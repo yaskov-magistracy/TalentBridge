@@ -25,20 +25,20 @@ services:
     networks:
       - my-network
 
-  # front:
-  #   image: ${FRONTEND_IMAGE}
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-  #     - ./nginx/fullchain.pem:/etc/nginx/fullchain.pem
-  #     - ./nginx/privkey.pem:/etc/nginx/privkey.pem
-  #   container_name: front
-  #   ports:
-  #     - 80:80
-  #     - 443:443
-  #   depends_on:
-  #     - app
-  #   networks:
-  #     - my-network
+  front:
+    image: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/fullchain.pem:/etc/nginx/fullchain.pem
+      - ./nginx/privkey.pem:/etc/nginx/privkey.pem
+    container_name: front
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - app
+    networks:
+      - my-network
 
 volumes:
   talentbridge_postgres_data:
