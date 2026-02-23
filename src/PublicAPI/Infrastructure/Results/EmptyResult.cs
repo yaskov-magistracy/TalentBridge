@@ -29,4 +29,7 @@ public static class EmptyResults
 
     public static EmptyResult NotFound(string error)
         => new EmptyResult(HttpStatusCode.NotFound, error);
+    
+    public static EmptyResult NotImplemented()
+        => new EmptyResult(HttpStatusCode.NotImplemented, null);
 }
