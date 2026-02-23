@@ -1,0 +1,1 @@
+sudo cat docker-env-* > ./cloud/.env

@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    environment:
+      POSTGRES_DB: "TalentBridge"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - talentbridge_postgres_data:/var/lib/postgresql
+    networks:
+      - my-network
+
+  app:
+    image: ${BACKEND_IMAGE}
+    container_name: app
+    environment:
+      - "APP_NAME=TalentBridge"
+      - "APP_ENVIRONMENT=PRODUCTION"
+      - "DATABASE_CONNECTION_STRING=host=postgres;Port=5432;Database=TalentBridge;User Id=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};"
+    volumes:
+      - backend_static_files:/app/_staticFiles
+    depends_on:
+      - postgres
+    networks:
+      - my-network
+
+  # front:
+  #   image: ${FRONTEND_IMAGE}
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  #     - ./nginx/fullchain.pem:/etc/nginx/fullchain.pem
+  #     - ./nginx/privkey.pem:/etc/nginx/privkey.pem
+  #   container_name: front
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   depends_on:
+  #     - app
+  #   networks:
+  #     - my-network
+
+volumes:
+  talentbridge_postgres_data:
+  backend_static_files:
+
+networks:
+  my-network:
+    driver: bridge

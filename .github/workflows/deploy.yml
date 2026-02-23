@@ -1,0 +1,62 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "deploy" ]
+
+jobs:
+  copy-deploy-configs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Copy deploy dist to VPS
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ vars.VPS_HOST }}
+        username: ${{ vars.SSH_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        source: "./deploy"
+        target: "~/"
+
+    - name: Create secrets 
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ vars.VPS_HOST }}
+        username: ${{ vars.SSH_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }} 
+        script: |
+          cd deploy
+
+          sudo echo -e \
+            "POSTGRES_USER = ${{ secrets.POSTGRES_USER }}\n"\
+            "POSTGRES_PASSWORD = ${{ secrets.POSTGRES_PASSWORD }}\n"\
+            > docker-env-secrets
+            
+          sudo echo -e \
+            "BACKEND_IMAGE = fnatikjk/talentbridge-backend:last\n"\
+            "FRONTEND_IMAGE = iceneo/talentbridge-frontend:last\n"\
+            >> docker-env-public
+          sudo sh copy-env.sh
+
+          cd cloud/nginx
+          sudo echo "${{ secrets.SSL_FULLCHAIN }}" > fullchain.pem
+          sudo echo "${{ secrets.SSL_PRIVATE_KEY }}" > privkey.pem
+
+  deploy-update:
+    runs-on: ubuntu-latest
+
+    needs: ["copy-deploy-configs"]
+
+    steps:
+    - name: Run server
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ vars.VPS_HOST }}
+        username: ${{ vars.SSH_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          cd deploy
+          sudo sh compose.sh

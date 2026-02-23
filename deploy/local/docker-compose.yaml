@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: "Eduteka"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} 
+    ports:
+      - ":5432"
+    volumes:
+      - eduteka_postgres_data:/var/lib/postgresql/data/
+    networks:
+      - my-network
+
+  app:
+    image: ${BACKEND_IMAGE}
+    container_name: app
+    environment:
+      - "APPLICATION_NAME=Eduteka"
+      - "APP_ENVIRONMENT=DEBUG"
+      - "DATABASE_CONNECTION_STRING=host=postgres;Port=5432;Database=Eduteka;User Id=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};"
+      - "STATICS_BASE_URL=${STATICS_BASE_URL}"
+      - "STATICS_PATH_TO_LOCAL_FILES=${STATICS_PATH_TO_LOCAL_FILES}"
+    ports:
+      - 8080:8080
+      - 8081:8081
+    volumes:
+      - backend_static_files:/app/StaticFiles
+    depends_on:
+      - postgres
+    networks:
+      - my-network
+
+  front:
+    image: ${FRONTEND_IMAGE}
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    container_name: front
+    ports:
+      - 80:80
+    depends_on:
+      - app
+    networks:
+      - my-network
+
+volumes:
+  eduteka_postgres_data:
+  backend_static_files:
+
+networks:
+  my-network:
+    driver: bridge
