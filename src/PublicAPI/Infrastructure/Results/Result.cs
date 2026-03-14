@@ -28,9 +28,15 @@ public static class Results
 
     public static Result<T> BadRequest<T>(string error)
         => new Result<T>(HttpStatusCode.BadRequest, error);
+    
+    public static Result<T> Forbidden<T>()
+        => new Result<T>(HttpStatusCode.Forbidden, null);
 
     public static Result<T> NotFound<T>(string error)
         => new Result<T>(HttpStatusCode.NotFound, error);
+    
+    public static Result<T> NotFound<T>()
+        => new Result<T>(HttpStatusCode.NotFound, null);
     
     public static Result<T2> From<T1, T2>(Result<T1> source) => new(source.StatusCode, source.Error);
 }

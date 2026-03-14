@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DAL.Employers;
 
-public class EmployerEntityConfiguration : IEntityTypeConfiguration<EmployerEntity>
+internal class EmployerEntityConfiguration : IEntityTypeConfiguration<EmployerEntity>
 {
     public void Configure(EntityTypeBuilder<EmployerEntity> builder)
     {

@@ -2,9 +2,11 @@
 using DAL.Authorization;
 using DAL.Candidates;
 using DAL.Employers;
+using DAL.EmployerTasks;
 using Domain.Authorization;
 using Domain.Candidates;
 using Domain.Employers;
+using Domain.EmployerTasks;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application;
@@ -26,5 +28,8 @@ public static class DI
         
         services.AddScoped<IEmployersRepository, EmployersRepository>();
         services.AddScoped<IEmployersService, EmployersService>();
+
+        services.AddScoped<IEmployerTasksRepository, EmployerTaskRepository>();
+        services.AddScoped<IEmployerTasksService, EmployerTasksService>();
     }
 }

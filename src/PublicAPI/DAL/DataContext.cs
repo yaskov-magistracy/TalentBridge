@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using DAL.Candidates;
 using DAL.Employers;
+using DAL.EmployerTasks;
 using DAL.Experts;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,4 +28,5 @@ public class DataContext(
     internal DbSet<EmployerEntity> Employers => Set<EmployerEntity>();
     internal DbSet<CandidateEntity> Candidates => Set<CandidateEntity>();
     internal DbSet<ExpertEntity> Experts => Set<ExpertEntity>();
+    internal DbSet<EmployerTaskEntity> EmployerTasks => Set<EmployerTaskEntity>();
 }

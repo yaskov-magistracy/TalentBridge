@@ -16,6 +16,12 @@ using IAuthorizationService = Domain.Authorization.IAuthorizationService;
 
 namespace API.Authorization;
 
+/// <summary>
+/// asdasdsda
+/// </summary>
+/// <param name="authorizationService"></param>
+/// <param name="candidatesService"></param>
+/// <param name="employersService"></param>
 [ApiController]
 [Route("api/auth")]
 public class AuthorizationController(
@@ -34,6 +40,9 @@ public class AuthorizationController(
     /// <summary>
     /// Вход
     /// </summary>
+    /// <remarks>
+    /// Регистрация аккаунтов в контроллерах сущностей (Employers/Candidates)
+    /// </remarks>
     [HttpPost("login")]
     public async Task<ActionResult<SessionInfo>> Login(LoginRequest request)
     {
@@ -47,26 +56,6 @@ public class AuthorizationController(
             loginResult.Id,
             loginResult.Role)
         );
-    }
-    
-    /// <summary>
-    /// Регистрация Работодателя
-    /// </summary>
-    [HttpPost("register/employer")]
-    public async Task<ActionResult<SessionInfo>> RegisterEmployer([FromBody] RegisterEmployerRequest request)
-    {
-        var res = await employersService.Register(request);
-        return res.ActionResult;
-    }
-    
-    /// <summary>
-    /// Регистрация Соискателя
-    /// </summary>
-    [HttpPost("register/candidate")]
-    public async Task<ActionResult<SessionInfo>> RegisterCandidate([FromBody] RegisterCandidateRequest request)
-    {
-        var res = await candidatesService.Register(request);
-        return res.ActionResult;
     }
     
     /// <summary>
