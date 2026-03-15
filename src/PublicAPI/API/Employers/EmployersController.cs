@@ -16,7 +16,7 @@ public class EmployersController(
     [HttpPost("register/employer")]
     public async Task<ActionResult<Guid>> RegisterEmployer([FromBody] RegisterEmployerRequest request)
     {
-        var res = await employersService.Register(request);
+        var res = await employersService.Add(request);
         return res.ActionResult;
     }
 }

@@ -9,7 +9,7 @@ public interface ICandidatesService
 {
     Task<Result<Candidate>> Get(Guid id);
     Task<Result<Candidate>> Get(string login);
-    Task<Result<Candidate>> Register(RegisterCandidateRequest request);
+    Task<Result<Candidate>> Add(RegisterCandidateRequest request);
     Task<EmptyResult> ChangePassword(Guid id, ChangePasswordRequest request);
 }
 
@@ -37,7 +37,7 @@ public class CandidatesService(
         return Results.Ok(res);
     }
 
-    public async Task<Result<Candidate>> Register(RegisterCandidateRequest request)
+    public async Task<Result<Candidate>> Add(RegisterCandidateRequest request)
     {
         var existed = await accountsRepository.Find(request.Login);
         if (existed != null)

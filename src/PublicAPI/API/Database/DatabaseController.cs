@@ -12,6 +12,12 @@ public class DatabaseController(
     /// <summary>
     /// Пересоздаёт БД
     /// </summary>
+    /// <remarks>
+    /// Базовые сущности: <br/>
+    /// логин/пароль <br/>
+    /// Работодатель: employer/employer <br/>
+    /// Кандидат: candidate/candidate <br/>
+    /// </remarks>
     [HttpPost("recreate")]
     public async Task<NoContentResult> Recreate()
     {

@@ -9,7 +9,7 @@ public interface IEmployersService
 {
     Task<Result<Employer>> Get(Guid id);
     Task<Result<Employer>> Get(string login);
-    Task<Result<Employer>> Register(RegisterEmployerRequest request);
+    Task<Result<Employer>> Add(RegisterEmployerRequest request);
     Task<EmptyResult> ChangePassword(Guid id, ChangePasswordRequest request);
 }
 
@@ -37,7 +37,7 @@ public class EmployersService(
         return Results.Ok(res);
     }
 
-    public async Task<Result<Employer>> Register(RegisterEmployerRequest request)
+    public async Task<Result<Employer>> Add(RegisterEmployerRequest request)
     {
         var existed = await accountsRepository.Find(request.Login);
         if (existed != null)

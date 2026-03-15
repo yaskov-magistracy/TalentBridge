@@ -16,7 +16,7 @@ public class CandidatesController(
     [HttpPost("register/candidate")]
     public async Task<ActionResult<Guid>> RegisterCandidate([FromBody] RegisterCandidateRequest request)
     {
-        var res = await candidatesService.Register(request);
+        var res = await candidatesService.Add(request);
         return res.ActionResult;
     }
 }
