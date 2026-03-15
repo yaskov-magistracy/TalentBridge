@@ -3,6 +3,7 @@ using DAL.Candidates;
 using DAL.Employers;
 using DAL.EmployerTasks;
 using DAL.Experts;
+using DAL.Technologies;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAL;
@@ -29,4 +30,5 @@ public class DataContext(
     internal DbSet<CandidateEntity> Candidates => Set<CandidateEntity>();
     internal DbSet<ExpertEntity> Experts => Set<ExpertEntity>();
     internal DbSet<EmployerTaskEntity> EmployerTasks => Set<EmployerTaskEntity>();
+    internal DbSet<TechnologyEntity> Technologies => Set<TechnologyEntity>();
 }

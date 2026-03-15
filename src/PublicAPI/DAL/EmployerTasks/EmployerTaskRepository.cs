@@ -8,7 +8,7 @@ public class EmployerTaskRepository(
     DataContext dataContext
 ) : IEmployerTasksRepository
 {
-    private DbSet<EmployerTaskEntity> EmployerTasks => dataContext.Set<EmployerTaskEntity>();
+    private DbSet<EmployerTaskEntity> EmployerTasks => dataContext.EmployerTasks;
     private IQueryable<EmployerTaskEntity> EmployerTasksSearch => EmployerTasks.AsNoTracking();
     
     public async Task<EmployerTask?> Get(Guid id)
