@@ -27,7 +27,7 @@ public class EmployerTasksController(
     /// Поиск по задачам
     /// </summary>
     [HttpPost("search")]
-    public async Task<ActionResult<EmployerTask>> Search([FromBody] EmployerTaskSearchRequest searchRequest)
+    public async Task<ActionResult<EmployerTaskSearchResponse>> Search([FromBody] EmployerTaskSearchRequest searchRequest)
     {
         var employerTask = await employerTasksService.Search(searchRequest);
         return employerTask.ActionResult;

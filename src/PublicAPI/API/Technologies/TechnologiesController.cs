@@ -24,7 +24,7 @@ public class TechnologiesController(
     /// Поиск по технологиям
     /// </summary>
     [HttpPost("search")]
-    public async Task<ActionResult<Technology>> Search([FromBody] TechnologySearchRequest searchRequest)
+    public async Task<ActionResult<TechnologySearchResponse>> Search([FromBody] TechnologySearchRequest searchRequest)
     {
         var employerTask = await technologiesService.Search(searchRequest);
         return employerTask.ActionResult;
