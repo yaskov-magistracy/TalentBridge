@@ -48,7 +48,7 @@ public class DatabaseAccessor(
             "Юрьевич",
             "Екатеринбург",
             "Я новенький разработчик тут",
-            technologies.Take(1).Select(e => e.Id).ToArray()
+            technologies.Take(5).Select(e => e.Id).ToArray()
         ))).Value;
         ClearAttachedItems();
         var employer = (await employersService.Add(new(
@@ -57,12 +57,13 @@ public class DatabaseAccessor(
             "ООО Рога-копыта"
         ))).Value;
         ClearAttachedItems();
-        await employerTasksService.Add(new(
+        var employerTask = await employerTasksService.Add(new(
             "Тестовое задание по каким-то технологиям",
             "Это описание тестового задания",
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
-            employer.Id));
+            employer.Id,
+            technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()));
     }
 
     private static readonly TechnologyCreateEntity[] TechnologyCreateEntities =

@@ -5,21 +5,21 @@ namespace Domain.EmployerTasks;
 
 public interface IEmployerTasksService
 {
-    Task<Result<EmployerTask>> Get(Guid id);
+    Task<Result<EmployerTaskFullInfo>> Get(Guid id);
     Task<Result<EmployerTaskSearchResponse>> Search(EmployerTaskSearchRequest request);
-    Task<Result<EmployerTask>> Add(EmployerTaskCreateEntity createEntity);
-    Task<Result<EmployerTask>> Update(Guid employerId, Guid id, EmployerTaskUpdateEntity updateEntity);
+    Task<Result<EmployerTaskFullInfo>> Add(EmployerTaskCreateEntity createEntity);
+    Task<Result<EmployerTaskFullInfo>> Update(Guid employerId, Guid id, EmployerTaskUpdateEntity updateEntity);
 }
 
 public class EmployerTasksService(
     IEmployerTasksRepository employerTasksRepository
 ) : IEmployerTasksService
 {
-    public async Task<Result<EmployerTask>> Get(Guid id)
+    public async Task<Result<EmployerTaskFullInfo>> Get(Guid id)
     {
-        var employerTask = await employerTasksRepository.Get(id);
+        var employerTask = await employerTasksRepository.GetFull(id);
         if (employerTask == null)
-            return Results.NotFound<EmployerTask>();
+            return Results.NotFound<EmployerTaskFullInfo>();
         
         return Results.Ok(employerTask);
     }
@@ -30,19 +30,19 @@ public class EmployerTasksService(
         return Results.Ok(searchResponse);
     }
 
-    public async Task<Result<EmployerTask>> Add(EmployerTaskCreateEntity createEntity)
+    public async Task<Result<EmployerTaskFullInfo>> Add(EmployerTaskCreateEntity createEntity)
     {
         var newTask = await employerTasksRepository.Add(createEntity);
         return Results.Ok(newTask);
     }
 
-    public async Task<Result<EmployerTask>> Update(Guid employerId, Guid id, EmployerTaskUpdateEntity updateEntity)
+    public async Task<Result<EmployerTaskFullInfo>> Update(Guid employerId, Guid id, EmployerTaskUpdateEntity updateEntity)
     {
-        var existed = await employerTasksRepository.Get(id);
-        if (existed == null)
-            return Results.NotFound<EmployerTask>();
-        if (existed.EmployerId != employerId)
-            return Results.Forbidden<EmployerTask>();
+        var pair = await employerTasksRepository.GetWithOwner(id);
+        if (pair == null)
+            return Results.NotFound<EmployerTaskFullInfo>();
+        if (pair.Value.employerId != employerId)
+            return Results.Forbidden<EmployerTaskFullInfo>();
         
         var updated = await employerTasksRepository.Update(id, updateEntity);
         return Results.Ok(updated);

@@ -3,9 +3,9 @@
 namespace Domain.EmployerTasks.DTO;
 
 public record EmployerTaskSearchResponse(
-    ICollection<EmployerTask> Items, 
+    ICollection<EmployerTaskFullInfo> Items, 
     int TotalCount
-) : BaseSearchResponse<EmployerTask>(Items, TotalCount)
+) : BaseSearchResponse<EmployerTaskFullInfo>(Items, TotalCount)
 {
     
 }

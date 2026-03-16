@@ -11,5 +11,8 @@ internal class TechnologyEntityConfiguration : IEntityTypeConfiguration<Technolo
 
         builder.HasMany(e => e.Candidates)
             .WithMany(e2 => e2.Technologies);
+
+        builder.HasMany(e => e.EmployerTasks)
+            .WithMany(e2 => e2.Technologies);
     }
 }

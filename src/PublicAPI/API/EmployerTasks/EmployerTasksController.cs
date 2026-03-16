@@ -46,7 +46,8 @@ public class EmployerTasksController(
             request.Description,
             request.TemplateUrl,
             request.DeadLine,
-            employerId));
+            employerId,
+            request.Technologies));
         return employerTask.ActionResult;
     }
     

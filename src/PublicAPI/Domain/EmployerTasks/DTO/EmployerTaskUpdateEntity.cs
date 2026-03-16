@@ -6,7 +6,8 @@ public record EmployerTaskUpdateEntity(
     string? Name,
     string? Description,
     NullablePatch<string?>? TemplateUrl,
-    DateOnly? DeadLine)
+    DateOnly? DeadLine,
+    RelationsPatch? Technologies)
 {
     
 }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using DAL.Employers;
+using DAL.Technologies;
 
 namespace DAL.EmployerTasks;
 
@@ -15,4 +16,6 @@ internal class EmployerTaskEntity
     
     [ForeignKey(nameof(Employer))] public Guid EmployerId { get; set; }
     public EmployerEntity Employer { get; set; }
+    
+    public List<TechnologyEntity>? Technologies { get; set; }
 }

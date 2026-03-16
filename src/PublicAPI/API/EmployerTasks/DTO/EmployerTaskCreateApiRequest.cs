@@ -4,7 +4,8 @@ public record EmployerTaskCreateApiRequest(
     string Name,
     string Description,
     string? TemplateUrl,
-    DateOnly DeadLine
+    DateOnly DeadLine,
+    Guid[]? Technologies
 )
 {
     

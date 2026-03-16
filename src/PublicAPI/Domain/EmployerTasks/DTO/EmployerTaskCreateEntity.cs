@@ -5,7 +5,8 @@ public record EmployerTaskCreateEntity(
     string Description,
     string? TemplateUrl,
     DateOnly DeadLine,
-    Guid EmployerId)
+    Guid EmployerId,
+    Guid[]? Technologies)
 {
     
 }
