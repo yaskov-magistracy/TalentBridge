@@ -3,6 +3,7 @@ using Domain.Employers;
 using Domain.EmployerTasks;
 using Domain.Technologies;
 using Domain.Technologies.DTO;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL;
 
@@ -21,16 +22,40 @@ public class DatabaseAccessor(
         await AddBaseEntities();
     }
 
+    // TODO: Сделать резолвинг сервисов по требованию
+    /// <summary>
+    /// Костыль чтобы имитировать Scoped
+    /// </summary>
+    private void ClearAttachedItems()
+    {
+        foreach (var entry in dataContext.ChangeTracker.Entries())
+        {
+            entry.State = EntityState.Detached;
+        }
+    }
+
     private async Task AddBaseEntities()
     {
         await technologiesService.AddBatch(TechnologyCreateEntities);
+        ClearAttachedItems();
         var (technologies, technologiesCount) = (await technologiesService.Search(new())).Value;
+        ClearAttachedItems();
         var candidate = (await candidatesService.Add(new(
             "candidate",
-            "candidate"))).Value;
+            "candidate",
+            "Корнишевский",
+            "Антон",
+            "Юрьевич",
+            "Екатеринбург",
+            "Я новенький разработчик тут",
+            technologies.Take(1).Select(e => e.Id).ToArray()
+        ))).Value;
+        ClearAttachedItems();
         var employer = (await employersService.Add(new(
             "employer",
-            "employer"))).Value;
+            "employer"
+        ))).Value;
+        ClearAttachedItems();
         await employerTasksService.Add(new(
             "Тестовое задание по каким-то технологиям",
             "Это описание тестового задания",

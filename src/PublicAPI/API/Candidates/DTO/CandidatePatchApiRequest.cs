@@ -1,9 +1,8 @@
 ﻿using Infrastructure.DTO;
 
-namespace Domain.Candidates.DTO;
+namespace API.Candidates.DTO;
 
-public record CandidateUpdateEntity(
-    string? PasswordHash = null,
+public record CandidatePatchApiRequest(
     string? Surname = null,
     string? Name = null,
     NullablePatch<string>? Patronymic = null,

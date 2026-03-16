@@ -3,10 +3,13 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DAL.Candidates;
 
-public class CandidateEntityConfiguration : IEntityTypeConfiguration<CandidateEntity>
+internal class CandidateEntityConfiguration : IEntityTypeConfiguration<CandidateEntity>
 {
     public void Configure(EntityTypeBuilder<CandidateEntity> builder)
     {
         builder.HasKey(e => e.Id);
+
+        builder.HasMany(e => e.Technologies)
+            .WithMany(e2 => e2.Candidates);
     }
 }

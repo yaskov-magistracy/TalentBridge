@@ -1,4 +1,5 @@
-﻿using Domain.Candidates;
+﻿using DAL.Technologies;
+using Domain.Candidates;
 using Domain.Candidates.DTO;
 
 namespace DAL.Candidates;
@@ -6,13 +7,42 @@ namespace DAL.Candidates;
 internal static class CandidatesMapper
 {
     public static Candidate ToDomain(CandidateEntity entity)
-        => new(entity.Id,
-            entity.Login);
+        => new(
+            entity.Id,
+            entity.Login,
+            entity.Surname,
+            entity.Name,
+            entity.Patronymic,
+            entity.City,
+            entity.About
+        );
+    
+    public static CandidateFullInfo ToDomainFull(CandidateEntity entity)
+        => new(
+            entity.Id,
+            entity.Login,
+            entity.Surname,
+            entity.Name,
+            entity.Patronymic,
+            entity.City,
+            entity.About,
+            entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray()
+        );
 
     public static CandidateEntity ToEntity(CandidateCreateEntity createEntity)
         => new()
         {
+            Id = Guid.Empty,
             Login = createEntity.Login,
             PasswordHash = createEntity.PasswordHash,
+            Surname = createEntity.Surname,
+            Name = createEntity.Name,
+            Patronymic = createEntity.Patronymic,
+            City = createEntity.City,
+            About = createEntity.About,
+            Technologies = createEntity.Technologies?.Select(e => new TechnologyEntity()
+            {
+                Id = e
+            }).ToList(),
         };
 }

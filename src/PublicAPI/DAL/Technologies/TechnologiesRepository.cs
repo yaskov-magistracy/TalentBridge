@@ -22,9 +22,9 @@ public class TechnologiesRepository(
     public async Task<TechnologySearchResponse> Search(TechnologySearchRequest request)
     {
         var query = TechnologiesSearch;
-        
-        if(request.Name != null)
-            query = query.Where(e => e.Name.Contains(request.Name));
+
+        if (request.Name != null)
+            query = query.Where(e => EF.Functions.ILike(e.Name, $"%{request.Name}%"));
 
         var count = await query.CountAsync();
         return new(

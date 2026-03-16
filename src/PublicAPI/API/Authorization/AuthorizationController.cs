@@ -2,32 +2,19 @@
 using API.Configuration.Auth;
 using Domain.Authorization;
 using Domain.Authorization.DTO;
-using Domain.Candidates;
-using Domain.Candidates.DTO;
-using Domain.Employers;
-using Domain.Employers.DTO;
-using Infrastructure.Results;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using EmptyResult = Infrastructure.Results.EmptyResult;
 using IAuthorizationService = Domain.Authorization.IAuthorizationService;
 
 namespace API.Authorization;
 
-/// <summary>
-/// asdasdsda
-/// </summary>
-/// <param name="authorizationService"></param>
-/// <param name="candidatesService"></param>
-/// <param name="employersService"></param>
 [ApiController]
 [Route("api/auth")]
 public class AuthorizationController(
-    IAuthorizationService authorizationService,
-    ICandidatesService candidatesService,
-    IEmployersService employersService) : ControllerBase
+    IAuthorizationService authorizationService
+) : ControllerBase
 {
     /// <summary>
     /// Текущая сессия пользователя
@@ -67,24 +54,6 @@ public class AuthorizationController(
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return NoContent();
-    }
-
-    /// <summary>
-    /// Смена пароля
-    /// </summary>
-    [Authorize]
-    [HttpPost("change-password")]
-    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
-    {
-        var id = User.GetId();
-        var role = User.GetRole();
-        EmptyResult result = EmptyResults.NotImplemented();
-        if (role == AccountRole.Candidate)
-            result = await candidatesService.ChangePassword(id, request);
-        else if (role == AccountRole.Employer)
-            result = await employersService.ChangePassword(id, request);
-
-        return result.ActionResult;
     }
     
     private ClaimsPrincipal BuildClaims(Account account)

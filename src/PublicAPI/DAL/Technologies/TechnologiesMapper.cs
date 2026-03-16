@@ -8,6 +8,7 @@ internal static class TechnologiesMapper
     public static TechnologyEntity ToEntity(TechnologyCreateEntity createEntity)
         => new()
         {
+            Id = Guid.Empty,
             Name = createEntity.Name,
         };
 

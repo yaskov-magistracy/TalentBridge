@@ -8,5 +8,8 @@ internal class TechnologyEntityConfiguration : IEntityTypeConfiguration<Technolo
     public void Configure(EntityTypeBuilder<TechnologyEntity> builder)
     {
         builder.HasKey(e => e.Id);
+
+        builder.HasMany(e => e.Candidates)
+            .WithMany(e2 => e2.Technologies);
     }
 }
