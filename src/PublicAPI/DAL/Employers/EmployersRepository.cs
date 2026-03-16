@@ -40,6 +40,8 @@ public class EmployersRepository(
 
         if (updateEntity.PasswordHash != null)
             existed.PasswordHash = updateEntity.PasswordHash;
+        if (updateEntity.Name != null)
+            existed.Name = updateEntity.Name;
 
         await dataContext.SaveChangesAsync();
         return EmployersMapper.ToDomain(existed);

@@ -1,6 +1,7 @@
 ﻿namespace Domain.Employers.DTO;
 
-public class EmployerUpdateEntity
+public record EmployerUpdateEntity(
+    string? PasswordHash = null,
+    string? Name = null)
 {
-    public string? PasswordHash { get; set; }
 }

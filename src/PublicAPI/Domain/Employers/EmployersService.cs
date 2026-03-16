@@ -9,7 +9,8 @@ public interface IEmployersService
 {
     Task<Result<Employer>> Get(Guid id);
     Task<Result<Employer>> Get(string login);
-    Task<Result<Employer>> Add(RegisterEmployerRequest request);
+    Task<Result<Employer>> Add(EmployerCreateRequest createRequest);
+    Task<Result<Employer>> Patch(Guid id, EmployerUpdateEntity patchRequest);
     Task<EmptyResult> ChangePassword(Guid id, ChangePasswordRequest request);
 }
 
@@ -37,17 +38,28 @@ public class EmployersService(
         return Results.Ok(res);
     }
 
-    public async Task<Result<Employer>> Add(RegisterEmployerRequest request)
+    public async Task<Result<Employer>> Add(EmployerCreateRequest createRequest)
     {
-        var existed = await accountsRepository.Find(request.Login);
+        var existed = await accountsRepository.Find(createRequest.Login);
         if (existed != null)
             return Results.BadRequest<Employer>("Login is already in use");
         
         var res = await employersRepository.Add(new(
-            request.Login, 
-            passwordHasher.HashPassword(request.Password)
+            createRequest.Login, 
+            passwordHasher.HashPassword(createRequest.Password),
+            createRequest.Name
         ));
         return Results.Ok(res);
+    }
+
+    public async Task<Result<Employer>> Patch(Guid id, EmployerUpdateEntity patchRequest)
+    {
+        var existed = await employersRepository.Get(id);
+        if (existed == null)
+            return Results.NotFound<Employer>("");
+        
+        var updated = await employersRepository.Update(id, patchRequest);
+        return Results.Ok(updated);
     }
 
     public async Task<EmptyResult> ChangePassword(Guid id, ChangePasswordRequest request)

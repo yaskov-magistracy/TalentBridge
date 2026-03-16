@@ -17,9 +17,24 @@ public class EmployersController(
     /// Регистрация Работодателя
     /// </summary>
     [HttpPost("")]
-    public async Task<ActionResult<Guid>> RegisterEmployer([FromBody] RegisterEmployerRequest request)
+    public async Task<ActionResult<Guid>> Add([FromBody] EmployerCreateRequest createRequest)
     {
-        var res = await employersService.Add(request);
+        var res = await employersService.Add(createRequest);
+        return res.ActionResult;
+    }
+    
+    /// <summary>
+    /// Редактирование Работодателя
+    /// </summary>
+    [AuthorizeRoles(AccountRole.Employer)]
+    [HttpPost("{id:Guid}")]
+    public async Task<ActionResult<Guid>> Patch([FromRoute] Guid id, [FromBody] EmployerUpdateEntity patchRequest)
+    {
+        var userId = User.GetId();
+        if (userId != id)
+            return Forbid();
+        
+        var res = await employersService.Patch(id, patchRequest);
         return res.ActionResult;
     }
     

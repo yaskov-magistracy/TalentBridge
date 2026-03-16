@@ -2,7 +2,9 @@
 
 public record EmployerCreateEntity(
     string Login,
-    string PasswordHash)
+    string PasswordHash,
+    string Name
+)
 {
     
 }

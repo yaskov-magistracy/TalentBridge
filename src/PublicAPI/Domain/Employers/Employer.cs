@@ -2,7 +2,8 @@
 
 public record Employer(
     Guid Id,
-    string Login)
+    string Login,
+    string Name)
 {
     
 }

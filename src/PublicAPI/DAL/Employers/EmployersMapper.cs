@@ -6,12 +6,13 @@ namespace DAL.Employers;
 internal static class EmployersMapper
 {
     public static Employer ToDomain(EmployerEntity entity)
-        => new(entity.Id, entity.Login);
+        => new(entity.Id, entity.Login, entity.Name);
 
     public static EmployerEntity ToEntity(EmployerCreateEntity createEntity)
         => new()
         {
             Login = createEntity.Login,
             PasswordHash = createEntity.PasswordHash,
+            Name = createEntity.Name,
         };
 }

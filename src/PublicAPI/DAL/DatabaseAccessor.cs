@@ -53,7 +53,8 @@ public class DatabaseAccessor(
         ClearAttachedItems();
         var employer = (await employersService.Add(new(
             "employer",
-            "employer"
+            "employer",
+            "ООО Рога-копыта"
         ))).Value;
         ClearAttachedItems();
         await employerTasksService.Add(new(
