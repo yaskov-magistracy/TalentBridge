@@ -1,0 +1,21 @@
+@import "tailwindcss";
+/**
+ * styles.css - Глобальные стили приложения
+ * 
+ * Импортируем Tailwind CSS для стилизации компонентов
+ */
+
+/* Импорт базовых стилей Tailwind */
+@tailwind utilities;
+
+/* Глобальные стили приложения */
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

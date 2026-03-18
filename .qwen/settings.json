@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "angular-cli": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@angular/cli",
+        "mcp"
+      ]
+    }
+  },
+  "context": {
+    "fileName": ["QWEN.md", "src/client/instructions.md", "src/client/llms.txt"]
+  },
+  "$version": 3
+}
