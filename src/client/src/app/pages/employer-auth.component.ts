@@ -2,19 +2,21 @@
  * EmployerAuthComponent - Страница аутентификации для работодателей
  * 
  * Предоставляет форму входа для работодателей.
- * Использует AuthService для взаимодействия с FastAPI бэкендом.
+ * В отличие от кандидатов, регистрация работодателей производится
+ * вручную через администрацию платформы.
  * 
- * API Endpoints:
- * - POST /api/v1/auth/login - вход
+ * Особенности:
+ * - Только форма входа (без регистрации)
+ * - Информационное сообщение о ручной регистрации
+ * - Ссылка "Забыли пароль?"
  * 
- * Регистрация работодателей производится вручную администрацией.
+ * После успешной аутентификации перенаправляет на /employer-dashboard
  */
 
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../services/auth.service';
 
 /**
  * Интерфейс данных формы входа
@@ -24,21 +26,15 @@ interface LoginFormData {
   password: string;
 }
 
-/**
- * Интерфейс ошибок формы
- */
-interface FormErrors {
-  email?: string;
-  password?: string;
-  general?: string;
-}
-
 @Component({
   selector: 'app-employer-auth',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <!-- Основной контейнер страницы -->
+    <!-- 
+      Основной контейнер страницы
+      - bg-gradient-to-br: градиент от slate-50 к emerald-50
+    -->
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
       
       <!-- ===== ШАПКА ===== -->
@@ -52,6 +48,7 @@ interface FormErrors {
 
       <!-- ===== ФОРМА ВХОДА ===== -->
       <div class="max-w-md mx-auto px-8 py-16">
+        <!-- Карточка формы с зеленой рамкой -->
         <div class="border-2 border-emerald-600 bg-white p-8 shadow-xl">
           
           <!-- Заголовок -->
@@ -60,16 +57,16 @@ interface FormErrors {
           </h2>
 
           <!-- ИНФОРМАЦИОННОЕ СООБЩЕНИЕ -->
+          <!-- 
+            Предупреждение о ручной регистрации
+            - border-amber-400: желтая рамка
+            - bg-amber-50: светло-желтый фон
+          -->
           <div class="border-2 border-amber-400 bg-amber-50 p-4 mb-6">
             <p class="text-xs text-amber-900">
               <strong>ПРИМЕЧАНИЕ:</strong> Регистрация работодателей производится вручную. 
               Если вы хотите разместить задания, свяжитесь с администрацией платформы.
             </p>
-          </div>
-
-          <!-- Сообщение об ошибке -->
-          <div *ngIf="errors.general" class="border-2 border-red-400 bg-red-50 p-4 mb-6">
-            <p class="text-sm text-red-700">{{ errors.general }}</p>
           </div>
 
           <!-- ФОРМА -->
@@ -84,13 +81,10 @@ interface FormErrors {
                 type="email"
                 [(ngModel)]="formData.email"
                 name="email"
-                class="w-full border-2 p-3"
-                [ngClass]="errors.email ? 'border-red-400 bg-red-50' : 'border-black'"
+                class="w-full border-2 border-black p-3"
                 placeholder="company@email.com"
                 required
-                [disabled]="isLoading"
               />
-              <p *ngIf="errors.email" class="text-xs text-red-600 mt-1">{{ errors.email }}</p>
             </div>
 
             <!-- ПОЛЕ: ПАРОЛЬ -->
@@ -102,23 +96,18 @@ interface FormErrors {
                 type="password"
                 [(ngModel)]="formData.password"
                 name="password"
-                class="w-full border-2 p-3"
-                [ngClass]="errors.password ? 'border-red-400 bg-red-50' : 'border-black'"
+                class="w-full border-2 border-black p-3"
                 placeholder="••••••••"
                 required
-                [disabled]="isLoading"
               />
-              <p *ngIf="errors.password" class="text-xs text-red-600 mt-1">{{ errors.password }}</p>
             </div>
 
             <!-- КНОПКА ВХОДА -->
             <button
               type="submit"
-              [disabled]="isLoading"
-              class="w-full border-2 border-emerald-600 bg-emerald-600 text-white px-8 py-4 hover:bg-emerald-700 transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              class="w-full border-2 border-emerald-600 bg-emerald-600 text-white px-8 py-4 hover:bg-emerald-700 transition-colors font-bold uppercase tracking-wider"
             >
-              <span *ngIf="isLoading" class="animate-spin">⟳</span>
-              {{ isLoading ? 'Загрузка...' : 'Войти' }}
+              Войти
             </button>
           </form>
 
@@ -136,6 +125,7 @@ interface FormErrors {
               ← Назад на главную
             </a>
           </div>
+          
         </div>
       </div>
     </div>
@@ -151,78 +141,19 @@ export class EmployerAuthComponent {
   };
 
   /**
-   * Ошибки валидации
+   * Конструктор с внедрением Router для навигации
    */
-  errors: FormErrors = {};
-
-  /**
-   * Флаг загрузки
-   */
-  isLoading = false;
-
-  /**
-   * Конструктор с внедрением зависимостей
-   * @param authService - сервис аутентификации
-   * @param router - сервис навигации
-   */
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
-
-  /**
-   * Валидация формы
-   * @returns true если форма валидна
-   */
-  private validateForm(): boolean {
-    this.errors = {};
-    let isValid = true;
-
-    // Валидация email
-    if (!this.formData.email) {
-      this.errors.email = 'Email обязателен';
-      isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formData.email)) {
-      this.errors.email = 'Некорректный email';
-      isValid = false;
-    }
-
-    // Валидация пароля
-    if (!this.formData.password) {
-      this.errors.password = 'Пароль обязателен';
-      isValid = false;
-    }
-
-    return isValid;
-  }
+  constructor(private router: Router) {}
 
   /**
    * Обработчик отправки формы
-   * Выполняет вход через API
+   * В реальном приложении здесь была бы проверка учетных данных
    */
   onSubmit(): void {
-    // Валидация формы
-    if (!this.validateForm()) {
-      return;
-    }
-
-    this.isLoading = true;
-    this.errors.general = undefined;
-
-    this.authService.login({
-      email: this.formData.email,
-      password: this.formData.password,
-      role: 'employer'
-    }).subscribe({
-      next: () => {
-        this.isLoading = false;
-        // Перенаправляем на дашборд работодателя
-        this.router.navigate(['/employer-dashboard']);
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.errors.general = err.message || 'Ошибка входа. Проверьте email и пароль.';
-      }
-    });
+    // В реальном приложении здесь был бы вызов API для аутентификации
+    // Сейчас просто имитируем успешный вход
+    
+    // Перенаправляем на дашборд работодателя
+    this.router.navigate(['/employer-dashboard']);
   }
 }

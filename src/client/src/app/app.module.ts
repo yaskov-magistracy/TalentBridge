@@ -15,7 +15,6 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 
 // ===== ИМПОРТ КОРНЕВОГО КОМПОНЕНТА =====
 import { AppComponent } from './app.component';
@@ -77,9 +76,6 @@ const routes: Routes = [
   imports: [
     // Модуль браузера (обязательный для веб-приложений)
     BrowserModule,
-    
-    // Модуль HTTP клиента для API запросов
-    HttpClientModule,
     
     // Модуль маршрутизации с настроенными путями
     RouterModule.forRoot(routes),
