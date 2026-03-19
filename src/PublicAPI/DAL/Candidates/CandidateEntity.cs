@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using DAL.Solutions;
 using DAL.Technologies;
 
 namespace DAL.Candidates;
@@ -6,12 +7,13 @@ namespace DAL.Candidates;
 internal class CandidateEntity
 {
     [Key] public required Guid Id { get; set; }
-    public required string Login { get; set; }
-    public required string PasswordHash { get; set; }
-    public required string Surname { get; set; }
-    public required string Name { get; set; }
-    public required string? Patronymic { get; set; }
-    public required string City { get; set; }
-    public required string About { get; set; }
-    public required List<TechnologyEntity>? Technologies { get; set; }
+    public string Login { get; set; }
+    public string PasswordHash { get; set; }
+    public string Surname { get; set; }
+    public string Name { get; set; }
+    public string? Patronymic { get; set; }
+    public string City { get; set; }
+    public string About { get; set; }
+    public List<TechnologyEntity>? Technologies { get; set; }
+    public List<SolutionEntity>? Solutions { get; set; }
 }

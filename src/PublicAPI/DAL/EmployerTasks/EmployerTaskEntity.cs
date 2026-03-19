@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using DAL.Employers;
+using DAL.Solutions;
 using DAL.Technologies;
 
 namespace DAL.EmployerTasks;
@@ -18,4 +19,5 @@ internal class EmployerTaskEntity
     public EmployerEntity Employer { get; set; }
     
     public List<TechnologyEntity>? Technologies { get; set; }
+    public List<SolutionEntity>? Solutions { get; set; }
 }

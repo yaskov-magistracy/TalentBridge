@@ -1,8 +1,9 @@
-﻿using System.Reflection;
+using System.Reflection;
 using DAL.Candidates;
 using DAL.Employers;
 using DAL.EmployerTasks;
 using DAL.Experts;
+using DAL.Solutions;
 using DAL.Technologies;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,4 +32,5 @@ public class DataContext(
     internal DbSet<ExpertEntity> Experts => Set<ExpertEntity>();
     internal DbSet<EmployerTaskEntity> EmployerTasks => Set<EmployerTaskEntity>();
     internal DbSet<TechnologyEntity> Technologies => Set<TechnologyEntity>();
+    internal DbSet<SolutionEntity> Solutions => Set<SolutionEntity>();
 }

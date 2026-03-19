@@ -1,13 +1,15 @@
-﻿using DAL;
+using DAL;
 using DAL.Authorization;
 using DAL.Candidates;
 using DAL.Employers;
 using DAL.EmployerTasks;
+using DAL.Solutions;
 using DAL.Technologies;
 using Domain.Authorization;
 using Domain.Candidates;
 using Domain.Employers;
 using Domain.EmployerTasks;
+using Domain.Solutions;
 using Domain.Technologies;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -36,5 +38,8 @@ public static class DI
 
         services.AddScoped<ITechnologiesRepository, TechnologiesRepository>();
         services.AddScoped<ITechnologiesService, TechnologiesService>();
+
+        services.AddScoped<ISolutionsRepository, SolutionsRepository>();
+        services.AddScoped<ISolutionsService, SolutionsService>();
     }
 }

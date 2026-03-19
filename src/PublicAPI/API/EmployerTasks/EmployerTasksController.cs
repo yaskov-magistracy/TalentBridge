@@ -17,7 +17,7 @@ public class EmployerTasksController(
     /// Получить задачу
     /// </summary>
     [HttpGet("{id:Guid}")]
-    public async Task<ActionResult<EmployerTask>> Get([FromRoute] Guid id)
+    public async Task<ActionResult<EmployerTaskFullInfo>> Get([FromRoute] Guid id)
     {
         var employerTask = await employerTasksService.Get(id);
         return employerTask.ActionResult;
@@ -38,7 +38,7 @@ public class EmployerTasksController(
     /// </summary>
     [AuthorizeRoles(AccountRole.Employer)]
     [HttpPost("")]
-    public async Task<ActionResult<EmployerTask>> Add([FromBody] EmployerTaskCreateApiRequest request)
+    public async Task<ActionResult<EmployerTaskFullInfo>> Add([FromBody] EmployerTaskCreateApiRequest request)
     {
         var employerId = User.GetId();
         var employerTask = await employerTasksService.Add(new(
@@ -56,7 +56,7 @@ public class EmployerTasksController(
     /// </summary>
     [AuthorizeRoles(AccountRole.Employer)]
     [HttpPatch("{id:Guid}")]
-    public async Task<ActionResult<EmployerTask>> Update([FromRoute] Guid id, [FromBody] EmployerTaskUpdateEntity request)
+    public async Task<ActionResult<EmployerTaskFullInfo>> Update([FromRoute] Guid id, [FromBody] EmployerTaskUpdateEntity request)
     {
         var employerId = User.GetId();
         var employerTask = await employerTasksService.Update(employerId, id, request);

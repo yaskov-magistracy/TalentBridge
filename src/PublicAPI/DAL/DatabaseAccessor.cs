@@ -1,9 +1,11 @@
 ﻿using Domain.Candidates;
 using Domain.Employers;
 using Domain.EmployerTasks;
+using Domain.Solutions;
 using Domain.Technologies;
 using Domain.Technologies.DTO;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DAL;
 
@@ -12,7 +14,8 @@ public class DatabaseAccessor(
     IEmployersService employersService,
     ICandidatesService candidatesService,
     ITechnologiesService technologiesService,
-    IEmployerTasksService employerTasksService
+    IEmployerTasksService employerTasksService,
+    ISolutionsService solutionsService
 )
 {
     public async Task RecreateDatabase()
@@ -57,13 +60,19 @@ public class DatabaseAccessor(
             "ООО Рога-копыта"
         ))).Value;
         ClearAttachedItems();
-        var employerTask = await employerTasksService.Add(new(
+        var employerTask = (await employerTasksService.Add(new(
             "Тестовое задание по каким-то технологиям",
             "Это описание тестового задания",
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             employer.Id,
-            technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()));
+            technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()
+        ))).Value;
+        ClearAttachedItems();
+        var solution = (await solutionsService.Add(new(
+            employerTask.Id, 
+            candidate.Id
+        ))).Value;
     }
 
     private static readonly TechnologyCreateEntity[] TechnologyCreateEntities =
