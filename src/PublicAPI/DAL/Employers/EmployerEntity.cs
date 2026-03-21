@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using DAL.EmployerTasks;
+using DAL.Assignments;
 
 namespace DAL.Employers;
 
@@ -10,5 +10,5 @@ internal class EmployerEntity
     public string PasswordHash { get; set; }
     public string Name { get; set; }
     
-    public List<EmployerTaskEntity>? EmployerTasks { get; set; }
+    public List<AssignmentEntity>? Assignments { get; set; }
 }

@@ -1,5 +1,5 @@
+using DAL.Assignments;
 using DAL.Candidates;
-using DAL.EmployerTasks;
 using Domain.Solutions;
 using Domain.Solutions.DTO;
 
@@ -13,7 +13,7 @@ internal static class SolutionsMapper
             entity.SolutionUrl,
             entity.StartedAt,
             ToDomain(entity.State),
-            entity.EmployerTaskId,
+            entity.AssignmentId,
             entity.CandidateId
         );
 
@@ -23,7 +23,7 @@ internal static class SolutionsMapper
             entity.SolutionUrl,
             entity.StartedAt,
             ToDomain(entity.State),
-            EmployerTasksMapper.ToDomain(entity.EmployerTask),
+            AssignmentsMapper.ToDomain(entity.Assignment),
             CandidatesMapper.ToDomain(entity.Candidate)
         );
 
@@ -33,10 +33,10 @@ internal static class SolutionsMapper
             SolutionUrl = createEntity.SolutionUrl,
             StartedAt = createEntity.StartedAt,
             State = ToEntity(createEntity.State),
-            EmployerTaskId = createEntity.EmployerTaskId,
-            EmployerTask = new()
+            AssignmentId = createEntity.AssignmentId,
+            Assignment = new()
             {
-                Id = createEntity.EmployerTaskId,
+                Id = createEntity.AssignmentId,
             },
             CandidateId = createEntity.CandidateId,
             Candidate = new()

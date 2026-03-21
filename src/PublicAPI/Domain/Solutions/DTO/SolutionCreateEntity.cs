@@ -4,7 +4,7 @@ public record SolutionCreateEntity(
     string? SolutionUrl,
     DateOnly StartedAt,
     SolutionState State,
-    Guid EmployerTaskId,
+    Guid AssignmentId,
     Guid CandidateId)
 {
 }

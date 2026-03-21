@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using DAL.Assignments;
 using DAL.Candidates;
-using DAL.EmployerTasks;
 
 namespace DAL.Solutions;
 
@@ -11,8 +11,8 @@ internal class SolutionEntity : IEntity
     public DateOnly StartedAt { get; set; }
     public SolutionEntityState State { get; set; }
     
-    [ForeignKey(nameof(EmployerTask))] public Guid EmployerTaskId { get; set; }
-    public EmployerTaskEntity EmployerTask { get; set; }
+    [ForeignKey(nameof(Assignment))] public Guid AssignmentId { get; set; }
+    public AssignmentEntity Assignment { get; set; }
     
     [ForeignKey(nameof(Candidate))] public Guid CandidateId { get; set; }
     public CandidateEntity Candidate { get; set; }

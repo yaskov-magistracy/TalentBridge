@@ -12,7 +12,7 @@ public class SolutionsRepository(
     private IQueryable<SolutionEntity> SolutionsSearch => Solutions.AsNoTracking();
     private IQueryable<SolutionEntity> SolutionsFullSearch => SolutionsFull.AsNoTracking();
     private IQueryable<SolutionEntity> SolutionsFull => Solutions
-        .Include(e => e.EmployerTask)
+        .Include(e => e.Assignment)
         .Include(e => e.Candidate);
 
     public async Task<SolutionShortInfo?> Get(Guid id)
@@ -35,8 +35,8 @@ public class SolutionsRepository(
     {
         var query = SolutionsFullSearch;
 
-        if (request.EmployerTaskId != null)
-            query = query.Where(e => e.EmployerTaskId == request.EmployerTaskId);
+        if (request.AssignmentId != null)
+            query = query.Where(e => e.AssignmentId == request.AssignmentId);
         if (request.CandidateId != null)
             query = query.Where(e => e.CandidateId == request.CandidateId);
 
@@ -49,7 +49,7 @@ public class SolutionsRepository(
     public async Task<SolutionFullInfo> Add(SolutionCreateEntity createEntity)
     {
         var newEntity = SolutionsMapper.ToEntity(createEntity);
-        dataContext.EmployerTasks.Attach(newEntity.EmployerTask);
+        dataContext.Assignments.Attach(newEntity.Assignment);
         dataContext.Candidates.Attach(newEntity.Candidate);
         await Solutions.AddAsync(newEntity);
         await dataContext.SaveChangesAsync();

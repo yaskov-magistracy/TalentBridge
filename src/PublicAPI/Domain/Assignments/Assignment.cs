@@ -1,9 +1,9 @@
 ﻿using Domain.Employers;
 using Domain.Technologies;
 
-namespace Domain.EmployerTasks;
+namespace Domain.Assignments;
 
-public record EmployerTask(
+public record Assignment(
     Guid Id,
     string Name,
     string Description,
@@ -12,7 +12,7 @@ public record EmployerTask(
 {
 }
 
-public record EmployerTaskFullInfo(
+public record AssignmentFullInfo(
     Guid Id,
     string Name,
     string Description,
@@ -20,4 +20,4 @@ public record EmployerTaskFullInfo(
     DateOnly DeadLine,
     Employer Employer,
     Technology[]? Technologies
-) : EmployerTask(Id, Name, Description, TemplateUrl, DeadLine);
+) : Assignment(Id, Name, Description, TemplateUrl, DeadLine);

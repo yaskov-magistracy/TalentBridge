@@ -1,6 +1,6 @@
-﻿namespace Domain.EmployerTasks.DTO;
+﻿namespace Domain.Assignments.DTO;
 
-public record EmployerTaskCreateEntity(
+public record AssignmentCreateEntity(
     string Name,
     string Description,
     string? TemplateUrl,

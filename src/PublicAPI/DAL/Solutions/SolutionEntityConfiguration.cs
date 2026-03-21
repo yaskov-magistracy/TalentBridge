@@ -9,9 +9,9 @@ internal class SolutionEntityConfiguration : IEntityTypeConfiguration<SolutionEn
     {
         builder.HasKey(e => e.Id);
 
-        builder.HasOne(e => e.EmployerTask)
+        builder.HasOne(e => e.Assignment)
             .WithMany(e2 => e2.Solutions)
-            .HasForeignKey(e => e.EmployerTaskId);
+            .HasForeignKey(e => e.AssignmentId);
 
         builder.HasOne(e => e.Candidate)
             .WithMany(e2 => e2.Solutions)

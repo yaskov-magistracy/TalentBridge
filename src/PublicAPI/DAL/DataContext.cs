@@ -1,7 +1,7 @@
 using System.Reflection;
+using DAL.Assignments;
 using DAL.Candidates;
 using DAL.Employers;
-using DAL.EmployerTasks;
 using DAL.Experts;
 using DAL.Solutions;
 using DAL.Technologies;
@@ -30,7 +30,7 @@ public class DataContext(
     internal DbSet<EmployerEntity> Employers => Set<EmployerEntity>();
     internal DbSet<CandidateEntity> Candidates => Set<CandidateEntity>();
     internal DbSet<ExpertEntity> Experts => Set<ExpertEntity>();
-    internal DbSet<EmployerTaskEntity> EmployerTasks => Set<EmployerTaskEntity>();
+    internal DbSet<AssignmentEntity> Assignments => Set<AssignmentEntity>();
     internal DbSet<TechnologyEntity> Technologies => Set<TechnologyEntity>();
     internal DbSet<SolutionEntity> Solutions => Set<SolutionEntity>();
 }

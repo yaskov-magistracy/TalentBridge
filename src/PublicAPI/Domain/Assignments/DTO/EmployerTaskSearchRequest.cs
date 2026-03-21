@@ -1,13 +1,13 @@
 ﻿using Infrastructure.DTO.Search;
 
-namespace Domain.EmployerTasks.DTO;
+namespace Domain.Assignments.DTO;
 
-public record EmployerTaskSearchRequest(
+public record AssignmentSearchRequest(
     Guid? EmployerId = null,
     string? Text = null,
     int Take = 100,
     int Skip = 0
-) : BaseSearchRequest<EmployerTask>(Take, Skip)
+) : BaseSearchRequest<Assignment>(Take, Skip)
 {
     
 }

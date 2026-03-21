@@ -37,7 +37,7 @@ public class SolutionsService(
             null,
             DateOnly.FromDateTime(DateTime.UtcNow),
             SolutionState.InProgress,
-            request.EmployerTaskId,
+            request.AssignmentId,
             request.CandidateId));
         return Results.Ok(newSolution);
     }

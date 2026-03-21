@@ -1,6 +1,6 @@
-﻿namespace API.EmployerTasks.DTO;
+﻿namespace API.Assignments.DTO;
 
-public record EmployerTaskCreateApiRequest(
+public record AssignmentCreateApiRequest(
     string Name,
     string Description,
     string? TemplateUrl,

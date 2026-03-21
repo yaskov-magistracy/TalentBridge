@@ -1,6 +1,6 @@
-﻿using Domain.Candidates;
+﻿using Domain.Assignments;
+using Domain.Candidates;
 using Domain.Employers;
-using Domain.EmployerTasks;
 using Domain.Solutions;
 using Domain.Technologies;
 using Domain.Technologies.DTO;
@@ -14,7 +14,7 @@ public class DatabaseAccessor(
     IEmployersService employersService,
     ICandidatesService candidatesService,
     ITechnologiesService technologiesService,
-    IEmployerTasksService employerTasksService,
+    IAssignmentsService assignmentsService,
     ISolutionsService solutionsService
 )
 {
@@ -60,7 +60,7 @@ public class DatabaseAccessor(
             "ООО Рога-копыта"
         ))).Value;
         ClearAttachedItems();
-        var employerTask = (await employerTasksService.Add(new(
+        var assignment = (await assignmentsService.Add(new(
             "Тестовое задание по каким-то технологиям",
             "Это описание тестового задания",
             "https://github.com/yaskov-magistracy/TalentBridge",
@@ -70,7 +70,7 @@ public class DatabaseAccessor(
         ))).Value;
         ClearAttachedItems();
         var solution = (await solutionsService.Add(new(
-            employerTask.Id, 
+            assignment.Id, 
             candidate.Id
         ))).Value;
     }

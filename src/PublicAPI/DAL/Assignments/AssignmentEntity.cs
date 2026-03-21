@@ -4,9 +4,9 @@ using DAL.Employers;
 using DAL.Solutions;
 using DAL.Technologies;
 
-namespace DAL.EmployerTasks;
+namespace DAL.Assignments;
 
-internal class EmployerTaskEntity
+internal class AssignmentEntity
 {
     [Key]
     public Guid Id { get; set; }

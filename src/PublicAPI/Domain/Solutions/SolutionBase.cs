@@ -1,5 +1,5 @@
+using Domain.Assignments;
 using Domain.Candidates;
-using Domain.EmployerTasks;
 
 namespace Domain.Solutions;
 
@@ -15,7 +15,7 @@ public record SolutionShortInfo(
     string SolutionUrl,
     DateOnly StartedAt,
     SolutionState State,
-    Guid EmployerTaskId,
+    Guid AssignmentId,
     Guid CandidateId
 ) :  SolutionBase(Id, SolutionUrl, StartedAt, State);
 
@@ -24,7 +24,7 @@ public record SolutionFullInfo(
     string SolutionUrl,
     DateOnly StartedAt,
     SolutionState State,
-    EmployerTask EmployerTask,
+    Assignment Assignment,
     Candidate Candidate
 ) : SolutionBase(Id, SolutionUrl, StartedAt, State);
 

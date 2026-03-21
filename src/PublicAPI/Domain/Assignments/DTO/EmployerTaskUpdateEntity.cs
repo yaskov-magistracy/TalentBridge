@@ -1,8 +1,8 @@
 ﻿using Infrastructure.DTO;
 
-namespace Domain.EmployerTasks.DTO;
+namespace Domain.Assignments.DTO;
 
-public record EmployerTaskUpdateEntity(
+public record AssignmentUpdateEntity(
     string? Name,
     string? Description,
     NullablePatch<string?>? TemplateUrl,

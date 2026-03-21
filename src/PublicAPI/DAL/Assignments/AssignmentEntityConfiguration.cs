@@ -1,19 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace DAL.EmployerTasks;
+namespace DAL.Assignments;
 
-internal class EmployerTaskEntityConfiguration : IEntityTypeConfiguration<EmployerTaskEntity>
+internal class AssignmentEntityConfiguration : IEntityTypeConfiguration<AssignmentEntity>
 {
-    public void Configure(EntityTypeBuilder<EmployerTaskEntity> builder)
+    public void Configure(EntityTypeBuilder<AssignmentEntity> builder)
     {
         builder.HasKey(e => e.Id);
 
         builder.HasOne(e => e.Employer)
-            .WithMany(e2 => e2.EmployerTasks)
+            .WithMany(e2 => e2.Assignments)
             .HasForeignKey(e => e.EmployerId);
         
         builder.HasMany(e => e.Technologies)
-            .WithMany(e2 => e2.EmployerTasks);
+            .WithMany(e2 => e2.Assignments);
     }
 }

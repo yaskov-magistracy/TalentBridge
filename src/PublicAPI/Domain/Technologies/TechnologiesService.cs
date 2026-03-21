@@ -18,11 +18,11 @@ public class TechnologiesService(
 {
     public async Task<Result<Technology>> Get(Guid id)
     {
-        var employerTask = await technologiesRepository.Get(id);
-        if (employerTask == null)
+        var assignment = await technologiesRepository.Get(id);
+        if (assignment == null)
             return Results.NotFound<Technology>();
         
-        return Results.Ok(employerTask);
+        return Results.Ok(assignment);
     }
 
     public async Task<Result<TechnologySearchResponse>> Search(TechnologySearchRequest request)

@@ -42,7 +42,7 @@ public class SolutionsController(
     {
         var candidateId = User.GetId();
         var solution = await solutionsService.Add(new(
-            request.EmployerTaskId,
+            request.AssignmentId,
             candidateId));
         return solution.ActionResult;
     }

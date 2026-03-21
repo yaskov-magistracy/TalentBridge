@@ -1,0 +1,50 @@
+﻿using Domain.Assignments.DTO;
+using Infrastructure.Results;
+
+namespace Domain.Assignments;
+
+public interface IAssignmentsService
+{
+    Task<Result<AssignmentFullInfo>> Get(Guid id);
+    Task<Result<AssignmentSearchResponse>> Search(AssignmentSearchRequest request);
+    Task<Result<AssignmentFullInfo>> Add(AssignmentCreateEntity createEntity);
+    Task<Result<AssignmentFullInfo>> Update(Guid employerId, Guid id, AssignmentUpdateEntity updateEntity);
+}
+
+public class AssignmentsService(
+    IAssignmentsRepository assignmentsRepository
+) : IAssignmentsService
+{
+    public async Task<Result<AssignmentFullInfo>> Get(Guid id)
+    {
+        var assignment = await assignmentsRepository.GetFull(id);
+        if (assignment == null)
+            return Results.NotFound<AssignmentFullInfo>();
+        
+        return Results.Ok(assignment);
+    }
+
+    public async Task<Result<AssignmentSearchResponse>> Search(AssignmentSearchRequest request)
+    {
+        var searchResponse = await assignmentsRepository.Search(request);
+        return Results.Ok(searchResponse);
+    }
+
+    public async Task<Result<AssignmentFullInfo>> Add(AssignmentCreateEntity createEntity)
+    {
+        var newTask = await assignmentsRepository.Add(createEntity);
+        return Results.Ok(newTask);
+    }
+
+    public async Task<Result<AssignmentFullInfo>> Update(Guid employerId, Guid id, AssignmentUpdateEntity updateEntity)
+    {
+        var pair = await assignmentsRepository.GetWithOwner(id);
+        if (pair == null)
+            return Results.NotFound<AssignmentFullInfo>();
+        if (pair.Value.employerId != employerId)
+            return Results.Forbidden<AssignmentFullInfo>();
+        
+        var updated = await assignmentsRepository.Update(id, updateEntity);
+        return Results.Ok(updated);
+    }
+}

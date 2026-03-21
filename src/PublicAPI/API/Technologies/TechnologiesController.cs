@@ -16,8 +16,8 @@ public class TechnologiesController(
     [HttpGet("{id:Guid}")]
     public async Task<ActionResult<Technology>> Get([FromRoute] Guid id)
     {
-        var employerTask = await technologiesService.Get(id);
-        return employerTask.ActionResult;
+        var assignment = await technologiesService.Get(id);
+        return assignment.ActionResult;
     }
     
     /// <summary>
@@ -26,8 +26,8 @@ public class TechnologiesController(
     [HttpPost("search")]
     public async Task<ActionResult<TechnologySearchResponse>> Search([FromBody] TechnologySearchRequest searchRequest)
     {
-        var employerTask = await technologiesService.Search(searchRequest);
-        return employerTask.ActionResult;
+        var assignment = await technologiesService.Search(searchRequest);
+        return assignment.ActionResult;
     }
     
     /// <summary>
@@ -36,8 +36,8 @@ public class TechnologiesController(
     [HttpPost("")]
     public async Task<ActionResult<Technology>> Add([FromBody] TechnologyCreateEntity request)
     {
-        var employerTask = await technologiesService.Add(request);
-        return employerTask.ActionResult;
+        var assignment = await technologiesService.Add(request);
+        return assignment.ActionResult;
     }
     
     /// <summary>
@@ -46,7 +46,7 @@ public class TechnologiesController(
     [HttpPatch("{id:Guid}")]
     public async Task<ActionResult<Technology>> Update([FromRoute] Guid id, [FromBody] TechnologyUpdateEntity request)
     {
-        var employerTask = await technologiesService.Update(id, request);
-        return employerTask.ActionResult;
+        var assignment = await technologiesService.Update(id, request);
+        return assignment.ActionResult;
     }
 }
