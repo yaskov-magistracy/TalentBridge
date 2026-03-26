@@ -5,7 +5,8 @@ public record AssignmentCreateApiRequest(
     string Description,
     string? TemplateUrl,
     DateOnly DeadLine,
-    Guid[]? Technologies
+    int CandidatesCapacity = 1,
+    Guid[]? Technologies = null
 )
 {
     

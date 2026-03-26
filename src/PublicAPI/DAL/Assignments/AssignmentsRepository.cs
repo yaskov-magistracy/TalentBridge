@@ -77,6 +77,8 @@ public class AssignmentsRepository(
             existed.TemplateUrl = updateEntity.TemplateUrl.Value;
         if (updateEntity.DeadLine != null)
             existed.DeadLine = updateEntity.DeadLine.Value;
+        if (updateEntity.CandidatesCapacity != null)
+            existed.CandidatesCapacity = updateEntity.CandidatesCapacity.Value;
         if (updateEntity.Technologies is { } relationsPatch)
         {
             relationsPatch.ApplyRemove(existed.Technologies);

@@ -46,6 +46,7 @@ public class AssignmentsController(
             request.Description,
             request.TemplateUrl,
             request.DeadLine,
+            request.CandidatesCapacity,
             employerId,
             request.Technologies));
         return assignment.ActionResult;

@@ -7,6 +7,7 @@ public record AssignmentUpdateEntity(
     string? Description,
     NullablePatch<string?>? TemplateUrl,
     DateOnly? DeadLine,
+    int? CandidatesCapacity,
     RelationsPatch? Technologies)
 {
     

@@ -8,8 +8,10 @@ public record Assignment(
     string Name,
     string Description,
     string? TemplateUrl,
-    DateOnly DeadLine)
+    DateOnly DeadLine,
+    int CandidatesCapacity)
 {
+    public bool IsGrouped => CandidatesCapacity > 1;
 }
 
 public record AssignmentFullInfo(
@@ -18,6 +20,7 @@ public record AssignmentFullInfo(
     string Description,
     string? TemplateUrl,
     DateOnly DeadLine,
+    int CandidatesCapacity,
     Employer Employer,
     Technology[]? Technologies
-) : Assignment(Id, Name, Description, TemplateUrl, DeadLine);
+) : Assignment(Id, Name, Description, TemplateUrl, DeadLine, CandidatesCapacity);

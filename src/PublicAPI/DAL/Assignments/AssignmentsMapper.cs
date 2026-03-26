@@ -14,6 +14,7 @@ internal static class AssignmentsMapper
             Description = createEntity.Description,
             TemplateUrl = createEntity.TemplateUrl,
             DeadLine = createEntity.DeadLine,
+            CandidatesCapacity = createEntity.CandidatesCapacity,
             Employer = new()
             {
                 Id = createEntity.EmployerId
@@ -30,7 +31,8 @@ internal static class AssignmentsMapper
             assignment.Name, 
             assignment.Description, 
             assignment.TemplateUrl, 
-            assignment.DeadLine);
+            assignment.DeadLine,
+            assignment.CandidatesCapacity);
     
     public static AssignmentFullInfo ToDomainFull(AssignmentEntity assignment)
         => new(
@@ -39,6 +41,7 @@ internal static class AssignmentsMapper
             assignment.Description, 
             assignment.TemplateUrl, 
             assignment.DeadLine,
+            assignment.CandidatesCapacity,
             EmployersMapper.ToDomain(assignment.Employer),
             assignment.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray());
 }

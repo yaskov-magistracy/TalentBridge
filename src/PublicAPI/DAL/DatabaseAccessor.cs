@@ -60,17 +60,33 @@ public class DatabaseAccessor(
             "ООО Рога-копыта"
         ))).Value;
         ClearAttachedItems();
-        var assignment = (await assignmentsService.Add(new(
-            "Тестовое задание по каким-то технологиям",
-            "Это описание тестового задания",
+        var soloAssignment = (await assignmentsService.Add(new(
+            "Тестовое задание для одного человека",
+            "Это описание тестового задания для одного человека",
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
+            1,
             employer.Id,
             technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()
         ))).Value;
         ClearAttachedItems();
-        var solution = (await solutionsService.Add(new(
-            assignment.Id, 
+        var teamAssignment = (await assignmentsService.Add(new(
+            "Тестовое задание для команды",
+            "Это описание тестового задания для команды",
+            "https://github.com/yaskov-magistracy/TalentBridge",
+            DateOnly.FromDateTime(DateTime.UtcNow.AddDays(15)),
+            4,
+            employer.Id,
+            technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
+        ))).Value;
+        ClearAttachedItems();
+        var soloSolution = (await solutionsService.Add(new(
+            soloAssignment.Id, 
+            candidate.Id
+        ))).Value;
+        ClearAttachedItems();
+        var teamSolution = (await solutionsService.Add(new(
+            teamAssignment.Id, 
             candidate.Id
         ))).Value;
     }

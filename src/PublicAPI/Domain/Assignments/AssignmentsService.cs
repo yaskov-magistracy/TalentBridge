@@ -1,4 +1,5 @@
 ﻿using Domain.Assignments.DTO;
+using Domain.Employers;
 using Infrastructure.Results;
 
 namespace Domain.Assignments;
@@ -32,6 +33,9 @@ public class AssignmentsService(
 
     public async Task<Result<AssignmentFullInfo>> Add(AssignmentCreateEntity createEntity)
     {
+        if (createEntity.CandidatesCapacity < 1)
+            return Results.BadRequest<AssignmentFullInfo>($"{nameof(createEntity.CandidatesCapacity)} can not be less then 1");
+        
         var newTask = await assignmentsRepository.Add(createEntity);
         return Results.Ok(newTask);
     }
@@ -43,6 +47,8 @@ public class AssignmentsService(
             return Results.NotFound<AssignmentFullInfo>();
         if (pair.Value.employerId != employerId)
             return Results.Forbidden<AssignmentFullInfo>();
+        if (updateEntity.CandidatesCapacity < 1)
+            return Results.BadRequest<AssignmentFullInfo>($"{nameof(updateEntity.CandidatesCapacity)} can not be less than 1");
         
         var updated = await assignmentsRepository.Update(id, updateEntity);
         return Results.Ok(updated);
