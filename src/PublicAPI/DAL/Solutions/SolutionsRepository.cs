@@ -13,7 +13,8 @@ public class SolutionsRepository(
     private IQueryable<SolutionEntity> SolutionsFullSearch => SolutionsFull.AsNoTracking();
     private IQueryable<SolutionEntity> SolutionsFull => Solutions
         .Include(e => e.Assignment)
-        .Include(e => e.Candidate);
+        .Include(e => e.CandidateOwner)
+        .Include(e => e.Candidates);
 
     public async Task<SolutionShortInfo?> Get(Guid id)
     {
@@ -35,10 +36,14 @@ public class SolutionsRepository(
     {
         var query = SolutionsFullSearch;
 
+        if (request.Text != null)
+            query = query.Where(e => e.Team != null
+                                     && (EF.Functions.ILike(e.Team.Name, $"%{request.Text}%")
+                                         || EF.Functions.ILike(e.Team.Description, $"%{request.Text}%")));
         if (request.AssignmentId != null)
             query = query.Where(e => e.AssignmentId == request.AssignmentId);
         if (request.CandidateId != null)
-            query = query.Where(e => e.CandidateId == request.CandidateId);
+            query = query.Where(e => e.CandidateOwnerId == request.CandidateId);
 
         var count = await query.CountAsync();
         return new(
@@ -50,7 +55,7 @@ public class SolutionsRepository(
     {
         var newEntity = SolutionsMapper.ToEntity(createEntity);
         dataContext.Assignments.Attach(newEntity.Assignment);
-        dataContext.Candidates.Attach(newEntity.Candidate);
+        dataContext.Candidates.AttachRange(newEntity.Candidates);
         await Solutions.AddAsync(newEntity);
         await dataContext.SaveChangesAsync();
         return (await GetFull(newEntity.Id))!;
@@ -64,6 +69,16 @@ public class SolutionsRepository(
             existed.SolutionUrl = patchEntity.SolutionUrl;
         if (patchEntity.State != null)
             existed.State = SolutionsMapper.ToEntity(patchEntity.State.Value);
+        if (patchEntity.Team?.Name != null)
+            existed.Team!.Name = patchEntity.Team.Name;
+        if (patchEntity.Team?.Description != null)
+            existed.Team!.Description = patchEntity.Team.Description;
+        if (patchEntity.Candidates is {} relationsPatch)
+        {
+            relationsPatch.ApplyRemove(existed.Candidates);
+            (existed.Candidates, var toAdd) = relationsPatch.ApplyAdd(existed.Candidates);
+            dataContext.Candidates.AttachRangeIfNotEmpty(toAdd);
+        }
 
         await dataContext.SaveChangesAsync();
         return SolutionsMapper.ToDomainFull(existed);

@@ -11,5 +11,8 @@ internal class CandidateEntityConfiguration : IEntityTypeConfiguration<Candidate
 
         builder.HasMany(e => e.Technologies)
             .WithMany(e2 => e2.Candidates);
+        
+        builder.HasMany(e => e.Solutions)
+            .WithMany(e2 => e2.Candidates);
     }
 }

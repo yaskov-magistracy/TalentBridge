@@ -4,9 +4,9 @@ using DAL.Technologies;
 
 namespace DAL.Candidates;
 
-internal class CandidateEntity
+internal class CandidateEntity : IEntity
 {
-    [Key] public required Guid Id { get; set; }
+    [Key] public Guid Id { get; set; }
     public string Login { get; set; }
     public string PasswordHash { get; set; }
     public string Surname { get; set; }
@@ -16,4 +16,5 @@ internal class CandidateEntity
     public string About { get; set; }
     public List<TechnologyEntity>? Technologies { get; set; }
     public List<SolutionEntity>? Solutions { get; set; }
+    public List<SolutionEntity>? OwnedSolutions { get; set; }
 }

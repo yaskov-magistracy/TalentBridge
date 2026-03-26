@@ -10,16 +10,26 @@ internal class SolutionEntity : IEntity
     public string? SolutionUrl { get; set; }
     public DateOnly StartedAt { get; set; }
     public SolutionEntityState State { get; set; }
+    public SolutionTeamEntity? Team { get; set; }
     
     [ForeignKey(nameof(Assignment))] public Guid AssignmentId { get; set; }
     public AssignmentEntity Assignment { get; set; }
     
-    [ForeignKey(nameof(Candidate))] public Guid CandidateId { get; set; }
-    public CandidateEntity Candidate { get; set; }
+    [ForeignKey(nameof(CandidateOwner))] public Guid CandidateOwnerId { get; set; }
+    public CandidateEntity CandidateOwner { get; set; }
+    
+    public List<CandidateEntity> Candidates { get; set; }
+}
+
+internal class SolutionTeamEntity
+{
+    public required string Name { get; set; }
+    public required string Description { get; set; }
 }
 
 internal enum SolutionEntityState
 {
+    NotStarted,
     InProgress,
     Reopened,
     Autotests,

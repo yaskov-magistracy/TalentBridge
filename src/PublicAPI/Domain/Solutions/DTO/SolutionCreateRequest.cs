@@ -2,7 +2,11 @@
 
 public record SolutionCreateRequest(
     Guid AssignmentId,
-    Guid CandidateId)
-{
-    
-}
+    Guid CandidateOwnerId,
+    TeamCreateRequest? Team
+);
+
+public record TeamCreateRequest(
+    string Name,
+    string Description
+);

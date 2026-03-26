@@ -43,7 +43,8 @@ public class SolutionsController(
         var candidateId = User.GetId();
         var solution = await solutionsService.Add(new(
             request.AssignmentId,
-            candidateId));
+            candidateId,
+            request.Team == null ? null : new(request.Team.Name, request.Team.Description)));
         return solution.ActionResult;
     }
     
@@ -56,6 +57,30 @@ public class SolutionsController(
     {
         var candidateId = User.GetId();
         var solution = await solutionsService.Update(candidateId, id, request);
+        return solution.ActionResult;
+    }
+    
+    /// <summary>
+    /// Вступить в команду решения
+    /// </summary>
+    [AuthorizeRoles(AccountRole.Candidate)]
+    [HttpPatch("{id:Guid}/join")]
+    public async Task<ActionResult<SolutionFullInfo>> Join([FromRoute] Guid id)
+    {
+        var candidateId = User.GetId();
+        var solution = await solutionsService.Join(candidateId, id);
+        return solution.ActionResult;
+    }
+    
+    /// <summary>
+    /// Начать решение (может только лидер)
+    /// </summary>
+    [AuthorizeRoles(AccountRole.Candidate)]
+    [HttpPatch("{id:Guid}/start")]
+    public async Task<ActionResult<SolutionFullInfo>> Start([FromRoute] Guid id)
+    {
+        var candidateId = User.GetId();
+        var solution = await solutionsService.Start(candidateId, id);
         return solution.ActionResult;
     }
     

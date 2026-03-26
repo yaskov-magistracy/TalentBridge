@@ -13,8 +13,9 @@ internal static class SolutionsMapper
             entity.SolutionUrl,
             entity.StartedAt,
             ToDomain(entity.State),
+            entity.Team == null ? null : ToDomain(entity.Team),
             entity.AssignmentId,
-            entity.CandidateId
+            entity.CandidateOwnerId
         );
 
     public static SolutionFullInfo ToDomainFull(SolutionEntity entity)
@@ -23,12 +24,16 @@ internal static class SolutionsMapper
             entity.SolutionUrl,
             entity.StartedAt,
             ToDomain(entity.State),
+            entity.Team == null ? null : ToDomain(entity.Team),
             AssignmentsMapper.ToDomain(entity.Assignment),
-            CandidatesMapper.ToDomain(entity.Candidate)
+            CandidatesMapper.ToDomain(entity.CandidateOwner),
+            entity.Candidates.Select(CandidatesMapper.ToDomain).ToList()
         );
 
     public static SolutionEntity ToEntity(SolutionCreateEntity createEntity)
-        => new()
+    {
+        var candidateOwner = new CandidateEntity() { Id = createEntity.CandidateId };
+        return new()
         {
             SolutionUrl = createEntity.SolutionUrl,
             StartedAt = createEntity.StartedAt,
@@ -38,16 +43,27 @@ internal static class SolutionsMapper
             {
                 Id = createEntity.AssignmentId,
             },
-            CandidateId = createEntity.CandidateId,
-            Candidate = new()
-            {
-                Id = createEntity.CandidateId,
-            }
+            CandidateOwnerId = createEntity.CandidateId,
+            CandidateOwner = candidateOwner,
+            Candidates = [candidateOwner]
         };
+    }
+
+    public static SolutionTeamEntity ToEntity(SolutionTeamEntity entity)
+        => new()
+        {
+            Name = entity.Name,
+            Description = entity.Description,
+        };
+    
+    public static SolutionTeam ToDomain(SolutionTeamEntity entity)
+        => new(entity.Name, entity.Description);
+    
 
     public static SolutionEntityState ToEntity(SolutionState state)
         => state switch
         {
+            SolutionState.NotStarted => SolutionEntityState.NotStarted,
             SolutionState.InProgress => SolutionEntityState.InProgress,
             SolutionState.Reopened => SolutionEntityState.Reopened,
             SolutionState.Autotests => SolutionEntityState.Autotests,
@@ -60,6 +76,7 @@ internal static class SolutionsMapper
     public static SolutionState ToDomain(SolutionEntityState state)
         => state switch
         {
+            SolutionEntityState.NotStarted => SolutionState.NotStarted,
             SolutionEntityState.InProgress => SolutionState.InProgress,
             SolutionEntityState.Reopened => SolutionState.Reopened,
             SolutionEntityState.Autotests => SolutionState.Autotests,

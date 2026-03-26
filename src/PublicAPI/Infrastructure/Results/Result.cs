@@ -31,6 +31,9 @@ public static class Results
     
     public static Result<T> Forbidden<T>()
         => new Result<T>(HttpStatusCode.Forbidden, null);
+    
+    public static Result<T> Forbidden<T>(string error)
+        => new Result<T>(HttpStatusCode.Forbidden, error);
 
     public static Result<T> NotFound<T>(string error)
         => new Result<T>(HttpStatusCode.NotFound, error);

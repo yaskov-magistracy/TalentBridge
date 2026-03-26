@@ -2,6 +2,7 @@
 using Domain.Candidates;
 using Domain.Employers;
 using Domain.Solutions;
+using Domain.Solutions.DTO;
 using Domain.Technologies;
 using Domain.Technologies.DTO;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,17 @@ public class DatabaseAccessor(
             technologies.Take(5).Select(e => e.Id).ToArray()
         ))).Value;
         ClearAttachedItems();
+        var candidate2 = (await candidatesService.Add(new(
+            "candidate2",
+            "candidate2",
+            "Бушуев",
+            "Арсений",
+            "Игнатьевич",
+            "Москва",
+            "Опыт в пэт-проектах полгода. Делал телеграм-ботов на аутсорсе",
+            technologies.Take(3).Select(e => e.Id).ToArray()
+        ))).Value;
+        ClearAttachedItems();
         var employer = (await employersService.Add(new(
             "employer",
             "employer",
@@ -75,20 +87,27 @@ public class DatabaseAccessor(
             "Это описание тестового задания для команды",
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(15)),
-            4,
+            2,
             employer.Id,
             technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
         ))).Value;
         ClearAttachedItems();
         var soloSolution = (await solutionsService.Add(new(
             soloAssignment.Id, 
-            candidate.Id
+            candidate.Id,
+            null
         ))).Value;
         ClearAttachedItems();
         var teamSolution = (await solutionsService.Add(new(
             teamAssignment.Id, 
-            candidate.Id
+            candidate.Id,
+            new TeamCreateRequest("Супер команда для проекта", "Ищу интересных людей для работы вместе")
         ))).Value;
+        ClearAttachedItems();
+        await solutionsService.Join(candidate2.Id, teamSolution.Id);
+        ClearAttachedItems();
+        await solutionsService.Start(candidate.Id, teamSolution.Id);
+        ClearAttachedItems();
     }
 
     private static readonly TechnologyCreateEntity[] TechnologyCreateEntities =
