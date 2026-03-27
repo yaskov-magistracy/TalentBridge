@@ -328,9 +328,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               <div>
                 <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedSolution.assignment.deadLine | date:'dd.MM.yyyy' }}
               </div>
-              <div>
-                <span class="font-bold">СТАТУС:</span> {{ getStateLabel(selectedSolution.state) }}
-              </div>
             </div>
 
             <!-- Repository Link -->
@@ -360,20 +357,20 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               <h3 class="font-bold text-lg mb-3 uppercase text-amber-800">
                 📋 КОМАНДА ({{ selectedSolution.candidates?.length || 0 }} / {{ selectedSolution.assignment.candidatesCapacity }} чел.)
               </h3>
-              
+
               <!-- Team Warning -->
-              <div *ngIf="selectedSolution.candidates && selectedSolution.candidates.length < selectedSolution.assignment.candidatesCapacity" 
+              <div *ngIf="selectedSolution.candidates && selectedSolution.candidates.length < selectedSolution.assignment.candidatesCapacity"
                    class="mb-4 border-2 border-red-400 bg-red-50 p-3 text-red-700 text-sm font-bold">
                 ⚠️ ВНИМАНИЕ: В команде только {{ selectedSolution.candidates.length }} из {{ selectedSolution.assignment.candidatesCapacity }} участников!
               </div>
-              
+
               <!-- Team Name -->
               <div *ngIf="selectedSolution.team" class="mb-4">
                 <p class="text-sm font-bold uppercase">НАЗВАНИЕ КОМАНДЫ:</p>
                 <p class="text-lg">{{ selectedSolution.team.name }}</p>
                 <p *ngIf="selectedSolution.team.description" class="text-sm text-gray-600 mt-1">{{ selectedSolution.team.description }}</p>
               </div>
-              
+
               <!-- Team Members -->
               <div class="mb-4">
                 <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
@@ -393,7 +390,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
 
             <!-- Individual Project Info -->
             <div *ngIf="!selectedSolution.assignment.isGrouped" class="mb-6 border-2 border-indigo-300 bg-indigo-50 p-4">
-              <h3 class="font-bold text-lg mb-2 uppercase text-indigo-800">
+              <h3 class="font-bold text-lg uppercase text-indigo-800">
                 👤 ИНДИВИДУАЛЬНЫЙ ПРОЕКТ
               </h3>
             </div>
@@ -634,7 +631,7 @@ export class CandidateDashboardPage implements OnInit {
   loadingTechs = false;
   hasSearched = false;
   private searchTimeout: any;
-  
+
   // Для редактирования профиля (отдельно от фильтра)
   profileTechs: Technology[] = [];
 
@@ -655,7 +652,7 @@ export class CandidateDashboardPage implements OnInit {
   teamName = '';
   teamDescription = '';
   takingAssignment = false;
-  
+
   // Solution modal
   selectedSolution: SolutionFullInfo | null = null;
   showSolutionModal = false;
@@ -774,11 +771,11 @@ export class CandidateDashboardPage implements OnInit {
     if (tab === 'available') {
       return this.filteredAvailableAssignments.length;
     }
-    
+
     const filtered = this.filteredSolutions;
     return filtered.filter(solution => {
       const state = solution.state;
-      
+
       switch (tab) {
         case 'waiting-start':
           return state === 'NotStarted';
@@ -798,7 +795,7 @@ export class CandidateDashboardPage implements OnInit {
     const filtered = this.filteredSolutions;
     return filtered.filter(solution => {
       const state = solution.state;
-      
+
       switch (tab) {
         case 'waiting-start':
           return state === 'NotStarted';
@@ -876,7 +873,7 @@ export class CandidateDashboardPage implements OnInit {
 
   startSolution(solution: SolutionFullInfo): void {
     if (!solution.id) return;
-    
+
     // Для групповых проектов с недостаточным количеством участников - предупреждение
     if (solution.isGroup && solution.candidates.length < solution.assignment.candidatesCapacity) {
       const confirmed = confirm(
@@ -885,7 +882,7 @@ export class CandidateDashboardPage implements OnInit {
       );
       if (!confirmed) return;
     }
-    
+
     this.solutionsService.startSolution(solution.id).subscribe({
       next: () => {
         alert('Задание взято в работу!');
@@ -903,10 +900,10 @@ export class CandidateDashboardPage implements OnInit {
 
   sendToReview(solution: SolutionFullInfo): void {
     if (!solution.id) return;
-    
+
     this.sendingToReview = true;
     this.cdr.markForCheck();
-    
+
     this.solutionsService.sendToReview(solution.id).subscribe({
       next: () => {
         alert('Решение отправлено на проверку!');
@@ -945,12 +942,12 @@ export class CandidateDashboardPage implements OnInit {
 
   saveSolutionUrl(solution: SolutionFullInfo): void {
     if (!solution.id) return;
-    
+
     this.savingSolutionUrl = true;
     this.cdr.markForCheck();
-    
+
     const patchRequest = { solutionUrl: this.solutionUrl };
-    
+
     this.solutionsService.updateSolution(solution.id, patchRequest).subscribe({
       next: (updated) => {
         alert('Ссылка сохранена!');
@@ -1041,6 +1038,8 @@ export class CandidateDashboardPage implements OnInit {
 
       alert('Задание успешно взято!');
       this.closeAssignmentModal();
+      // Перезагружаем решения для обновления счётчиков в табах
+      this.loadSolutions();
       this.cdr.markForCheck();
     } catch (error) {
       console.error('Failed to take assignment:', error);
