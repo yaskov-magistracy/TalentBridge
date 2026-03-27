@@ -1,12 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
-import { ReviewProgressComponent } from '../shared/components/review-progress.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
-import { AuthService, CandidatesService, TechnologiesService } from '../core';
-import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch } from '../core/models/api.models';
+import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
+import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest } from '../core/models/api.models';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
 
 @Component({
@@ -16,9 +14,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterLink,
     NavbarComponent,
-    ReviewProgressComponent,
     TechChipComponent
   ],
   template: `
@@ -225,6 +221,96 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
           </div>
         </div>
 
+        <!-- Assignment Detail Modal -->
+        <div *ngIf="showAssignmentModal && selectedAssignment" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeAssignmentModal()">
+          <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-6">
+              <h2 class="text-2xl font-bold text-indigo-600 uppercase">{{ selectedAssignment.name }}</h2>
+              <button (click)="closeAssignmentModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Info Bar -->
+            <div class="flex flex-wrap gap-4 mb-4 text-sm">
+              <div>
+                <span class="font-bold">КОМПАНИЯ:</span> {{ selectedAssignment.employer.name }}
+              </div>
+              <div>
+                <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedAssignment.deadLine | date:'dd.MM.yyyy' }}
+              </div>
+            </div>
+
+            <!-- Repository Link -->
+            <div *ngIf="selectedAssignment.templateUrl" class="mb-4">
+              <a
+                [href]="selectedAssignment.templateUrl"
+                target="_blank"
+                class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline">
+                🔗 РЕПОЗИТОРИЙ: {{ selectedAssignment.templateUrl }}
+              </a>
+            </div>
+
+            <!-- Technologies -->
+            <div class="flex flex-wrap gap-2 mb-6">
+              <app-tech-chip *ngFor="let tech of selectedAssignment.technologies" [name]="tech.name"></app-tech-chip>
+            </div>
+
+            <!-- Days Remaining -->
+            <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
+              <span class="font-bold text-lg" [class]="getDaysRemaining(selectedAssignment.deadLine) < 0 ? 'text-red-600' : 'text-indigo-600'">
+                ОСТАЛОСЬ ДНЕЙ: {{ getDaysRemaining(selectedAssignment.deadLine) }}
+              </span>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+              <h3 class="font-bold text-lg mb-3 uppercase">ОПИСАНИЕ ПРОЕКТА</h3>
+              <div class="border-2 border-gray-300 p-4 bg-gray-50">
+                <p class="text-gray-700 whitespace-pre-line">{{ selectedAssignment.description }}</p>
+              </div>
+            </div>
+
+            <!-- Team Form for Group Projects -->
+            <div *ngIf="selectedAssignment.isGrouped" class="mb-6 border-2 border-amber-300 bg-amber-50 p-4">
+              <h3 class="font-bold text-lg mb-3 uppercase text-amber-800">
+                📋 ГРУППОВОЙ ПРОЕКТ (до {{ selectedAssignment.candidatesCapacity }} чел.)
+              </h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block font-bold mb-2 text-sm uppercase">НАЗВАНИЕ КОМАНДЫ</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="teamName"
+                    class="w-full border-2 border-black p-3 text-sm"
+                    [class.border-red-500]="teamNameError"
+                    [placeholder]="'От ' + TEAM_NAME_MIN_LENGTH + ' до ' + TEAM_NAME_MAX_LENGTH + ' символов'"/>
+                  <p *ngIf="teamNameError" class="text-red-600 text-xs mt-1">{{ teamNameError }}</p>
+                </div>
+                <div>
+                  <label class="block font-bold mb-2 text-sm uppercase">ОПИСАНИЕ КОМАНДЫ (НЕ ОБЯЗАТЕЛЬНО)</label>
+                  <textarea
+                    [(ngModel)]="teamDescription"
+                    class="w-full border-2 border-black p-3 text-sm min-h-[100px]"
+                    [class.border-red-500]="teamDescriptionError"
+                    [placeholder]="'От ' + TEAM_DESC_MIN_LENGTH + ' до ' + TEAM_DESC_MAX_LENGTH + ' символов'"></textarea>
+                  <p *ngIf="teamDescriptionError" class="text-red-600 text-xs mt-1">{{ teamDescriptionError }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4 mt-auto pt-6 border-t-2">
+              <button
+                (click)="takeAssignment()"
+                [disabled]="!canTakeAssignment"
+                class="flex-1 border-2 border-indigo-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                [class]="canTakeAssignment ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-500'">
+                {{ takingAssignment ? 'ОФОРМЛЕНИЕ...' : 'ВЗЯТЬ ЗАДАНИЕ' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="flex gap-8">
           <!-- Left Sidebar - Technology Filter -->
           <div class="w-64 flex-shrink-0">
@@ -235,7 +321,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                   <input
                     type="checkbox"
                     [checked]="selectedTechs.some(t => t.name === tech)"
-                    (change)="toggleFilterTech(tech)"
+                    (change)="toggleTech({ id: '', name: tech })"
                     class="w-4 h-4 border-2 border-black"/>
                   <span>{{ tech }}</span>
                 </label>
@@ -245,68 +331,42 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
 
           <!-- Right Content -->
           <div class="flex-1 space-y-12">
+            <!-- Search Bar -->
+            <div>
+              <input
+                type="text"
+                [(ngModel)]="assignmentSearchText"
+                (ngModelChange)="onAssignmentSearch()"
+                class="w-full border-2 border-black p-3"
+                placeholder="Поиск заданий..."/>
+            </div>
+
             <!-- Available Tasks Section -->
             <div>
               <h2 class="text-2xl font-bold mb-6 uppercase text-indigo-600">ДОСТУПНЫЕ ЗАДАНИЯ</h2>
               <div class="space-y-4">
-                <div *ngFor="let task of filteredAvailableTasks" class="border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all">
-                  <a
-                    [routerLink]="['/task', task.id]"
-                    [queryParams]="{ mode: 'available' }"
-                    class="block hover:bg-gray-50 transition-colors -m-6 p-6 mb-0 cursor-pointer">
+                <div *ngFor="let assignment of filteredAvailableAssignments" [class]="assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'">
+                  <div (click)="openAssignmentModal(assignment)" class="cursor-pointer">
                     <div class="mb-3">
-                      <h3 class="font-bold text-lg mb-1">{{ task.title }}</h3>
-                      <p class="text-sm mb-2"><span class="font-bold">КОМПАНИЯ:</span> {{ task.company }}</p>
-                      <p class="text-sm mb-3"><span class="font-bold">ДЕДЛАЙН:</span> {{ task.deadline }}</p>
+                      <h3 class="font-bold text-lg mb-1">{{ assignment.name }}</h3>
+                      <p class="text-sm mb-2"><span class="font-bold">КОМПАНИЯ:</span> {{ assignment.employer.name }}</p>
+                      <p class="text-sm mb-2">
+                        <span class="font-bold">ДЕДЛАЙН:</span> {{ assignment.deadLine | date:'dd.MM.yyyy' }}
+                      </p>
+                      <p class="text-sm mb-3" *ngIf="assignment.isGrouped">
+                        <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ assignment.candidatesCapacity }} чел.)
+                      </p>
+                      <p class="text-sm mb-3" *ngIf="!assignment.isGrouped">
+                        <span class="font-bold">ПРОЕКТ:</span> ИНДИВИДУАЛЬНЫЙ
+                      </p>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                      <app-tech-chip *ngFor="let tech of task.technologies" [name]="tech"></app-tech-chip>
+                      <app-tech-chip *ngFor="let tech of assignment.technologies" [name]="tech.name"></app-tech-chip>
                     </div>
-                  </a>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- In Progress Section -->
-            <div *ngIf="tasksInProgressList.length > 0">
-              <h2 class="text-2xl font-bold mb-6 uppercase text-amber-600">В ПРОЦЕССЕ</h2>
-              <div class="space-y-4">
-                <div *ngFor="let task of tasksInProgressList" class="border-2 border-amber-400 bg-white p-6 shadow-md">
-                  <a
-                    [routerLink]="['/task', task.id]"
-                    [queryParams]="{ mode: 'inprogress' }"
-                    class="block hover:bg-gray-50 transition-colors -m-6 p-6 mb-0 cursor-pointer">
-                    <div class="mb-3">
-                      <h3 class="font-bold text-lg mb-1">{{ task.title }}</h3>
-                      <p class="text-sm mb-2"><span class="font-bold">КОМПАНИЯ:</span> {{ task.company }}</p>
-                      <p class="text-sm mb-3"><span class="font-bold">ДЕДЛАЙН:</span> {{ task.deadline }}</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <app-tech-chip *ngFor="let tech of task.technologies" [name]="tech"></app-tech-chip>
-                    </div>
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <!-- Completed Tasks Section -->
-            <div *ngIf="completedSubmissions.length > 0">
-              <h2 class="text-2xl font-bold mb-6 uppercase text-emerald-600">ЗАВЕРШЁННЫЕ</h2>
-              <div class="space-y-4">
-                <div *ngFor="let submission of completedSubmissions" class="border-2 border-emerald-400 bg-white p-6 shadow-md">
-                  <a
-                    [routerLink]="['/submission', submission.id]"
-                    class="block hover:bg-gray-50 transition-colors -m-6 p-6 mb-0 cursor-pointer">
-                    <div class="mb-3">
-                      <h3 class="font-bold text-lg mb-1">{{ submission.taskTitle }}</h3>
-                      <p class="text-sm"><span class="font-bold">ОТПРАВЛЕНО:</span> {{ submission.submittedDate }}</p>
-                    </div>
-                    <app-review-progress
-                      [autoTests]="submission.status.autoTests"
-                      [aiAnalysis]="submission.status.aiAnalysis"
-                      [expertReview]="submission.status.expertReview"
-                    ></app-review-progress>
-                  </a>
+                <div *ngIf="filteredAvailableAssignments.length === 0" class="text-center py-8 text-gray-500">
+                  Заданий пока нет
                 </div>
               </div>
             </div>
@@ -334,15 +394,27 @@ export class CandidateDashboardPage implements OnInit {
   hasSearched = false;
   private searchTimeout: any;
 
-  // Mock data for tasks (пока используем repository)
-  allTasks: any[] = [];
-  tasksInProgress: string[] = [];
-  allSubmissions: any[] = [];
+  // Assignments
+  availableAssignments: AssignmentFullInfo[] = [];
+  assignmentSearchText = '';
+  selectedAssignment: AssignmentFullInfo | null = null;
+  showAssignmentModal = false;
+  teamName = '';
+  teamDescription = '';
+  takingAssignment = false;
+
+  // Validators for team form
+  readonly TEAM_NAME_MIN_LENGTH = 2;
+  readonly TEAM_NAME_MAX_LENGTH = 50;
+  readonly TEAM_DESC_MIN_LENGTH = 5;
+  readonly TEAM_DESC_MAX_LENGTH = 200;
 
   constructor(
     private authService: AuthService,
     private candidatesService: CandidatesService,
     private technologiesService: TechnologiesService,
+    private assignmentsService: AssignmentsService,
+    private solutionsService: SolutionsService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {
@@ -357,7 +429,7 @@ export class CandidateDashboardPage implements OnInit {
 
   ngOnInit() {
     this.loadCandidate();
-    this.loadAllTasks();
+    this.loadAvailableAssignments();
   }
 
   private loadCandidate(): void {
@@ -376,12 +448,29 @@ export class CandidateDashboardPage implements OnInit {
     }
   }
 
-  private loadAllTasks(): void {
-    // Пока используем mock данные из repository
-    // В будущем заменить на API запросы
-    this.allTasks = [];
-    this.tasksInProgress = [];
-    this.allSubmissions = [];
+  private loadAvailableAssignments(): void {
+    const searchRequest: AssignmentSearchRequest = {
+      text: this.assignmentSearchText || undefined,
+      take: 100,
+      skip: 0
+    };
+    this.assignmentsService.searchAssignments(searchRequest).subscribe({
+      next: (response) => {
+        this.availableAssignments = response.items || [];
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to load assignments:', error);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onAssignmentSearch(): void {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.loadAvailableAssignments();
+    }, 300);
   }
 
   openProfileEdit() {
@@ -398,6 +487,103 @@ export class CandidateDashboardPage implements OnInit {
     }
     this.showProfileEdit = true;
     this.loadTechnologies();
+  }
+
+  openAssignmentModal(assignment: AssignmentFullInfo): void {
+    this.selectedAssignment = assignment;
+    this.showAssignmentModal = true;
+    // Сбрасываем форму команды
+    this.teamName = '';
+    this.teamDescription = '';
+  }
+
+  closeAssignmentModal(): void {
+    this.showAssignmentModal = false;
+    this.selectedAssignment = null;
+  }
+
+  getDaysRemaining(deadline: string): number {
+    const deadlineDate = new Date(deadline);
+    const today = new Date();
+    const diffTime = deadlineDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+
+  get isTeamFormValid(): boolean {
+    if (!this.selectedAssignment?.isGrouped) return true;
+    
+    const nameLength = this.teamName.trim().length;
+    const nameValid = nameLength >= this.TEAM_NAME_MIN_LENGTH &&
+                      nameLength <= this.TEAM_NAME_MAX_LENGTH;
+    
+    // Описание не обязательное, но если введено - должно быть в пределах лимита
+    const descLength = this.teamDescription.trim().length;
+    const descValid = descLength === 0 || 
+                      (descLength >= this.TEAM_DESC_MIN_LENGTH && descLength <= this.TEAM_DESC_MAX_LENGTH);
+    
+    return nameValid && descValid;
+  }
+
+  get canTakeAssignment(): boolean {
+    if (this.takingAssignment) return false;
+    if (!this.selectedAssignment) return false;
+    
+    if (this.selectedAssignment.isGrouped) {
+      return this.isTeamFormValid;
+    }
+    return true;
+  }
+
+  get teamNameError(): string | null {
+    if (!this.selectedAssignment?.isGrouped) return null;
+    
+    const nameLength = this.teamName.trim().length;
+    if (nameLength === 0) return 'Введите название команды';
+    if (nameLength < this.TEAM_NAME_MIN_LENGTH) return `Минимум ${this.TEAM_NAME_MIN_LENGTH} символа`;
+    if (nameLength > this.TEAM_NAME_MAX_LENGTH) return `Максимум ${this.TEAM_NAME_MAX_LENGTH} символов`;
+    return null;
+  }
+
+  get teamDescriptionError(): string | null {
+    if (!this.selectedAssignment?.isGrouped) return null;
+    
+    const descLength = this.teamDescription.trim().length;
+    // Описание не обязательное
+    if (descLength === 0) return null;
+    if (descLength < this.TEAM_DESC_MIN_LENGTH) return `Минимум ${this.TEAM_DESC_MIN_LENGTH} символов`;
+    if (descLength > this.TEAM_DESC_MAX_LENGTH) return `Максимум ${this.TEAM_DESC_MAX_LENGTH} символов`;
+    return null;
+  }
+
+  async takeAssignment(): Promise<void> {
+    if (!this.selectedAssignment || !this.canTakeAssignment) return;
+
+    this.takingAssignment = true;
+    this.cdr.markForCheck();
+
+    try {
+      const request = {
+        assignmentId: this.selectedAssignment.id,
+        team: this.selectedAssignment.isGrouped ? {
+          name: this.teamName.trim(),
+          description: this.teamDescription.trim()
+        } : undefined
+      };
+
+      await this.solutionsService.createSolution(request).toPromise();
+      
+      alert('Задание успешно взято!');
+      this.closeAssignmentModal();
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Failed to take assignment:', error);
+      alert('Не удалось взять задание. Попробуйте позже.');
+      this.cdr.markForCheck();
+    } finally {
+      this.takingAssignment = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async saveProfile(): Promise<void> {
@@ -523,35 +709,13 @@ export class CandidateDashboardPage implements OnInit {
     }
   }
 
-  // Filter methods
-  get filteredAvailableTasks(): any[] {
-    return this.allTasks.filter(task => {
-      const notInProgress = !this.tasksInProgress.includes(task.id);
-      const techMatch = this.selectedTechs.length === 0 ||
-        this.selectedTechs.some(tech => task.technologies.includes(tech));
-      return notInProgress && techMatch;
-    });
-  }
-
-  get tasksInProgressList(): any[] {
-    return this.allTasks.filter(task => this.tasksInProgress.includes(task.id));
-  }
-
-  get completedSubmissions(): any[] {
-    return this.allSubmissions.filter(sub =>
-      sub.status.expertReview === 'approved' || sub.status.expertReview === 'rejected'
-    );
-  }
-
-  toggleFilterTech(techName: string) {
-    const existingTech = this.selectedTechs.find(t => t.name === techName);
-    if (existingTech) {
-      const index = this.selectedTechs.findIndex(t => t.id === existingTech.id);
-      this.selectedTechs.splice(index, 1);
-    } else {
-      // Создаём новый объект Technology
-      const newTech: Technology = { id: '', name: techName };
-      this.selectedTechs.push(newTech);
+  get filteredAvailableAssignments(): AssignmentFullInfo[] {
+    if (this.selectedTechs.length === 0) {
+      return this.availableAssignments;
     }
+    const selectedTechNames = this.selectedTechs.map(t => t.name);
+    return this.availableAssignments.filter(assignment =>
+      assignment.technologies?.some(t => selectedTechNames.includes(t.name))
+    );
   }
 }

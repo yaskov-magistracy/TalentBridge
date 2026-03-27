@@ -105,20 +105,25 @@ export interface AssignmentFullInfo {
   templateUrl?: string;
   deadLine: string;
   candidatesCapacity: number;
+  isGrouped: boolean;
+  employer: {
+    id: string;
+    login: string;
+    name: string;
+  };
   technologies: Technology[];
-  publishedBy: EmployerFullInfo;
 }
 
 export interface AssignmentSearchRequest {
-  search?: string;
-  technologies?: string[];
-  page?: number;
-  pageSize?: number;
+  employerId?: string;
+  text?: string;
+  take?: number;
+  skip?: number;
 }
 
 export interface AssignmentSearchResponse {
   items: AssignmentFullInfo[];
-  total: number;
+  totalCount: number;
 }
 
 // ==================== Solutions ====================
