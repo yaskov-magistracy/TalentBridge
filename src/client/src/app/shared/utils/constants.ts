@@ -1,0 +1,23 @@
+export const AVAILABLE_TECHS = [
+  'JavaScript',
+  'TypeScript',
+  'Python',
+  'Java',
+  'Go',
+  'React',
+  'Vue',
+  'Angular',
+  'Node.js',
+  'Express',
+  'Django',
+  'FastAPI',
+  'Spring Boot',
+  'PostgreSQL',
+  'MongoDB',
+  'Redis',
+  'MySQL',
+  'Docker',
+  'Kubernetes',
+  'AWS',
+  'Git'
+];
