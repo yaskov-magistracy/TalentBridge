@@ -1,5 +1,7 @@
-export type AutoTestStatus = 'pending' | 'passed' | 'failed';
-export type ExpertReviewStatus = 'pending' | 'approved' | 'rejected';
+import type { AutoTestStatus, ExpertReviewStatus } from './api.models';
+
+export type { AutoTestStatus, ExpertReviewStatus };
+
 export type BadgeStatus = 'pending' | 'passed' | 'failed' | 'approved' | 'rejected';
 export type TaskType = 'individual' | 'team';
 export type SkillLevel = 'начинающий' | 'базовый' | 'опытный';

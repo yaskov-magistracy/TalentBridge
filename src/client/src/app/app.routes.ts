@@ -10,18 +10,19 @@ import { JuniorAuthPage } from './pages/junior-auth.page';
 import { LandingPage } from './pages/landing.page';
 import { SubmissionResultsPage } from './pages/submission-results.page';
 import { TaskDetailPage } from './pages/task-detail.page';
+import { authGuard, requireAuthGuard } from './core/guards';
 
 export const routes: Routes = [
-	{ path: '', component: LandingPage },
-	{ path: 'junior-auth', component: JuniorAuthPage },
-	{ path: 'employer-auth', component: EmployerAuthPage },
-	{ path: 'candidate-dashboard', component: CandidateDashboardPage },
+	{ path: '', component: LandingPage, canActivate: [authGuard] },
+	{ path: 'junior-auth', component: JuniorAuthPage, canActivate: [authGuard] },
+	{ path: 'employer-auth', component: EmployerAuthPage, canActivate: [authGuard] },
+	{ path: 'candidate-dashboard', component: CandidateDashboardPage, canActivate: [requireAuthGuard] },
 	{ path: 'task/:id', component: TaskDetailPage },
 	{ path: 'submission/:id', component: SubmissionResultsPage },
-	{ path: 'employer-dashboard', component: EmployerDashboardPage },
-	{ path: 'create-task', component: CreateTaskPage },
-	{ path: 'edit-task/:id', component: EditTaskPage },
+	{ path: 'employer-dashboard', component: EmployerDashboardPage, canActivate: [requireAuthGuard] },
+	{ path: 'create-task', component: CreateTaskPage, canActivate: [requireAuthGuard] },
+	{ path: 'edit-task/:id', component: EditTaskPage, canActivate: [requireAuthGuard] },
 	{ path: 'candidate/:id', component: CandidateProfilePage },
-	{ path: 'candidates-ranking', component: CandidatesRankingPage },
+	{ path: 'candidates-ranking', component: CandidatesRankingPage, canActivate: [requireAuthGuard] },
 	{ path: '**', redirectTo: '' }
 ];

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core';
 
 @Component({
   selector: 'app-navbar',
@@ -17,7 +18,7 @@ import { RouterLink } from '@angular/router';
           <span class="text-sm uppercase tracking-wider border-2 px-3 py-1 font-semibold" [ngClass]="getRoleBadgeClasses()">
             {{ role === 'candidate' ? 'КАНДИДАТ' : 'РАБОТОДАТЕЛЬ' }}
           </span>
-          <a routerLink="/" class="text-sm uppercase tracking-wider font-semibold hover:text-indigo-600 transition-colors">
+          <a (click)="logout()" class="text-sm uppercase tracking-wider font-semibold hover:text-indigo-600 transition-colors cursor-pointer">
             ВЫХОД
           </a>
         </div>
@@ -27,6 +28,22 @@ import { RouterLink } from '@angular/router';
 })
 export class NavbarComponent {
   @Input() role: 'candidate' | 'employer' | null = null;
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  async logout(): Promise<void> {
+    try {
+      await this.authService.logout();
+      this.router.navigateByUrl('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      this.authService.clearSession();
+      this.router.navigateByUrl('/');
+    }
+  }
 
   get dashboardPath(): string {
     if (this.role === 'candidate') {

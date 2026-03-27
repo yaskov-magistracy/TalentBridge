@@ -1,0 +1,228 @@
+// ==================== Authorization ====================
+
+export interface LoginRequest {
+  login: string;
+  password: string;
+}
+
+export interface SessionInfo {
+  userId: string;
+  role: AccountRole;
+}
+
+export type AccountRole = 'Candidate' | 'Employer' | 'Admin';
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+// ==================== Candidates ====================
+
+export interface CandidateCreateRequest {
+  login: string;
+  password: string;
+  surname: string;
+  name: string;
+  patronymic?: string;
+  city: string;
+  about: string;
+  technologies?: string[];
+}
+
+export interface CandidatePatchApiRequest {
+  surname?: string;
+  name?: string;
+  patronymic?: NullablePatch<string>;
+  city?: string;
+  about?: string;
+  technologies?: RelationsPatch;
+}
+
+export interface CandidateFullInfo {
+  id: string;
+  login: string;
+  surname: string;
+  name: string;
+  patronymic?: string;
+  city: string;
+  about: string;
+  technologies: Technology[];
+}
+
+// ==================== Employers ====================
+
+export interface EmployerCreateRequest {
+  companyName: string;
+  email: string;
+  password: string;
+  description?: string;
+  phone?: string;
+  website?: string;
+}
+
+export interface EmployerUpdateEntity {
+  companyName?: string;
+  email?: string;
+  description?: string;
+  phone?: string;
+  website?: string;
+}
+
+export interface EmployerFullInfo {
+  id: string;
+  companyName: string;
+  email: string;
+  description?: string;
+  phone?: string;
+  website?: string;
+}
+
+// ==================== Assignments ====================
+
+export interface AssignmentCreateApiRequest {
+  name: string;
+  description: string;
+  templateUrl?: string;
+  deadLine: string; // DateOnly as ISO string
+  candidatesCapacity: number;
+  technologies?: string[]; // Guid[]
+}
+
+export interface AssignmentUpdateEntity {
+  name?: string;
+  description?: string;
+  templateUrl?: string;
+  deadLine?: string;
+  candidatesCapacity?: number;
+  technologies?: RelationsPatch;
+}
+
+export interface AssignmentFullInfo {
+  id: string;
+  name: string;
+  description: string;
+  templateUrl?: string;
+  deadLine: string;
+  candidatesCapacity: number;
+  technologies: Technology[];
+  publishedBy: EmployerFullInfo;
+}
+
+export interface AssignmentSearchRequest {
+  search?: string;
+  technologies?: string[];
+  page?: number;
+  pageSize?: number;
+}
+
+export interface AssignmentSearchResponse {
+  items: AssignmentFullInfo[];
+  total: number;
+}
+
+// ==================== Solutions ====================
+
+export interface SolutionCreateApiRequest {
+  assignmentId: string;
+  team?: SolutionTeamCreateApiRequest;
+}
+
+export interface SolutionTeamCreateApiRequest {
+  name: string;
+  description: string;
+}
+
+export interface SolutionPatchApiRequest {
+  solutionUrl?: string;
+  team?: SolutionTeamPatchApiRequest;
+}
+
+export interface SolutionTeamPatchApiRequest {
+  name?: string;
+  description?: string;
+}
+
+export interface SolutionFullInfo {
+  id: string;
+  assignment: AssignmentFullInfo;
+  solutionUrl?: string;
+  team?: SolutionTeamInfo;
+  status: SolutionStatus;
+  autoTestStatus: AutoTestStatus;
+  expertReviewStatus: ExpertReviewStatus;
+  submittedAt?: string;
+}
+
+export interface SolutionTeamInfo {
+  name: string;
+  description: string;
+  members: CandidateShortInfo[];
+}
+
+export interface CandidateShortInfo {
+  id: string;
+  name: string;
+  surname: string;
+}
+
+export type SolutionStatus = 'Draft' | 'InProgress' | 'Submitted' | 'Reviewed';
+export type AutoTestStatus = 'pending' | 'passed' | 'failed';
+export type ExpertReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface SolutionSearchRequest {
+  search?: string;
+  assignmentId?: string;
+  status?: SolutionStatus;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface SolutionSearchResponse {
+  items: SolutionFullInfo[];
+  total: number;
+}
+
+// ==================== Technologies ====================
+
+export interface Technology {
+  id: string;
+  name: string;
+}
+
+export interface TechnologyCreateEntity {
+  name: string;
+}
+
+export interface TechnologyUpdateEntity {
+  name?: string;
+}
+
+export interface TechnologySearchRequest {
+  name?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface TechnologySearchResponse {
+  items: Technology[];
+  total: number;
+}
+
+// ==================== Common ====================
+
+export interface NullablePatch<T> {
+  value: T | null;
+  isSet: boolean;
+}
+
+export interface RelationsPatch {
+  toAdd?: string[]; // Guid[]
+  toRemove?: string[]; // Guid[]
+}
+
+export interface ApiError {
+  status: number;
+  message: string;
+  errors?: Record<string, string[]>;
+}

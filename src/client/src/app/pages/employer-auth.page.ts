@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectorRef, Component } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../core';
+import { ApiError } from '../core/models/api.models';
 
 @Component({
   selector: 'app-employer-auth-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 flex flex-col">
       <div class="border-b-2 border-emerald-600 bg-white shadow-md">
@@ -23,40 +25,49 @@ import { Router, RouterLink } from '@angular/router';
         <div class="w-full max-w-md border-2 border-emerald-600 bg-white p-8 shadow-lg">
           <h2 class="text-2xl font-bold mb-8 text-center uppercase text-emerald-600 tracking-wider">Вход для работодателя</h2>
 
+          <div *ngIf="errorMessage" class="mb-6 border-2 border-red-400 bg-red-50 p-3 text-red-700 text-xs">
+            ⚠️ {{ errorMessage }}
+          </div>
+
           <div class="border-2 border-amber-400 bg-amber-50 p-4 mb-6 text-xs text-amber-900 font-semibold">
             <strong>⚠️ ПРИМЕЧАНИЕ:</strong> Регистрация работодателей производится вручную.
           </div>
 
-          <form (ngSubmit)="submit()" class="space-y-6">
+          <form [formGroup]="formGroup" (ngSubmit)="submit()" class="space-y-6">
             <div>
-              <label class="block font-bold mb-2 text-xs uppercase tracking-wider text-gray-500">Email</label>
-              <input 
-                type="email" 
-                [(ngModel)]="email" 
-                name="email" 
-                class="w-full border-2 border-black p-3 text-sm" 
+              <label class="block font-bold mb-2 text-xs uppercase tracking-wider text-gray-500">Логин</label>
+              <input
+                type="text"
+                formControlName="email"
+                name="email"
+                class="w-full border-2 border-black p-3 text-sm"
                 placeholder="company@email.com"
-                required 
               />
+              <div *ngIf="formGroup.get('email')?.invalid && formGroup.get('email')?.touched" class="mt-1 text-red-600 text-xs">
+                Введите логин (от 1 до 100 символов)
+              </div>
             </div>
 
             <div>
               <label class="block font-bold mb-2 text-xs uppercase tracking-wider text-gray-500">Пароль</label>
-              <input 
-                type="password" 
-                [(ngModel)]="password" 
-                name="password" 
-                class="w-full border-2 border-black p-3 text-sm" 
+              <input
+                type="password"
+                formControlName="password"
+                name="password"
+                class="w-full border-2 border-black p-3 text-sm"
                 placeholder="••••••••"
-                required 
               />
+              <div *ngIf="formGroup.get('password')?.invalid && formGroup.get('password')?.touched" class="mt-1 text-red-600 text-xs">
+                Введите пароль (от 1 до 100 символов)
+              </div>
             </div>
 
-            <button 
-              type="submit" 
-              class="w-full border-2 border-emerald-600 bg-emerald-600 text-white px-8 py-4 hover:bg-emerald-700 transition-colors font-bold uppercase tracking-wider text-sm"
+            <button
+              type="submit"
+              [disabled]="loading || formGroup.invalid"
+              class="w-full border-2 border-emerald-600 bg-emerald-600 text-white px-8 py-4 hover:bg-emerald-700 transition-colors font-bold uppercase tracking-wider text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Войти
+              {{ loading ? 'Загрузка...' : 'Войти' }}
             </button>
           </form>
 
@@ -71,17 +82,48 @@ import { Router, RouterLink } from '@angular/router';
   `
 })
 export class EmployerAuthPage {
-  email = '';
-  password = '';
+  formGroup: FormGroup;
+  loading = false;
+  errorMessage = '';
 
-  constructor(public router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private fb: FormBuilder,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.formGroup = this.fb.group({
+      email: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(100)]],
+      password: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(100)]]
+    });
+  }
 
-  submit(): void {
-    if (!this.email || !this.password) {
-      alert('Введите email и пароль!');
+  async submit(): Promise<void> {
+    if (this.formGroup.invalid) {
+      this.formGroup.markAllAsTouched();
       return;
     }
-    this.router.navigateByUrl('/employer-dashboard');
+
+    this.loading = true;
+    this.errorMessage = '';
+
+    try {
+      const formValue = this.formGroup.value;
+
+      await this.authService.login({
+        login: formValue.email,
+        password: formValue.password
+      });
+
+      this.router.navigateByUrl('/employer-dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+      const apiError = error as ApiError;
+      this.errorMessage = apiError?.message || 'Произошла ошибка. Попробуйте позже.';
+      this.cdr.markForCheck();
+    } finally {
+      this.loading = false;
+      this.cdr.markForCheck();
+    }
   }
 }
-

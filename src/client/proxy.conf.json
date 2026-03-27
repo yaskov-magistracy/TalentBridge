@@ -1,0 +1,8 @@
+{
+  "/api": {
+    "target": "https://talentbridge.yaskov.space",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}
