@@ -447,6 +447,42 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
           </div>
         </div>
 
+        <!-- Join Solution Modal -->
+        <div *ngIf="showJoinModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeJoinModal()">
+          <div class="bg-white border-2 border-emerald-600 p-8 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-6">
+              <h2 class="text-2xl font-bold text-emerald-600 uppercase">Присоединиться к решению</h2>
+              <button (click)="closeJoinModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Description -->
+            <p class="text-sm text-gray-600 mb-4">
+              Введите ID решения, к которому хотите присоединиться
+            </p>
+
+            <!-- Solution ID Input -->
+            <div class="mb-6">
+              <label class="block font-bold mb-2 text-sm uppercase tracking-wider">ID РЕШЕНИЯ</label>
+              <input
+                type="text"
+                [(ngModel)]="joinSolutionId"
+                class="w-full border-2 border-black p-3 text-sm"
+                placeholder="3fa85f64-5717-4562-b3fc-2c963f66afa6"/>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4">
+              <button
+                (click)="joinSolution()"
+                [disabled]="joiningSolution || !joinSolutionId.trim()"
+                class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-emerald-600 text-white hover:bg-emerald-700">
+                {{ joiningSolution ? 'ПРИСОЕДИНЕНИЕ...' : 'ПРИСОЕДИНИТЬСЯ' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="flex gap-8">
           <!-- Left Sidebar - Technology Filter -->
           <div class="w-64 flex-shrink-0">
@@ -469,36 +505,43 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
           <div class="flex-1">
             <!-- Tabs -->
             <div class="border-b-2 border-indigo-200 mb-6">
-              <div class="flex gap-2 overflow-x-auto">
+              <div class="flex gap-2 overflow-x-auto items-center justify-between">
+                <div class="flex gap-2 overflow-x-auto">
+                  <button
+                    (click)="onTabChange('available')"
+                    [class]="activeTab === 'available' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                    class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                    Доступные {{ getTabCount('available') }}
+                  </button>
+                  <button
+                    (click)="onTabChange('waiting-start')"
+                    [class]="activeTab === 'waiting-start' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                    class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                    Ожидают начала {{ getTabCount('waiting-start') }}
+                  </button>
+                  <button
+                    (click)="onTabChange('in-progress')"
+                    [class]="activeTab === 'in-progress' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                    class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                    В работе {{ getTabCount('in-progress') }}
+                  </button>
+                  <button
+                    (click)="onTabChange('review')"
+                    [class]="activeTab === 'review' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                    class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                    Проверка {{ getTabCount('review') }}
+                  </button>
+                  <button
+                    (click)="onTabChange('canceled')"
+                    [class]="activeTab === 'canceled' ? 'border-2 border-red-600 bg-red-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-red-400'"
+                    class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                    Отменённые {{ getTabCount('canceled') }}
+                  </button>
+                </div>
                 <button
-                  (click)="onTabChange('available')"
-                  [class]="activeTab === 'available' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
-                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
-                  Доступные {{ getTabCount('available') }}
-                </button>
-                <button
-                  (click)="onTabChange('waiting-start')"
-                  [class]="activeTab === 'waiting-start' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
-                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
-                  Ожидают начала {{ getTabCount('waiting-start') }}
-                </button>
-                <button
-                  (click)="onTabChange('in-progress')"
-                  [class]="activeTab === 'in-progress' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
-                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
-                  В работе {{ getTabCount('in-progress') }}
-                </button>
-                <button
-                  (click)="onTabChange('review')"
-                  [class]="activeTab === 'review' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
-                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
-                  Проверка {{ getTabCount('review') }}
-                </button>
-                <button
-                  (click)="onTabChange('canceled')"
-                  [class]="activeTab === 'canceled' ? 'border-2 border-red-600 bg-red-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-red-400'"
-                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
-                  Отменённые {{ getTabCount('canceled') }}
+                  (click)="openJoinModal()"
+                  class="flex-shrink-0 border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors uppercase font-bold text-xs whitespace-nowrap">
+                  🔗 ПРИСОЕДИНИТЬСЯ
                 </button>
               </div>
             </div>
@@ -659,6 +702,11 @@ export class CandidateDashboardPage implements OnInit {
   sendingToReview = false;
   solutionUrl = '';
   savingSolutionUrl = false;
+  
+  // Join solution modal
+  showJoinModal = false;
+  joinSolutionId = '';
+  joiningSolution = false;
 
   // Validators for team form
   readonly TEAM_NAME_MIN_LENGTH = 2;
@@ -869,6 +917,40 @@ export class CandidateDashboardPage implements OnInit {
   closeSolutionModal(): void {
     this.showSolutionModal = false;
     this.selectedSolution = null;
+  }
+
+  openJoinModal(): void {
+    this.showJoinModal = true;
+    this.joinSolutionId = '';
+  }
+
+  closeJoinModal(): void {
+    this.showJoinModal = false;
+    this.joinSolutionId = '';
+  }
+
+  joinSolution(): void {
+    if (!this.joinSolutionId.trim()) return;
+
+    this.joiningSolution = true;
+    this.cdr.markForCheck();
+
+    this.solutionsService.joinSolution(this.joinSolutionId.trim()).subscribe({
+      next: () => {
+        alert('Вы успешно присоединились к решению!');
+        this.closeJoinModal();
+        this.loadSolutions();
+        this.joiningSolution = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to join solution:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Не удалось присоединиться к решению. Проверьте ID и попробуйте позже.';
+        alert(`Ошибка: ${errorMessage}`);
+        this.joiningSolution = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   startSolution(solution: SolutionFullInfo): void {
