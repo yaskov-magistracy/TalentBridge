@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
-import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest } from '../core/models/api.models';
+import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
 
 @Component({
@@ -75,7 +75,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
 
           <!-- Profile Edit Modal -->
           <div *ngIf="showProfileEdit" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="showProfileEdit = false">
-            <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
+            <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
               <div class="flex justify-between items-center mb-6">
                 <h3 class="text-2xl font-bold uppercase text-indigo-600">РЕДАКТИРОВАНИЕ ПРОФИЛЯ</h3>
                 <button (click)="showProfileEdit = false" class="text-2xl hover:text-red-600">×</button>
@@ -173,7 +173,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
 
         <!-- Technology Modal -->
         <div *ngIf="showTechModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeTechModal()">
-          <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
+          <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
             <h3 class="text-xl font-bold mb-4 uppercase text-indigo-600">Выберите навыки</h3>
 
             <!-- Search Input -->
@@ -223,7 +223,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
 
         <!-- Assignment Detail Modal -->
         <div *ngIf="showAssignmentModal && selectedAssignment" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeAssignmentModal()">
-          <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
+          <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
             <!-- Header -->
             <div class="flex justify-between items-start mb-6">
               <h2 class="text-2xl font-bold text-indigo-600 uppercase">{{ selectedAssignment.name }}</h2>
@@ -311,6 +311,145 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
           </div>
         </div>
 
+        <!-- Solution Detail Modal -->
+        <div *ngIf="showSolutionModal && selectedSolution" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeSolutionModal()">
+          <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-6">
+              <h2 class="text-2xl font-bold text-indigo-600 uppercase">{{ selectedSolution.assignment.name }}</h2>
+              <button (click)="closeSolutionModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Info Bar -->
+            <div class="flex flex-wrap gap-4 mb-4 text-sm">
+              <div>
+                <span class="font-bold">КОМПАНИЯ:</span>
+              </div>
+              <div>
+                <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedSolution.assignment.deadLine | date:'dd.MM.yyyy' }}
+              </div>
+              <div>
+                <span class="font-bold">СТАТУС:</span> {{ getStateLabel(selectedSolution.state) }}
+              </div>
+            </div>
+
+            <!-- Repository Link -->
+            <div *ngIf="selectedSolution.assignment.templateUrl" class="mb-4">
+              <a
+                [href]="selectedSolution.assignment.templateUrl"
+                target="_blank"
+                class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline">
+                🔗 РЕПОЗИТОРИЙ: {{ selectedSolution.assignment.templateUrl }}
+              </a>
+            </div>
+
+            <!-- Technologies -->
+            <div class="flex flex-wrap gap-2 mb-6">
+              <app-tech-chip *ngFor="let tech of selectedSolution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+            </div>
+
+            <!-- Days Remaining -->
+            <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
+              <span class="font-bold text-lg" [class]="getDaysRemaining(selectedSolution.assignment.deadLine) < 0 ? 'text-red-600' : 'text-indigo-600'">
+                ОСТАЛОСЬ ДНЕЙ: {{ getDaysRemaining(selectedSolution.assignment.deadLine) }}
+              </span>
+            </div>
+
+            <!-- Team Info for Group Projects -->
+            <div *ngIf="selectedSolution.assignment.isGrouped" class="mb-6 border-2 border-amber-300 bg-amber-50 p-4">
+              <h3 class="font-bold text-lg mb-3 uppercase text-amber-800">
+                📋 КОМАНДА ({{ selectedSolution.candidates?.length || 0 }} / {{ selectedSolution.assignment.candidatesCapacity }} чел.)
+              </h3>
+              
+              <!-- Team Warning -->
+              <div *ngIf="selectedSolution.candidates && selectedSolution.candidates.length < selectedSolution.assignment.candidatesCapacity" 
+                   class="mb-4 border-2 border-red-400 bg-red-50 p-3 text-red-700 text-sm font-bold">
+                ⚠️ ВНИМАНИЕ: В команде только {{ selectedSolution.candidates.length }} из {{ selectedSolution.assignment.candidatesCapacity }} участников!
+              </div>
+              
+              <!-- Team Name -->
+              <div *ngIf="selectedSolution.team" class="mb-4">
+                <p class="text-sm font-bold uppercase">НАЗВАНИЕ КОМАНДЫ:</p>
+                <p class="text-lg">{{ selectedSolution.team.name }}</p>
+                <p *ngIf="selectedSolution.team.description" class="text-sm text-gray-600 mt-1">{{ selectedSolution.team.description }}</p>
+              </div>
+              
+              <!-- Team Members -->
+              <div class="mb-4">
+                <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
+                <div class="space-y-3">
+                  <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                    </div>
+                    <div>
+                      <p class="font-semibold">{{ member.surname }} {{ member.name }}{{ member.patronymic ? ' ' + member.patronymic : '' }}</p>
+                      <p class="text-xs text-gray-500">{{ member.login }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Individual Project Info -->
+            <div *ngIf="!selectedSolution.assignment.isGrouped" class="mb-6 border-2 border-indigo-300 bg-indigo-50 p-4">
+              <h3 class="font-bold text-lg mb-2 uppercase text-indigo-800">
+                👤 ИНДИВИДУАЛЬНЫЙ ПРОЕКТ
+              </h3>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+              <h3 class="font-bold text-lg mb-3 uppercase">ОПИСАНИЕ ПРОЕКТА</h3>
+              <div class="border-2 border-gray-300 p-4 bg-gray-50">
+                <p class="text-gray-700 whitespace-pre-line">{{ selectedSolution.assignment.description }}</p>
+              </div>
+            </div>
+
+            <!-- Solution URL (for NotStarted and InProgress tabs) -->
+            <div *ngIf="selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress'" class="mb-6 border-2 border-emerald-300 bg-emerald-50 p-4">
+              <h3 class="font-bold text-lg mb-3 uppercase text-emerald-800">
+                🔗 ССЫЛКА НА РЕШЕНИЕ
+              </h3>
+              <div class="flex gap-2 items-start">
+                <input
+                  type="text"
+                  [(ngModel)]="solutionUrl"
+                  class="flex-1 border-2 border-black p-3 text-sm"
+                  placeholder="https://github.com/username/repo"/>
+                <button
+                  (click)="saveSolutionUrl(selectedSolution)"
+                  [disabled]="savingSolutionUrl || !solutionUrl.trim()"
+                  class="border-2 border-emerald-600 bg-emerald-600 text-white px-6 py-3 hover:bg-emerald-700 transition-colors font-bold uppercase text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                  {{ savingSolutionUrl ? 'СОХРАНЕНИЕ...' : 'СОХРАНИТЬ' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col gap-2 mt-auto pt-6 border-t-2">
+              <button
+                *ngIf="selectedSolution.state === 'NotStarted'"
+                (click)="startSolution(selectedSolution)"
+                [disabled]="takingAssignment"
+                class="flex-1 border-2 border-indigo-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
+                {{ takingAssignment ? 'ЗАГРУЗКА...' : 'ВЗЯТЬ В РАБОТУ' }}
+              </button>
+              <button
+                *ngIf="selectedSolution.state === 'InProgress'"
+                (click)="sendToReview(selectedSolution)"
+                [disabled]="sendingToReview || !canSendToReview(selectedSolution)"
+                class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                [class]="canSendToReview(selectedSolution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
+                {{ sendingToReview ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ НА ПРОВЕРКУ' }}
+              </button>
+              <div *ngIf="selectedSolution.state === 'InProgress' && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
+                ⚠️ {{ getSendToReviewDisabledReason(selectedSolution) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="flex gap-8">
           <!-- Left Sidebar - Technology Filter -->
           <div class="w-64 flex-shrink-0">
@@ -330,20 +469,65 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
           </div>
 
           <!-- Right Content -->
-          <div class="flex-1 space-y-12">
-            <!-- Search Bar -->
-            <div>
+          <div class="flex-1">
+            <!-- Tabs -->
+            <div class="border-b-2 border-indigo-200 mb-6">
+              <div class="flex gap-2 overflow-x-auto">
+                <button
+                  (click)="onTabChange('available')"
+                  [class]="activeTab === 'available' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                  Доступные {{ getTabCount('available') }}
+                </button>
+                <button
+                  (click)="onTabChange('waiting-start')"
+                  [class]="activeTab === 'waiting-start' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                  Ожидают начала {{ getTabCount('waiting-start') }}
+                </button>
+                <button
+                  (click)="onTabChange('in-progress')"
+                  [class]="activeTab === 'in-progress' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                  В работе {{ getTabCount('in-progress') }}
+                </button>
+                <button
+                  (click)="onTabChange('review')"
+                  [class]="activeTab === 'review' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                  Проверка {{ getTabCount('review') }}
+                </button>
+                <button
+                  (click)="onTabChange('canceled')"
+                  [class]="activeTab === 'canceled' ? 'border-2 border-red-600 bg-red-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-red-400'"
+                  class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                  Отменённые {{ getTabCount('canceled') }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Search Bar for Available Tab -->
+            <div *ngIf="activeTab === 'available'" class="mb-6">
               <input
                 type="text"
-                [(ngModel)]="assignmentSearchText"
-                (ngModelChange)="onAssignmentSearch()"
+                [(ngModel)]="availableSearchText"
+                (ngModelChange)="onAvailableSearch()"
                 class="w-full border-2 border-black p-3"
                 placeholder="Поиск заданий..."/>
             </div>
 
-            <!-- Available Tasks Section -->
-            <div>
-              <h2 class="text-2xl font-bold mb-6 uppercase text-indigo-600">ДОСТУПНЫЕ ЗАДАНИЯ</h2>
+            <!-- Search Bar for Solutions Tabs -->
+            <div *ngIf="activeTab !== 'available'" class="mb-6">
+              <input
+                type="text"
+                [(ngModel)]="solutionsSearchText"
+                (ngModelChange)="onSolutionsSearch()"
+                class="w-full border-2 border-black p-3"
+                placeholder="Поиск..."/>
+            </div>
+
+            <!-- Available Assignments -->
+            <div *ngIf="activeTab === 'available'">
               <div class="space-y-4">
                 <div *ngFor="let assignment of filteredAvailableAssignments" [class]="assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'">
                   <div (click)="openAssignmentModal(assignment)" class="cursor-pointer">
@@ -370,6 +554,63 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                 </div>
               </div>
             </div>
+
+            <!-- Solutions Tabs -->
+            <div *ngIf="activeTab !== 'available'" class="space-y-4">
+              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="solution.assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'">
+                <div class="flex justify-between items-start gap-4">
+                  <div (click)="openSolutionModal(solution)" class="cursor-pointer flex-1">
+                    <div class="mb-3">
+                      <h3 class="font-bold text-lg mb-1">{{ solution.assignment.name }}</h3>
+                      <p class="text-sm mb-2"><span class="font-bold">КОМПАНИЯ:</span></p>
+                      <p class="text-sm mb-2">
+                        <span class="font-bold">ДЕДЛАЙН:</span> {{ solution.assignment.deadLine | date:'dd.MM.yyyy' }}
+                      </p>
+                      <p class="text-sm mb-2" *ngIf="activeTab === 'review'">
+                        <span class="font-bold">СТАТУС:</span> {{ getStateLabel(solution.state) }}
+                      </p>
+                      <p class="text-sm mb-2" *ngIf="solution.team">
+                        <span class="font-bold">КОМАНДА:</span> {{ solution.team.name }}
+                      </p>
+                      <p class="text-sm mb-3" *ngIf="solution.assignment.isGrouped">
+                        <span class="font-bold">УЧАСТНИКИ:</span> {{ solution.candidates?.length || 0 }} / {{ solution.assignment.candidatesCapacity }} чел.
+                      </p>
+                      <p class="text-sm mb-3" *ngIf="!solution.assignment.isGrouped && activeTab !== 'review'">
+                        <span class="font-bold">ПРОЕКТ:</span> ИНДИВИДУАЛЬНЫЙ
+                      </p>
+                      <p class="text-sm mb-3" *ngIf="solution.assignment.isGrouped && activeTab !== 'review'">
+                        <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
+                      </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <app-tech-chip *ngFor="let tech of solution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+                    </div>
+                  </div>
+                  <!-- Start Button for Waiting Start Tab -->
+                  <div *ngIf="activeTab === 'waiting-start'" class="flex-shrink-0">
+                    <button
+                      (click)="startSolution(solution)"
+                      [disabled]="takingAssignment"
+                      class="border-2 border-indigo-600 bg-indigo-600 text-white px-4 py-2 hover:bg-indigo-700 transition-colors font-bold uppercase text-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                      {{ takingAssignment ? 'Загрузка...' : 'Взять в работу' }}
+                    </button>
+                  </div>
+                  <!-- Send to Review Button for In Progress Tab -->
+                  <div *ngIf="activeTab === 'in-progress'" class="flex-shrink-0">
+                    <button
+                      (click)="sendToReview(solution)"
+                      [disabled]="sendingToReview || !canSendToReview(solution)"
+                      class="border-2 border-emerald-600 px-4 py-2 font-bold uppercase text-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      [class]="canSendToReview(solution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
+                      {{ sendingToReview ? '...' : 'На проверку' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="getSolutionsForTab(activeTab).length === 0" class="text-center py-8 text-gray-500">
+                Заданий в этой категории нет
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -389,19 +630,35 @@ export class CandidateDashboardPage implements OnInit {
   techSearchQuery = '';
   allTechs: Technology[] = [];
   filteredTechs: Technology[] = [];
-  selectedTechs: Technology[] = []; // Храним полные объекты, а не ID
+  selectedTechs: Technology[] = [];
   loadingTechs = false;
   hasSearched = false;
   private searchTimeout: any;
 
-  // Assignments
+  // Tabs
+  activeTab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'canceled' = 'available';
+
+  // Available assignments tab
   availableAssignments: AssignmentFullInfo[] = [];
-  assignmentSearchText = '';
+  availableSearchText = '';
+
+  // Solutions tabs
+  solutions: SolutionFullInfo[] = [];
+  solutionsSearchText = '';
+
+  // Assignment modal
   selectedAssignment: AssignmentFullInfo | null = null;
   showAssignmentModal = false;
   teamName = '';
   teamDescription = '';
   takingAssignment = false;
+  
+  // Solution modal
+  selectedSolution: SolutionFullInfo | null = null;
+  showSolutionModal = false;
+  sendingToReview = false;
+  solutionUrl = '';
+  savingSolutionUrl = false;
 
   // Validators for team form
   readonly TEAM_NAME_MIN_LENGTH = 2;
@@ -430,6 +687,7 @@ export class CandidateDashboardPage implements OnInit {
   ngOnInit() {
     this.loadCandidate();
     this.loadAvailableAssignments();
+    this.loadSolutions();
   }
 
   private loadCandidate(): void {
@@ -450,7 +708,7 @@ export class CandidateDashboardPage implements OnInit {
 
   private loadAvailableAssignments(): void {
     const searchRequest: AssignmentSearchRequest = {
-      text: this.assignmentSearchText || undefined,
+      text: this.availableSearchText || undefined,
       take: 100,
       skip: 0
     };
@@ -466,11 +724,91 @@ export class CandidateDashboardPage implements OnInit {
     });
   }
 
-  onAssignmentSearch(): void {
+  private loadSolutions(): void {
+    const searchRequest: SolutionSearchRequest = {
+      text: this.solutionsSearchText || undefined,
+      candidateId: this.authService.currentUser()?.userId,
+      take: 100,
+      skip: 0
+    };
+    this.solutionsService.searchSolutions(searchRequest).subscribe({
+      next: (response) => {
+        this.solutions = response.items || [];
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to load solutions:', error);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onTabChange(tab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'canceled'): void {
+    this.activeTab = tab;
+    // При переключении на таб Available - загружаем задания, иначе - решения
+    if (tab === 'available') {
+      this.loadAvailableAssignments();
+    } else {
+      this.loadSolutions();
+    }
+  }
+
+  onAvailableSearch(): void {
     clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => {
       this.loadAvailableAssignments();
     }, 300);
+  }
+
+  onSolutionsSearch(): void {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.loadSolutions();
+    }, 300);
+  }
+
+  getTabCount(tab: string): number {
+    if (tab === 'available') {
+      return this.filteredAvailableAssignments.length;
+    }
+    
+    const filtered = this.filteredSolutions;
+    return filtered.filter(solution => {
+      const state = solution.state;
+      
+      switch (tab) {
+        case 'waiting-start':
+          return state === 'NotStarted';
+        case 'in-progress':
+          return state === 'InProgress';
+        case 'review':
+          return state === 'AiReview' || state === 'ExpertReview';
+        case 'canceled':
+          return state === 'Canceled';
+        default:
+          return false;
+      }
+    }).length;
+  }
+
+  getSolutionsForTab(tab: string): SolutionFullInfo[] {
+    const filtered = this.filteredSolutions;
+    return filtered.filter(solution => {
+      const state = solution.state;
+      
+      switch (tab) {
+        case 'waiting-start':
+          return state === 'NotStarted';
+        case 'in-progress':
+          return state === 'InProgress';
+        case 'review':
+          return state === 'AiReview' || state === 'ExpertReview';
+        case 'canceled':
+          return state === 'Canceled';
+        default:
+          return false;
+      }
+    });
   }
 
   openProfileEdit() {
@@ -489,6 +827,19 @@ export class CandidateDashboardPage implements OnInit {
     this.loadTechnologies();
   }
 
+  getStateLabel(state: SolutionState): string {
+    const labels: Record<SolutionState, string> = {
+      'NotStarted': 'Ожидает начала',
+      'InProgress': 'В работе',
+      'Reopened': 'Открыто повторно',
+      'Autotests': 'Автотесты',
+      'AiReview': 'AI проверка',
+      'ExpertReview': 'Проверка экспертом',
+      'Canceled': 'Отменено'
+    };
+    return labels[state] || state;
+  }
+
   openAssignmentModal(assignment: AssignmentFullInfo): void {
     this.selectedAssignment = assignment;
     this.showAssignmentModal = true;
@@ -502,6 +853,111 @@ export class CandidateDashboardPage implements OnInit {
     this.selectedAssignment = null;
   }
 
+  openSolutionModal(solution: SolutionFullInfo): void {
+    this.selectedSolution = solution;
+    this.showSolutionModal = true;
+    this.solutionUrl = solution.solutionUrl || '';
+  }
+
+  closeSolutionModal(): void {
+    this.showSolutionModal = false;
+    this.selectedSolution = null;
+  }
+
+  startSolution(solution: SolutionFullInfo): void {
+    if (!solution.id) return;
+    
+    // Для групповых проектов с недостаточным количеством участников - предупреждение
+    if (solution.isGroup && solution.candidates.length < solution.assignment.candidatesCapacity) {
+      const confirmed = confirm(
+        `ВНИМАНИЕ: В команде только ${solution.candidates.length} из ${solution.assignment.candidatesCapacity} участников.\n\n` +
+        `Вы всё равно хотите взять задание в работу?`
+      );
+      if (!confirmed) return;
+    }
+    
+    this.solutionsService.startSolution(solution.id).subscribe({
+      next: () => {
+        alert('Задание взято в работу!');
+        this.closeSolutionModal();
+        this.loadSolutions();
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to start solution:', error);
+        alert('Не удалось взять задание в работу. Попробуйте позже.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  sendToReview(solution: SolutionFullInfo): void {
+    if (!solution.id) return;
+    
+    this.sendingToReview = true;
+    this.cdr.markForCheck();
+    
+    this.solutionsService.sendToReview(solution.id).subscribe({
+      next: () => {
+        alert('Решение отправлено на проверку!');
+        this.closeSolutionModal();
+        this.loadSolutions();
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to send to review:', error);
+        alert('Не удалось отправить решение на проверку. Попробуйте позже.');
+        this.sendingToReview = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  canSendToReview(solution: SolutionFullInfo): boolean {
+    if (!solution) return false;
+    if (!solution.solutionUrl || solution.solutionUrl.trim() === '') return false;
+    const currentUserId = this.authService.currentUser()?.userId;
+    if (!currentUserId) return false;
+    return solution.candidateOwner.id === currentUserId;
+  }
+
+  getSendToReviewDisabledReason(solution: SolutionFullInfo): string | null {
+    if (!solution.solutionUrl || solution.solutionUrl.trim() === '') {
+      return 'Сначала добавьте ссылку на решение';
+    }
+    const currentUserId = this.authService.currentUser()?.userId;
+    if (!currentUserId) return 'Не удалось определить пользователя';
+    if (solution.candidateOwner.id !== currentUserId) {
+      return 'Только владелец решения может отправить его на проверку';
+    }
+    return null;
+  }
+
+  saveSolutionUrl(solution: SolutionFullInfo): void {
+    if (!solution.id) return;
+    
+    this.savingSolutionUrl = true;
+    this.cdr.markForCheck();
+    
+    const patchRequest = { solutionUrl: this.solutionUrl };
+    
+    this.solutionsService.updateSolution(solution.id, patchRequest).subscribe({
+      next: (updated) => {
+        alert('Ссылка сохранена!');
+        this.selectedSolution = updated;
+        this.loadSolutions();
+        this.savingSolutionUrl = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to save solution URL:', error);
+        alert('Не удалось сохранить ссылку. Попробуйте позже.');
+        this.savingSolutionUrl = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   getDaysRemaining(deadline: string): number {
     const deadlineDate = new Date(deadline);
     const today = new Date();
@@ -512,23 +968,23 @@ export class CandidateDashboardPage implements OnInit {
 
   get isTeamFormValid(): boolean {
     if (!this.selectedAssignment?.isGrouped) return true;
-    
+
     const nameLength = this.teamName.trim().length;
     const nameValid = nameLength >= this.TEAM_NAME_MIN_LENGTH &&
                       nameLength <= this.TEAM_NAME_MAX_LENGTH;
-    
+
     // Описание не обязательное, но если введено - должно быть в пределах лимита
     const descLength = this.teamDescription.trim().length;
-    const descValid = descLength === 0 || 
+    const descValid = descLength === 0 ||
                       (descLength >= this.TEAM_DESC_MIN_LENGTH && descLength <= this.TEAM_DESC_MAX_LENGTH);
-    
+
     return nameValid && descValid;
   }
 
   get canTakeAssignment(): boolean {
     if (this.takingAssignment) return false;
     if (!this.selectedAssignment) return false;
-    
+
     if (this.selectedAssignment.isGrouped) {
       return this.isTeamFormValid;
     }
@@ -537,7 +993,7 @@ export class CandidateDashboardPage implements OnInit {
 
   get teamNameError(): string | null {
     if (!this.selectedAssignment?.isGrouped) return null;
-    
+
     const nameLength = this.teamName.trim().length;
     if (nameLength === 0) return 'Введите название команды';
     if (nameLength < this.TEAM_NAME_MIN_LENGTH) return `Минимум ${this.TEAM_NAME_MIN_LENGTH} символа`;
@@ -547,7 +1003,7 @@ export class CandidateDashboardPage implements OnInit {
 
   get teamDescriptionError(): string | null {
     if (!this.selectedAssignment?.isGrouped) return null;
-    
+
     const descLength = this.teamDescription.trim().length;
     // Описание не обязательное
     if (descLength === 0) return null;
@@ -572,7 +1028,7 @@ export class CandidateDashboardPage implements OnInit {
       };
 
       await this.solutionsService.createSolution(request).toPromise();
-      
+
       alert('Задание успешно взято!');
       this.closeAssignmentModal();
       this.cdr.markForCheck();
@@ -716,6 +1172,16 @@ export class CandidateDashboardPage implements OnInit {
     const selectedTechNames = this.selectedTechs.map(t => t.name);
     return this.availableAssignments.filter(assignment =>
       assignment.technologies?.some(t => selectedTechNames.includes(t.name))
+    );
+  }
+
+  get filteredSolutions(): SolutionFullInfo[] {
+    if (this.selectedTechs.length === 0) {
+      return this.solutions;
+    }
+    const selectedTechNames = this.selectedTechs.map(t => t.name);
+    return this.solutions.filter(solution =>
+      solution.assignment.technologies?.some(t => selectedTechNames.includes(t.name))
     );
   }
 }

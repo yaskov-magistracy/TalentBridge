@@ -150,13 +150,14 @@ export interface SolutionTeamPatchApiRequest {
 
 export interface SolutionFullInfo {
   id: string;
-  assignment: AssignmentFullInfo;
   solutionUrl?: string;
+  startedAt: string;
+  state: SolutionState;
   team?: SolutionTeamInfo;
-  status: SolutionStatus;
-  autoTestStatus: AutoTestStatus;
-  expertReviewStatus: ExpertReviewStatus;
-  submittedAt?: string;
+  isGroup: boolean;
+  assignment: AssignmentFullInfo;
+  candidateOwner: CandidateFullInfo;
+  candidates: CandidateFullInfo[];
 }
 
 export interface SolutionTeamInfo {
@@ -167,25 +168,27 @@ export interface SolutionTeamInfo {
 
 export interface CandidateShortInfo {
   id: string;
-  name: string;
   surname: string;
+  name: string;
 }
 
-export type SolutionStatus = 'Draft' | 'InProgress' | 'Submitted' | 'Reviewed';
+export type SolutionState = 'NotStarted' | 'InProgress' | 'Reopened' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'Canceled';
+
+// Для совместимости со старыми компонентами
 export type AutoTestStatus = 'pending' | 'passed' | 'failed';
 export type ExpertReviewStatus = 'pending' | 'approved' | 'rejected';
 
 export interface SolutionSearchRequest {
-  search?: string;
   assignmentId?: string;
-  status?: SolutionStatus;
-  page?: number;
-  pageSize?: number;
+  candidateId?: string;
+  text?: string;
+  take?: number;
+  skip?: number;
 }
 
 export interface SolutionSearchResponse {
   items: SolutionFullInfo[];
-  total: number;
+  totalCount: number;
 }
 
 // ==================== Technologies ====================

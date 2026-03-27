@@ -1,6 +1,6 @@
-import type { AutoTestStatus, ExpertReviewStatus } from './api.models';
+import type { SolutionState, AutoTestStatus, ExpertReviewStatus } from './api.models';
 
-export type { AutoTestStatus, ExpertReviewStatus };
+export type { SolutionState, AutoTestStatus, ExpertReviewStatus };
 
 export type BadgeStatus = 'pending' | 'passed' | 'failed' | 'approved' | 'rejected';
 export type TaskType = 'individual' | 'team';
@@ -48,9 +48,9 @@ export interface Submission {
   submittedDate: string;
   githubUrl: string;
   status: {
-    autoTests: AutoTestStatus;
-    aiAnalysis: AutoTestStatus;
-    expertReview: ExpertReviewStatus;
+    autoTests: 'pending' | 'passed' | 'failed';
+    aiAnalysis: 'pending' | 'passed' | 'failed';
+    expertReview: 'pending' | 'approved' | 'rejected';
   };
   autoTestsResults?: {
     passed: number;
