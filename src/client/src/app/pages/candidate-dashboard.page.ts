@@ -74,7 +74,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
           </div>
 
           <!-- Profile Edit Modal -->
-          <div *ngIf="showProfileEdit" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="showProfileEdit = false">
+          <div *ngIf="showProfileEdit" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeProfileEdit()">
             <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
               <div class="flex justify-between items-center mb-6">
                 <h3 class="text-2xl font-bold uppercase text-indigo-600">РЕДАКТИРОВАНИЕ ПРОФИЛЯ</h3>
@@ -134,18 +134,18 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                       <h3 class="font-bold text-sm uppercase tracking-wider">НАВЫКИ</h3>
                       <button
                         type="button"
-                        (click)="openTechModal()"
+                        (click)="openTechModalForProfile()"
                         class="border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors text-sm uppercase font-semibold flex items-center gap-2">
                         <span class="text-lg">+</span> ДОБАВИТЬ НАВЫК
                       </button>
                     </div>
 
                     <div class="space-y-2">
-                      <div *ngFor="let tech of selectedTechs" class="flex items-center gap-2 border-2 p-2">
+                      <div *ngFor="let tech of profileTechs" class="flex items-center gap-2 border-2 p-2">
                         <span class="flex-1 text-sm">{{ tech.name }}</span>
-                        <button type="button" (click)="removeTech(tech.id)" class="text-xl hover:opacity-70">🗑️</button>
+                        <button type="button" (click)="removeTechFromProfile(tech.id)" class="text-xl hover:opacity-70">🗑️</button>
                       </div>
-                      <div *ngIf="selectedTechs.length === 0" class="text-gray-500 text-sm">
+                      <div *ngIf="profileTechs.length === 0" class="text-gray-500 text-sm">
                         Навыки не выбраны
                       </div>
                     </div>
@@ -198,8 +198,8 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               <label *ngFor="let tech of filteredTechs" class="flex items-center gap-2 text-xs cursor-pointer border-2 p-2 hover:bg-gray-50">
                 <input
                   type="checkbox"
-                  [checked]="selectedTechs.some(t => t.id === tech.id)"
-                  (change)="toggleTech(tech)"
+                  [checked]="techModalMode === 'profile' ? profileTechs.some(t => t.id === tech.id) : selectedTechs.some(t => t.id === tech.id)"
+                  (change)="techModalMode === 'profile' ? toggleTechForProfile(tech) : toggleTech(tech)"
                   class="w-4 h-4 border-2 border-black"
                 />
                 <span>{{ tech.name }}</span>
@@ -213,7 +213,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
             <div class="mt-6 flex gap-2">
               <button
                 type="button"
-                (click)="closeTechModal()"
+                (click)="techModalMode === 'profile' ? saveTechsToProfile() : closeTechModal()"
                 class="flex-1 border-2 border-indigo-600 bg-indigo-600 text-white px-4 py-2 hover:bg-indigo-700 transition-colors uppercase font-semibold">
                 ГОТОВО
               </button>
@@ -634,6 +634,9 @@ export class CandidateDashboardPage implements OnInit {
   loadingTechs = false;
   hasSearched = false;
   private searchTimeout: any;
+  
+  // Для редактирования профиля (отдельно от фильтра)
+  profileTechs: Technology[] = [];
 
   // Tabs
   activeTab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'canceled' = 'available';
@@ -820,11 +823,18 @@ export class CandidateDashboardPage implements OnInit {
         city: this.candidate.city || '',
         about: this.candidate.about || ''
       });
-      // Храним полные объекты технологий, а не только ID
-      this.selectedTechs = this.candidate.technologies?.map(t => ({ ...t })) || [];
+      // Копируем технологии кандидата для редактирования (не влияя на фильтр)
+      this.profileTechs = this.candidate.technologies?.map(t => ({ ...t })) || [];
+      console.log('openProfileEdit: candidate.technologies =', this.candidate.technologies);
+      console.log('openProfileEdit: profileTechs =', this.profileTechs);
     }
     this.showProfileEdit = true;
     this.loadTechnologies();
+  }
+
+  closeProfileEdit(): void {
+    this.showProfileEdit = false;
+    this.profileTechs = [];
   }
 
   getStateLabel(state: SolutionState): string {
@@ -1045,6 +1055,9 @@ export class CandidateDashboardPage implements OnInit {
   async saveProfile(): Promise<void> {
     if (this.profileForm.invalid || !this.candidate) return;
 
+    console.log('saveProfile: profileTechs =', this.profileTechs);
+    console.log('saveProfile: candidate.technologies =', this.candidate.technologies);
+
     this.savingProfile = true;
     this.cdr.markForCheck();
 
@@ -1053,9 +1066,14 @@ export class CandidateDashboardPage implements OnInit {
 
       // Определяем изменения в технологиях
       const currentTechIds = this.candidate.technologies?.map(t => t.id) || [];
-      const newTechIds = this.selectedTechs.map(t => t.id);
+      const newTechIds = this.profileTechs.map(t => t.id);
       const addedTechs = newTechIds.filter(id => !currentTechIds.includes(id));
       const removedTechs = currentTechIds.filter(id => !newTechIds.includes(id));
+
+      console.log('Current tech IDs:', currentTechIds);
+      console.log('New tech IDs:', newTechIds);
+      console.log('Added:', addedTechs);
+      console.log('Removed:', removedTechs);
 
       const patchRequest: CandidatePatchApiRequest = {
         surname: formValue.surname !== this.candidate.surname ? formValue.surname : undefined,
@@ -1070,11 +1088,13 @@ export class CandidateDashboardPage implements OnInit {
           : undefined
       };
 
+      console.log('Patch request:', patchRequest);
+
       await this.candidatesService.updateCandidate(this.candidate.id, patchRequest).toPromise();
 
       // Reload candidate data
       this.loadCandidate();
-      this.showProfileEdit = false;
+      this.closeProfileEdit();
       this.cdr.markForCheck();
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -1087,7 +1107,10 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   // Technology modal methods
+  techModalMode: 'filter' | 'profile' = 'filter';
+
   openTechModal(): void {
+    this.techModalMode = 'filter';
     this.showTechModal = true;
     this.techSearchQuery = '';
     this.filteredTechs = this.allTechs;
@@ -1098,6 +1121,33 @@ export class CandidateDashboardPage implements OnInit {
   closeTechModal(): void {
     this.showTechModal = false;
     this.techSearchQuery = '';
+  }
+
+  openTechModalForProfile(): void {
+    this.techModalMode = 'profile';
+    this.showTechModal = true;
+    this.techSearchQuery = '';
+    this.filteredTechs = this.allTechs;
+    this.hasSearched = false;
+    this.loadTechnologies();
+  }
+
+  closeTechModalForProfile(): void {
+    this.showTechModal = false;
+    this.techSearchQuery = '';
+  }
+
+  toggleTechForProfile(tech: Technology): void {
+    const index = this.profileTechs.findIndex(t => t.id === tech.id);
+    if (index > -1) {
+      this.profileTechs.splice(index, 1);
+    } else {
+      this.profileTechs.push({ ...tech });
+    }
+  }
+
+  saveTechsToProfile(): void {
+    this.closeTechModalForProfile();
   }
 
   private loadTechnologies(): void {
@@ -1165,14 +1215,24 @@ export class CandidateDashboardPage implements OnInit {
     }
   }
 
+  removeTechFromProfile(techId: string): void {
+    const index = this.profileTechs.findIndex(t => t.id === techId);
+    if (index > -1) {
+      this.profileTechs.splice(index, 1);
+    }
+  }
+
   get filteredAvailableAssignments(): AssignmentFullInfo[] {
     if (this.selectedTechs.length === 0) {
       return this.availableAssignments;
     }
     const selectedTechNames = this.selectedTechs.map(t => t.name);
-    return this.availableAssignments.filter(assignment =>
+    const result = this.availableAssignments.filter(assignment =>
       assignment.technologies?.some(t => selectedTechNames.includes(t.name))
     );
+    console.log('filteredAvailableAssignments: selectedTechs =', this.selectedTechs);
+    console.log('filteredAvailableAssignments: result count =', result.length);
+    return result;
   }
 
   get filteredSolutions(): SolutionFullInfo[] {
@@ -1180,8 +1240,11 @@ export class CandidateDashboardPage implements OnInit {
       return this.solutions;
     }
     const selectedTechNames = this.selectedTechs.map(t => t.name);
-    return this.solutions.filter(solution =>
+    const result = this.solutions.filter(solution =>
       solution.assignment.technologies?.some(t => selectedTechNames.includes(t.name))
     );
+    console.log('filteredSolutions: selectedTechs =', this.selectedTechs);
+    console.log('filteredSolutions: result count =', result.length);
+    return result;
   }
 }
