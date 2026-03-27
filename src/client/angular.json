@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "angular": {
+    "TalentBridge": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -59,10 +59,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "angular:build:production"
+              "buildTarget": "TalentBridge:build:production"
             },
             "development": {
-              "buildTarget": "angular:build:development"
+              "buildTarget": "TalentBridge:build:development"
             }
           },
           "defaultConfiguration": "development"
