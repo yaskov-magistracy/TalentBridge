@@ -6,18 +6,18 @@ namespace Domain.Solutions;
 public record Solution(
     Guid Id,
     string? SolutionUrl,
-    DateOnly StartedAt,
+    DateOnly? StartedAt,
     SolutionState State,
     SolutionTeam? Team
 )
 {
-    public bool IsGroup => Team != null;
+    internal bool IsGroup => Team != null;
 }
 
 public record SolutionShortInfo(
     Guid Id,
     string? SolutionUrl,
-    DateOnly StartedAt,
+    DateOnly? StartedAt,
     SolutionState State,
     SolutionTeam? Team,
     Guid AssignmentId,
@@ -27,10 +27,10 @@ public record SolutionShortInfo(
 public record SolutionFullInfo(
     Guid Id,
     string? SolutionUrl,
-    DateOnly StartedAt,
+    DateOnly? StartedAt,
     SolutionState State,
     SolutionTeam? Team,
-    Assignment Assignment,
+    AssignmentFullInfo Assignment,
     Candidate CandidateOwner,
     List<Candidate> Candidates
 ) : Solution(Id, SolutionUrl, StartedAt, State, Team);

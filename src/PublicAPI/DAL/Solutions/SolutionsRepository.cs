@@ -12,7 +12,8 @@ public class SolutionsRepository(
     private IQueryable<SolutionEntity> SolutionsSearch => Solutions.AsNoTracking();
     private IQueryable<SolutionEntity> SolutionsFullSearch => SolutionsFull.AsNoTracking();
     private IQueryable<SolutionEntity> SolutionsFull => Solutions
-        .Include(e => e.Assignment)
+        .Include(e => e.Assignment).ThenInclude(a => a.Employer)
+        .Include(e => e.Assignment).ThenInclude(a => a.Technologies)
         .Include(e => e.CandidateOwner)
         .Include(e => e.Candidates);
 
@@ -69,6 +70,8 @@ public class SolutionsRepository(
             existed.SolutionUrl = patchEntity.SolutionUrl;
         if (patchEntity.State != null)
             existed.State = SolutionsMapper.ToEntity(patchEntity.State.Value);
+        if (patchEntity.StartedAt != null)
+            existed.StartedAt = patchEntity.StartedAt;
         if (patchEntity.Team?.Name != null)
             existed.Team!.Name = patchEntity.Team.Name;
         if (patchEntity.Team?.Description != null)

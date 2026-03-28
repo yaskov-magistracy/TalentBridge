@@ -46,6 +46,8 @@ public class AssignmentsRepository(
         
         if (request.EmployerId != null)
             query = query.Where(x => x.EmployerId == request.EmployerId);
+        if (request.ExcludedIds != null)
+            query = query.Where(x => !request.ExcludedIds.Contains(x.Id));
         if (request.Text != null) 
             query = query.Where(e => EF.Functions.ILike(e.Name, $"%{request.Text}%"));
         

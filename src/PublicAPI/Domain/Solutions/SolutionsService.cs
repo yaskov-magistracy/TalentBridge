@@ -47,7 +47,6 @@ public class SolutionsService(
         
         var newSolution = await solutionsRepository.Add(new(
             null,
-            DateOnly.FromDateTime(DateTime.UtcNow),
             SolutionState.NotStarted,
             request.Team == null ? null : new(request.Team.Name, request.Team.Description),
             request.AssignmentId,
@@ -83,10 +82,11 @@ public class SolutionsService(
         if (solution.Assignment.CandidatesCapacity == solution.Candidates.Count)
             return Results.BadRequest<SolutionFullInfo>("CandidatesCapacity is full");
         
-        var updated = await solutionsRepository.Update(
+        await solutionsRepository.Update(
             id,
             new(Candidates: new(ToAdd: [candidateId])));
-        return Results.Ok(updated);
+        var updated = await solutionsRepository.GetFull(id);
+        return Results.Ok(updated!);
     }
 
     public async Task<Result<SolutionFullInfo>> Start(Guid candidateId, Guid id)
@@ -100,7 +100,9 @@ public class SolutionsService(
             return Results.BadRequest<SolutionFullInfo>("Solution is already started");
 
         var updated = await solutionsRepository
-            .Update(id, new(State: SolutionState.InProgress));
+            .Update(id, new(
+                State: SolutionState.InProgress,
+                StartedAt: DateOnly.FromDateTime(DateTime.UtcNow)));
         return Results.Ok(updated);
     }
 
@@ -111,7 +113,7 @@ public class SolutionsService(
             return Results.NotFound<SolutionFullInfo>();
         if (solution.CandidateOwnerId != candidateId)
             return Results.Forbidden<SolutionFullInfo>();
-        if (solution.State != SolutionState.InProgress || solution.State != SolutionState.Reopened)
+        if (solution.State != SolutionState.InProgress && solution.State != SolutionState.Reopened)
             return Results.BadRequest<SolutionFullInfo>($"State of Solution is incorrect: {solution.State}");
 
         var updated = await solutionsRepository

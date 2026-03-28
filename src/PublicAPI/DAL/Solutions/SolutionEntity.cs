@@ -8,7 +8,7 @@ internal class SolutionEntity : IEntity
 {
     public Guid Id { get; set; }
     public string? SolutionUrl { get; set; }
-    public DateOnly StartedAt { get; set; }
+    public DateOnly? StartedAt { get; set; }
     public SolutionEntityState State { get; set; }
     public SolutionTeamEntity? Team { get; set; }
     

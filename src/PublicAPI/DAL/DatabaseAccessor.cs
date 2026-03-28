@@ -101,12 +101,18 @@ public class DatabaseAccessor(
         var teamSolution = (await solutionsService.Add(new(
             teamAssignment.Id, 
             candidate.Id,
-            new TeamCreateRequest("Супер команда для проекта", "Ищу интересных людей для работы вместе")
+            new TeamCreateRequest("Супер команда для проекта", "Делаем крутые штуки")
         ))).Value;
         ClearAttachedItems();
         await solutionsService.Join(candidate2.Id, teamSolution.Id);
         ClearAttachedItems();
         await solutionsService.Start(candidate.Id, teamSolution.Id);
+        ClearAttachedItems();
+        var notFullTeamSolution = (await solutionsService.Add(new(
+            teamAssignment.Id, 
+            candidate.Id,
+            new TeamCreateRequest("Ещё не собранная команда", "Ищу интересных людей для работы вместе")
+        ))).Value;
         ClearAttachedItems();
     }
 
