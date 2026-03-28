@@ -92,7 +92,7 @@ export interface AssignmentCreateApiRequest {
 export interface AssignmentUpdateEntity {
   name?: string;
   description?: string;
-  templateUrl?: string;
+  templateUrl?: { value: string | null };
   deadLine?: string;
   candidatesCapacity?: number;
   technologies?: RelationsPatch;
@@ -157,6 +157,7 @@ export interface SolutionFullInfo {
   isGroup: boolean;
   assignment: AssignmentFullInfo;
   candidateOwner: CandidateFullInfo;
+  candidateOwnerId: string;
   candidates: CandidateFullInfo[];
 }
 

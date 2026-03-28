@@ -1,19 +1,35 @@
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { inject, Injectable } from '@angular/core';
+import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 /**
  * Guard для защищённых страниц (требует авторизации).
- * Перенаправляет на / если пользователь не залогинен.
+ * Перенаправляет на соответствующий дашборд если пользователь не имеет доступа.
  */
-export const requireAuthGuard = () => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
+export const requireAuthGuard = (allowedRole?: 'Candidate' | 'Employer'): CanActivateFn => {
+  return () => {
+    const authService = inject(AuthService);
+    const router = inject(Router);
 
-  if (!authService.isLoggedInSync()) {
-    router.navigateByUrl('/');
-    return false;
-  }
+    if (!authService.isLoggedInSync()) {
+      router.navigateByUrl('/');
+      return false;
+    }
 
-  return true;
+    // Если указана роль, проверяем её
+    if (allowedRole) {
+      const userRole = authService.userRole();
+      if (userRole !== allowedRole) {
+        // Перенаправляем на соответствующий дашборд
+        if (userRole === 'Candidate') {
+          router.navigateByUrl('/candidate-dashboard');
+        } else if (userRole === 'Employer') {
+          router.navigateByUrl('/employer-dashboard');
+        }
+        return false;
+      }
+    }
+
+    return true;
+  };
 };
