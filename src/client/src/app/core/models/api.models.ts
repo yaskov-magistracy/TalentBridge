@@ -155,7 +155,6 @@ export interface SolutionFullInfo {
   startedAt: string;
   state: SolutionState;
   team?: SolutionTeamInfo;
-  isGroup: boolean;
   assignment: AssignmentFullInfo;
   candidateOwner: CandidateFullInfo;
   candidateOwnerId: string;

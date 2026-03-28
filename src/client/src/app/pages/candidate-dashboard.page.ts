@@ -1097,7 +1097,7 @@ export class CandidateDashboardPage implements OnInit {
     if (!solution.id) return;
 
     // Для групповых проектов с недостаточным количеством участников - предупреждение
-    if (solution.isGroup && solution.candidates.length < solution.assignment.candidatesCapacity) {
+    if (solution.assignment.isGrouped && solution.candidates.length < solution.assignment.candidatesCapacity) {
       const confirmed = confirm(
         `ВНИМАНИЕ: В команде только ${solution.candidates.length} из ${solution.assignment.candidatesCapacity} участников.\n\n` +
         `Вы всё равно хотите взять задание в работу?`
