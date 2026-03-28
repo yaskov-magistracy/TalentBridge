@@ -230,6 +230,11 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               <button (click)="closeAssignmentModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
             </div>
 
+            <!-- Technologies -->
+            <div class="flex flex-wrap gap-2 mb-4">
+              <app-tech-chip *ngFor="let tech of selectedAssignment.technologies" [name]="tech.name"></app-tech-chip>
+            </div>
+
             <!-- Info Bar -->
             <div class="flex flex-wrap gap-4 mb-4 text-sm">
               <div>
@@ -248,11 +253,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                 class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline">
                 🔗 РЕПОЗИТОРИЙ: {{ selectedAssignment.templateUrl }}
               </a>
-            </div>
-
-            <!-- Technologies -->
-            <div class="flex flex-wrap gap-2 mb-6">
-              <app-tech-chip *ngFor="let tech of selectedAssignment.technologies" [name]="tech.name"></app-tech-chip>
             </div>
 
             <!-- Days Remaining -->
@@ -320,10 +320,15 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               <button (click)="closeSolutionModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
             </div>
 
+            <!-- Technologies -->
+            <div class="flex flex-wrap gap-2 mb-4">
+              <app-tech-chip *ngFor="let tech of selectedSolution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+            </div>
+
             <!-- Info Bar -->
             <div class="flex flex-wrap gap-4 mb-4 text-sm">
               <div>
-                <span class="font-bold">КОМПАНИЯ:</span>
+                <span class="font-bold">КОМПАНИЯ:</span> {{ selectedSolution.assignment.employer.name }}
               </div>
               <div>
                 <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedSolution.assignment.deadLine | date:'dd.MM.yyyy' }}
@@ -340,16 +345,17 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               </a>
             </div>
 
-            <!-- Technologies -->
-            <div class="flex flex-wrap gap-2 mb-6">
-              <app-tech-chip *ngFor="let tech of selectedSolution.assignment.technologies" [name]="tech.name"></app-tech-chip>
-            </div>
-
             <!-- Days Remaining -->
             <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
               <span class="font-bold text-lg" [class]="getDaysRemaining(selectedSolution.assignment.deadLine) < 0 ? 'text-red-600' : 'text-indigo-600'">
                 ОСТАЛОСЬ ДНЕЙ: {{ getDaysRemaining(selectedSolution.assignment.deadLine) }}
               </span>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+              <h3 class="font-bold text-lg mb-2 uppercase">ОПИСАНИЕ ПРОЕКТА</h3>
+              <p class="text-gray-700 whitespace-pre-line">{{ selectedSolution.assignment.description }}</p>
             </div>
 
             <!-- Team Info for Group Projects -->
@@ -395,12 +401,25 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               </h3>
             </div>
 
-            <!-- Description -->
-            <div class="mb-6">
-              <h3 class="font-bold text-lg mb-3 uppercase">ОПИСАНИЕ ПРОЕКТА</h3>
-              <div class="border-2 border-gray-300 p-4 bg-gray-50">
-                <p class="text-gray-700 whitespace-pre-line">{{ selectedSolution.assignment.description }}</p>
+            <!-- Solution ID for Joining (for group projects in NotStarted/InProgress tabs) -->
+            <div *ngIf="selectedSolution.assignment.isGrouped && (selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress')" class="mb-6 border-2 border-indigo-400 bg-indigo-50 p-4">
+              <h3 class="font-bold text-lg mb-3 uppercase text-indigo-800">
+                🔗 ID РЕШЕНИЯ (для присоединения к команде)
+              </h3>
+              <div class="flex items-center gap-2">
+                <code class="flex-1 bg-white px-3 py-2 border-2 border-gray-300 text-sm font-mono break-all">
+                  {{ selectedSolution.id }}
+                </code>
+                <button
+                  (click)="copySolutionId(selectedSolution.id)"
+                  class="border-2 border-indigo-600 bg-indigo-600 text-white px-3 py-2 hover:bg-indigo-700 transition-colors text-xs font-bold uppercase whitespace-nowrap"
+                  title="Скопировать ID">
+                  📋 Копировать
+                </button>
               </div>
+              <p class="text-xs text-gray-600 mt-2">
+                Другие участники могут использовать этот ID для присоединения к вашей команде через кнопку "Присоединиться"
+              </p>
             </div>
 
             <!-- Solution URL (for NotStarted and InProgress tabs) -->
@@ -442,6 +461,57 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               </button>
               <div *ngIf="selectedSolution.state === 'InProgress' && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
                 ⚠️ {{ getSendToReviewDisabledReason(selectedSolution) }}
+              </div>
+            </div>
+
+            <!-- Review Progress (only for review tab) -->
+            <div *ngIf="activeTab === 'review'" class="mt-6 border-2 border-amber-300 p-4 bg-amber-50">
+              <h4 class="font-bold mb-4 uppercase text-amber-700">СТАДИИ ПРОВЕРКИ</h4>
+              <div class="flex items-center justify-between mb-4">
+                <!-- Autotests -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'Autotests')">
+                    {{ getStageNumber(selectedSolution.state, 'Autotests') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'Autotests')">
+                    {{ selectedSolution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
+                  </div>
+                </div>
+                <!-- Line -->
+                <div class="flex-1 h-1 mx-2"
+                  [class]="getLineClass(selectedSolution.state, 'Autotests')"></div>
+                <!-- AI Review -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'AiReview')">
+                    {{ getStageNumber(selectedSolution.state, 'AiReview') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'AiReview')">
+                    {{ selectedSolution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
+                  </div>
+                </div>
+                <!-- Line -->
+                <div class="flex-1 h-1 mx-2"
+                  [class]="getLineClass(selectedSolution.state, 'AiReview')"></div>
+                <!-- Expert Review -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'ExpertReview')">
+                    {{ getStageNumber(selectedSolution.state, 'ExpertReview') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'ExpertReview')">
+                    {{ selectedSolution.state === 'ExpertReview' ? '✓ ' : '' }}ЭКСПЕРТ
+                  </div>
+                </div>
+              </div>
+              <!-- Status Message -->
+              <div class="border-l-4 border-amber-500 bg-amber-50 p-3">
+                <p class="text-xs font-bold uppercase text-amber-700 mb-1">СТАТУС:</p>
+                <p class="text-sm text-amber-900">{{ getStatusMessage(selectedSolution.state) }}</p>
               </div>
             </div>
           </div>
@@ -556,16 +626,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                 placeholder="Поиск заданий..."/>
             </div>
 
-            <!-- Search Bar for Solutions Tabs -->
-            <div *ngIf="activeTab !== 'available'" class="mb-6">
-              <input
-                type="text"
-                [(ngModel)]="solutionsSearchText"
-                (ngModelChange)="onSolutionsSearch()"
-                class="w-full border-2 border-black p-3"
-                placeholder="Поиск..."/>
-            </div>
-
             <!-- Available Assignments -->
             <div *ngIf="activeTab === 'available'">
               <div class="space-y-4">
@@ -573,6 +633,9 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                   <div (click)="openAssignmentModal(assignment)" class="cursor-pointer">
                     <div class="mb-3">
                       <h3 class="font-bold text-lg mb-1">{{ assignment.name }}</h3>
+                      <div class="flex flex-wrap gap-2 mb-2">
+                        <app-tech-chip *ngFor="let tech of assignment.technologies" [name]="tech.name"></app-tech-chip>
+                      </div>
                       <p class="text-sm mb-2"><span class="font-bold">КОМПАНИЯ:</span> {{ assignment.employer.name }}</p>
                       <p class="text-sm mb-2">
                         <span class="font-bold">ДЕДЛАЙН:</span> {{ assignment.deadLine | date:'dd.MM.yyyy' }}
@@ -583,9 +646,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                       <p class="text-sm mb-3" *ngIf="!assignment.isGrouped">
                         <span class="font-bold">ПРОЕКТ:</span> ИНДИВИДУАЛЬНЫЙ
                       </p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <app-tech-chip *ngFor="let tech of assignment.technologies" [name]="tech.name"></app-tech-chip>
                     </div>
                   </div>
                 </div>
@@ -602,12 +662,14 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                   <div (click)="openSolutionModal(solution)" class="cursor-pointer flex-1">
                     <div class="mb-3">
                       <h3 class="font-bold text-lg mb-1">{{ solution.assignment.name }}</h3>
-                      <p class="text-sm mb-2"><span class="font-bold">КОМПАНИЯ:</span></p>
+                      <div class="flex flex-wrap gap-2 mb-2">
+                        <app-tech-chip *ngFor="let tech of solution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+                      </div>
+                      <p class="text-sm mb-2">
+                        <span class="font-bold">КОМПАНИЯ:</span> {{ solution.assignment.employer.name }}
+                      </p>
                       <p class="text-sm mb-2">
                         <span class="font-bold">ДЕДЛАЙН:</span> {{ solution.assignment.deadLine | date:'dd.MM.yyyy' }}
-                      </p>
-                      <p class="text-sm mb-2" *ngIf="activeTab === 'review'">
-                        <span class="font-bold">СТАТУС:</span> {{ getStateLabel(solution.state) }}
                       </p>
                       <p class="text-sm mb-2" *ngIf="solution.team">
                         <span class="font-bold">КОМАНДА:</span> {{ solution.team.name }}
@@ -622,8 +684,20 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                      <app-tech-chip *ngFor="let tech of solution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+                    <!-- Review Stage Badges (moved to bottom for review tab) -->
+                    <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review'">
+                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
+                        [class]="getStageBadgeClass(solution.state, 'Autotests')">
+                        {{ solution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
+                      </span>
+                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
+                        [class]="getStageBadgeClass(solution.state, 'AiReview')">
+                        {{ solution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
+                      </span>
+                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
+                        [class]="getStageBadgeClass(solution.state, 'ExpertReview')">
+                        {{ solution.state === 'ExpertReview' ? '✓ ' : '' }}ЭКСПЕРТ
+                      </span>
                     </div>
                   </div>
                   <!-- Start Button for Waiting Start Tab -->
@@ -687,7 +761,6 @@ export class CandidateDashboardPage implements OnInit {
 
   // Solutions tabs
   solutions: SolutionFullInfo[] = [];
-  solutionsSearchText = '';
 
   // Assignment modal
   selectedAssignment: AssignmentFullInfo | null = null;
@@ -702,7 +775,7 @@ export class CandidateDashboardPage implements OnInit {
   sendingToReview = false;
   solutionUrl = '';
   savingSolutionUrl = false;
-  
+
   // Join solution modal
   showJoinModal = false;
   joinSolutionId = '';
@@ -734,7 +807,6 @@ export class CandidateDashboardPage implements OnInit {
 
   ngOnInit() {
     this.loadCandidate();
-    this.loadAvailableAssignments();
     this.loadSolutions();
   }
 
@@ -758,7 +830,8 @@ export class CandidateDashboardPage implements OnInit {
     const searchRequest: AssignmentSearchRequest = {
       text: this.availableSearchText || undefined,
       take: 100,
-      skip: 0
+      skip: 0,
+      excludedIds: this.solutions.map(s => s.assignment.id)
     };
     this.assignmentsService.searchAssignments(searchRequest).subscribe({
       next: (response) => {
@@ -774,7 +847,6 @@ export class CandidateDashboardPage implements OnInit {
 
   private loadSolutions(): void {
     const searchRequest: SolutionSearchRequest = {
-      text: this.solutionsSearchText || undefined,
       candidateId: this.authService.currentUser()?.userId,
       take: 100,
       skip: 0
@@ -783,6 +855,8 @@ export class CandidateDashboardPage implements OnInit {
       next: (response) => {
         this.solutions = response.items || [];
         this.cdr.markForCheck();
+        // Загружаем задания после загрузки решений
+        this.loadAvailableAssignments();
       },
       error: (error) => {
         console.error('Failed to load solutions:', error);
@@ -793,9 +867,9 @@ export class CandidateDashboardPage implements OnInit {
 
   onTabChange(tab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'canceled'): void {
     this.activeTab = tab;
-    // При переключении на таб Available - загружаем задания, иначе - решения
+    // При переключении на таб Available - загружаем решения, а задания загрузятся автоматически
     if (tab === 'available') {
-      this.loadAvailableAssignments();
+      this.loadSolutions();
     } else {
       this.loadSolutions();
     }
@@ -805,13 +879,6 @@ export class CandidateDashboardPage implements OnInit {
     clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => {
       this.loadAvailableAssignments();
-    }, 300);
-  }
-
-  onSolutionsSearch(): void {
-    clearTimeout(this.searchTimeout);
-    this.searchTimeout = setTimeout(() => {
-      this.loadSolutions();
     }, 300);
   }
 
@@ -830,7 +897,7 @@ export class CandidateDashboardPage implements OnInit {
         case 'in-progress':
           return state === 'InProgress';
         case 'review':
-          return state === 'AiReview' || state === 'ExpertReview';
+          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
         case 'canceled':
           return state === 'Canceled';
         default:
@@ -850,7 +917,7 @@ export class CandidateDashboardPage implements OnInit {
         case 'in-progress':
           return state === 'InProgress';
         case 'review':
-          return state === 'AiReview' || state === 'ExpertReview';
+          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
         case 'canceled':
           return state === 'Canceled';
         default:
@@ -893,6 +960,79 @@ export class CandidateDashboardPage implements OnInit {
       'Canceled': 'Отменено'
     };
     return labels[state] || state;
+  }
+
+  getStageBadgeClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'border-emerald-500 bg-emerald-50 text-emerald-700';
+    } else if (currentIndex === stageIndex) {
+      // Текущий этап
+      return 'border-amber-500 bg-amber-50 text-amber-700';
+    } else {
+      // Ожидает
+      return 'border-gray-300 bg-gray-100 text-gray-500';
+    }
+  }
+
+  getReviewStageClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'border-emerald-500 bg-emerald-500 text-white';
+    } else if (currentIndex === stageIndex) {
+      // Текущий этап
+      return 'border-amber-500 bg-amber-50 text-amber-700';
+    } else {
+      // Ожидает
+      return 'border-gray-300 bg-white text-gray-400';
+    }
+  }
+
+  getLineClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'bg-emerald-500';
+    } else {
+      // Ожидает
+      return 'bg-gray-300';
+    }
+  }
+
+  getStageNumber(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      return '✓';
+    } else {
+      return stage === 'Autotests' ? '1' : stage === 'AiReview' ? '2' : '3';
+    }
+  }
+
+  getStatusMessage(state: SolutionState): string {
+    switch (state) {
+      case 'Autotests':
+        return 'Решение проходит автоматические тесты. Ожидайте завершения проверки.';
+      case 'AiReview':
+        return 'Автотесты пройдены. Решение анализируется искусственным интеллектом.';
+      case 'ExpertReview':
+        return 'Решение на проверке у эксперта. Ожидайте обратную связь.';
+      default:
+        return 'Неизвестный статус проверки.';
+    }
   }
 
   openAssignmentModal(assignment: AssignmentFullInfo): void {
@@ -977,6 +1117,15 @@ export class CandidateDashboardPage implements OnInit {
         alert('Не удалось взять задание в работу. Попробуйте позже.');
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  copySolutionId(solutionId: string): void {
+    navigator.clipboard.writeText(solutionId).then(() => {
+      alert('ID решения скопирован в буфер обмена!');
+    }).catch((err) => {
+      console.error('Failed to copy solution ID:', err);
+      alert('Не удалось скопировать ID. Попробуйте вручную.');
     });
   }
 

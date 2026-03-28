@@ -168,8 +168,59 @@ import { SolutionFullInfo, SolutionState, SolutionSearchRequest, AssignmentFullI
             <!-- Solution Info -->
             <div class="border-2 border-gray-300 p-4 bg-gray-50">
               <h3 class="font-bold text-lg mb-2 uppercase">{{ selectedSolution.team?.name || 'Индивидуальное решение' }}</h3>
-              <p class="text-sm"><span class="font-bold">СТАТУС:</span> {{ getStateLabel(selectedSolution.state) }}</p>
+              <p class="text-sm"><span class="font-bold">КОМПАНИЯ:</span> {{ selectedSolution.assignment.employer.name }}</p>
               <p class="text-sm"><span class="font-bold">НАЧАТО:</span> {{ selectedSolution.startedAt | date:'dd.MM.yyyy' }}</p>
+            </div>
+
+            <!-- Review Progress -->
+            <div class="border-2 border-amber-300 p-4 bg-amber-50">
+              <h4 class="font-bold mb-4 uppercase text-amber-700">СТАДИИ ПРОВЕРКИ</h4>
+              <div class="flex items-center justify-between mb-4">
+                <!-- Autotests -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'Autotests')">
+                    {{ getStageNumber(selectedSolution.state, 'Autotests') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'Autotests')">
+                    {{ selectedSolution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
+                  </div>
+                </div>
+                <!-- Line -->
+                <div class="flex-1 h-1 mx-2"
+                  [class]="getLineClass(selectedSolution.state, 'Autotests')"></div>
+                <!-- AI Review -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'AiReview')">
+                    {{ getStageNumber(selectedSolution.state, 'AiReview') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'AiReview')">
+                    {{ selectedSolution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
+                  </div>
+                </div>
+                <!-- Line -->
+                <div class="flex-1 h-1 mx-2"
+                  [class]="getLineClass(selectedSolution.state, 'AiReview')"></div>
+                <!-- Expert Review -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'ExpertReview')">
+                    {{ getStageNumber(selectedSolution.state, 'ExpertReview') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'ExpertReview')">
+                    {{ selectedSolution.state === 'ExpertReview' ? '✓ ' : '' }}ЭКСПЕРТ
+                  </div>
+                </div>
+              </div>
+              <!-- Status Message -->
+              <div class="border-l-4 border-amber-500 bg-amber-50 p-3">
+                <p class="text-xs font-bold uppercase text-amber-700 mb-1">СТАТУС:</p>
+                <p class="text-sm text-amber-900">{{ getStatusMessage(selectedSolution.state) }}</p>
+              </div>
             </div>
 
             <!-- Repository Link -->
@@ -378,6 +429,79 @@ export class AssignmentSolutionsPage implements OnInit {
         return `${baseClasses} bg-red-200 text-red-700`;
       default:
         return `${baseClasses} bg-gray-200 text-gray-700`;
+    }
+  }
+
+  getStageBadgeClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'border-emerald-500 bg-emerald-50 text-emerald-700';
+    } else if (currentIndex === stageIndex) {
+      // Текущий этап
+      return 'border-amber-500 bg-amber-50 text-amber-700';
+    } else {
+      // Ожидает
+      return 'border-gray-300 bg-gray-100 text-gray-500';
+    }
+  }
+
+  getReviewStageClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'border-emerald-500 bg-emerald-500 text-white';
+    } else if (currentIndex === stageIndex) {
+      // Текущий этап
+      return 'border-amber-500 bg-amber-50 text-amber-700';
+    } else {
+      // Ожидает
+      return 'border-gray-300 bg-white text-gray-400';
+    }
+  }
+
+  getLineClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'bg-emerald-500';
+    } else {
+      // Ожидает
+      return 'bg-gray-300';
+    }
+  }
+
+  getStageNumber(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      return '✓';
+    } else {
+      return stage === 'Autotests' ? '1' : stage === 'AiReview' ? '2' : '3';
+    }
+  }
+
+  getStatusMessage(state: SolutionState): string {
+    switch (state) {
+      case 'Autotests':
+        return 'Решение проходит автоматические тесты. Ожидайте завершения проверки.';
+      case 'AiReview':
+        return 'Автотесты пройдены. Решение анализируется искусственным интеллектом.';
+      case 'ExpertReview':
+        return 'Решение на проверке у эксперта. Ожидайте обратную связь.';
+      default:
+        return 'Неизвестный статус проверки.';
     }
   }
 

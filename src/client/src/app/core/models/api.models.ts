@@ -119,6 +119,7 @@ export interface AssignmentSearchRequest {
   text?: string;
   take?: number;
   skip?: number;
+  excludedIds?: string[];
 }
 
 export interface AssignmentSearchResponse {
