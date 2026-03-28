@@ -25,7 +25,7 @@ internal static class SolutionsMapper
             entity.StartedAt,
             ToDomain(entity.State),
             entity.Team == null ? null : ToDomain(entity.Team),
-            AssignmentsMapper.ToDomain(entity.Assignment),
+            AssignmentsMapper.ToDomainFull(entity.Assignment),
             CandidatesMapper.ToDomain(entity.CandidateOwner),
             entity.Candidates.Select(CandidatesMapper.ToDomain).ToList()
         );
@@ -36,7 +36,7 @@ internal static class SolutionsMapper
         return new()
         {
             SolutionUrl = createEntity.SolutionUrl,
-            StartedAt = createEntity.StartedAt,
+            StartedAt = null,
             State = ToEntity(createEntity.State),
             AssignmentId = createEntity.AssignmentId,
             Assignment = new()
@@ -45,15 +45,16 @@ internal static class SolutionsMapper
             },
             CandidateOwnerId = createEntity.CandidateId,
             CandidateOwner = candidateOwner,
-            Candidates = [candidateOwner]
+            Candidates = [candidateOwner],
+            Team = createEntity.Team == null ? null : ToEntity(createEntity.Team),
         };
     }
 
-    public static SolutionTeamEntity ToEntity(SolutionTeamEntity entity)
+    public static SolutionTeamEntity ToEntity(SolutionTeamCreateEntity createEntity)
         => new()
         {
-            Name = entity.Name,
-            Description = entity.Description,
+            Name = createEntity.Name,
+            Description = createEntity.Description,
         };
     
     public static SolutionTeam ToDomain(SolutionTeamEntity entity)

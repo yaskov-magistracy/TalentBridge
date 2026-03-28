@@ -2,15 +2,14 @@ namespace Domain.Solutions.DTO;
 
 public record SolutionCreateEntity(
     string? SolutionUrl,
-    DateOnly StartedAt,
     SolutionState State,
-    TeamCreateEntity? Team,
+    SolutionTeamCreateEntity? Team,
     Guid AssignmentId,
     Guid CandidateId)
 {
 }
 
-public record TeamCreateEntity(
+public record SolutionTeamCreateEntity(
     string Name,
     string Description
 );
