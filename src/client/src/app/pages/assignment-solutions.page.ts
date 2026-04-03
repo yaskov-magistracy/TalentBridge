@@ -6,6 +6,7 @@ import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { SolutionsService, AssignmentsService } from '../core';
 import { SolutionFullInfo, SolutionState, SolutionSearchRequest, AssignmentFullInfo } from '../core/models/api.models';
+import { NotificationService } from '../core/services/notification.service';
 
 @Component({
   selector: 'app-assignment-solutions',
@@ -134,6 +135,7 @@ import { SolutionFullInfo, SolutionState, SolutionSearchRequest, AssignmentFullI
                     *ngIf="solution.solutionUrl && (activeTab === 'autotestsAi' || activeTab === 'expertReview')"
                     [href]="solution.solutionUrl"
                     target="_blank"
+                    (click)="$event.stopPropagation()"
                     class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline mb-3"
                   >
                     🔗 Репозиторий решения
@@ -612,6 +614,7 @@ export class AssignmentSolutionsPage implements OnInit {
   private readonly solutionsService = inject(SolutionsService);
   private readonly assignmentsService = inject(AssignmentsService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly notificationService = inject(NotificationService);
 
   assignmentId = '';
   assignment: AssignmentFullInfo | null = null;
@@ -833,8 +836,8 @@ export class AssignmentSolutionsPage implements OnInit {
 
     // Здесь будет вызов сервиса для отправки оценки
     // Пока просто закрываем модалку и показываем уведомление
-    alert(
-      `Решение ${this.reviewApproved ? 'одобрено' : 'отклонено'}!\nКомментарий: ${this.reviewComment}`,
+    this.notificationService.success(
+      `Решение ${this.reviewApproved ? 'одобрено' : 'отклонено'}! Комментарий: ${this.reviewComment}`,
     );
     this.closeReviewModal();
     this.loadSolutions(); // Перезагружаем список решений

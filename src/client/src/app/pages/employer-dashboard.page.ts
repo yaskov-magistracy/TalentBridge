@@ -10,6 +10,7 @@ import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { EmployerCandidate, EmployerProfile, Submission } from '../core/models/domain.models';
 import { AssignmentFullInfo, AssignmentSearchRequest, AssignmentUpdateEntity, AssignmentCreateApiRequest, RelationsPatch, Technology, SolutionState, SolutionSearchRequest } from '../core/models/api.models';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
+import { NotificationService } from '../core/services/notification.service';
 
 @Component({
   selector: 'app-employer-dashboard',
@@ -717,6 +718,7 @@ export class EmployerDashboardPage implements OnInit {
   private readonly technologiesService = inject(TechnologiesService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly repository = inject(TalentBridgeRepository);
+  private readonly notificationService = inject(NotificationService);
 
   profile: EmployerProfile | null = null;
   editProfile: EmployerProfile = {
@@ -880,14 +882,14 @@ export class EmployerDashboardPage implements OnInit {
 
   approveSubmission() {
     if (this.selectedSubmission) {
-      alert('Решение одобрено!');
+      this.notificationService.success('Решение одобрено!');
       this.closeExpertReviewModal();
     }
   }
 
   rejectSubmission() {
     if (this.selectedSubmission) {
-      alert('Решение отклонено!');
+      this.notificationService.warning('Решение отклонено!');
       this.closeExpertReviewModal();
     }
   }
@@ -918,7 +920,7 @@ export class EmployerDashboardPage implements OnInit {
 
     // Проверка валидности формы
     if (!this.isFormValid()) {
-      alert('Заполните все обязательные поля корректно');
+      this.notificationService.warning('Заполните все обязательные поля корректно');
       return;
     }
 
@@ -944,14 +946,14 @@ export class EmployerDashboardPage implements OnInit {
 
     this.assignmentsService.updateAssignment(this.editingAssignment.id, patchRequest).subscribe({
       next: () => {
-        alert('Задание успешно обновлено!');
+        this.notificationService.success('Задание успешно обновлено!');
         this.closeEditAssignmentModal();
         this.loadPublishedAssignments();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to update assignment:', error);
-        alert('Не удалось обновить задание. Попробуйте позже.');
+        this.notificationService.error('Не удалось обновить задание. Попробуйте позже.');
         this.savingAssignment = false;
         this.cdr.markForCheck();
       }
@@ -988,7 +990,7 @@ export class EmployerDashboardPage implements OnInit {
 
   createAssignment(): void {
     if (!this.isCreateFormValid()) {
-      alert('Заполните все обязательные поля корректно');
+      this.notificationService.warning('Заполните все обязательные поля корректно');
       return;
     }
 
@@ -1008,14 +1010,14 @@ export class EmployerDashboardPage implements OnInit {
 
     this.assignmentsService.createAssignment(createRequest).subscribe({
       next: () => {
-        alert('Задание успешно создано!');
+        this.notificationService.success('Задание успешно создано!');
         this.closeCreateModal();
         this.loadPublishedAssignments();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to create assignment:', error);
-        alert('Не удалось создать задание. Попробуйте позже.');
+        this.notificationService.error('Не удалось создать задание. Попробуйте позже.');
         this.creatingAssignment = false;
         this.cdr.markForCheck();
       }

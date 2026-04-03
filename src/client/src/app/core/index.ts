@@ -7,6 +7,7 @@ export { EmployersService } from './services/employers.service';
 export { SolutionsService } from './services/solutions.service';
 export { TechnologiesService } from './services/technologies.service';
 export { TalentBridgeRepository } from './services/talent-bridge.repository';
+export { NotificationService } from './services/notification.service';
 
 // ==================== Guards ====================
 export { authGuard, requireAuthGuard } from './guards';

@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, CandidatesService, TechnologiesService } from '../../core';
 import { ApiError, Technology } from '../../core/models/api.models';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-register-form',
@@ -234,6 +235,7 @@ export class RegisterForm implements OnInit {
   loadingTechs = false;
   hasSearched = false;
   private searchTimeout: any;
+  private notificationService = inject(NotificationService);
 
   constructor(
     private authService: AuthService,
@@ -393,7 +395,7 @@ export class RegisterForm implements OnInit {
     } catch (error) {
       console.error('Register error:', error);
       const apiError = error as ApiError;
-      alert(apiError?.message || 'Произошла ошибка. Попробуйте позже.');
+      this.notificationService.error(apiError?.message || 'Произошла ошибка. Попробуйте позже.');
     } finally {
       this.loading = false;
     }

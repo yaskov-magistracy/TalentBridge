@@ -1,11 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
 import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
+import { NotificationService } from '../core/services/notification.service';
 
 @Component({
   selector: 'app-candidate-dashboard',
@@ -601,12 +603,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                     class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
                     Проверка {{ getTabCount('review') }}
                   </button>
-                  <button
-                    (click)="onTabChange('canceled')"
-                    [class]="activeTab === 'canceled' ? 'border-2 border-red-600 bg-red-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-red-400'"
-                    class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
-                    Отменённые {{ getTabCount('canceled') }}
-                  </button>
                 </div>
                 <button
                   (click)="openJoinModal()"
@@ -736,9 +732,18 @@ export class CandidateDashboardPage implements OnInit {
   showProfileEdit = false;
   showTechModal = false;
   savingProfile = false;
+  private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
+  private candidatesService = inject(CandidatesService);
+  private technologiesService = inject(TechnologiesService);
+  private assignmentsService = inject(AssignmentsService);
+  private solutionsService = inject(SolutionsService);
+  private cdr = inject(ChangeDetectorRef);
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   candidate: CandidateFullInfo | null = null;
-  profileForm: FormGroup;
+  profileForm!: FormGroup;
 
   // Tech modal
   techSearchQuery = '';
@@ -753,7 +758,7 @@ export class CandidateDashboardPage implements OnInit {
   profileTechs: Technology[] = [];
 
   // Tabs
-  activeTab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'canceled' = 'available';
+  activeTab: 'available' | 'waiting-start' | 'in-progress' | 'review' = 'available';
 
   // Available assignments tab
   availableAssignments: AssignmentFullInfo[] = [];
@@ -787,15 +792,7 @@ export class CandidateDashboardPage implements OnInit {
   readonly TEAM_DESC_MIN_LENGTH = 5;
   readonly TEAM_DESC_MAX_LENGTH = 200;
 
-  constructor(
-    private authService: AuthService,
-    private candidatesService: CandidatesService,
-    private technologiesService: TechnologiesService,
-    private assignmentsService: AssignmentsService,
-    private solutionsService: SolutionsService,
-    private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
-  ) {
+  ngOnInit() {
     this.profileForm = this.fb.group({
       surname: ['', [Validators.required, Validators.maxLength(50)]],
       name: ['', [Validators.required, Validators.maxLength(50)]],
@@ -803,9 +800,6 @@ export class CandidateDashboardPage implements OnInit {
       city: [''],
       about: ['']
     });
-  }
-
-  ngOnInit() {
     this.loadCandidate();
     this.loadSolutions();
   }
@@ -865,7 +859,7 @@ export class CandidateDashboardPage implements OnInit {
     });
   }
 
-  onTabChange(tab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'canceled'): void {
+  onTabChange(tab: 'available' | 'waiting-start' | 'in-progress' | 'review'): void {
     this.activeTab = tab;
     // При переключении на таб Available - загружаем решения, а задания загрузятся автоматически
     if (tab === 'available') {
@@ -898,8 +892,6 @@ export class CandidateDashboardPage implements OnInit {
           return state === 'InProgress';
         case 'review':
           return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
-        case 'canceled':
-          return state === 'Canceled';
         default:
           return false;
       }
@@ -918,8 +910,6 @@ export class CandidateDashboardPage implements OnInit {
           return state === 'InProgress';
         case 'review':
           return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
-        case 'canceled':
-          return state === 'Canceled';
         default:
           return false;
       }
@@ -950,14 +940,13 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   getStateLabel(state: SolutionState): string {
-    const labels: Record<SolutionState, string> = {
+    const labels: Record<string, string> = {
       'NotStarted': 'Ожидает начала',
       'InProgress': 'В работе',
       'Reopened': 'Открыто повторно',
       'Autotests': 'Автотесты',
       'AiReview': 'AI проверка',
-      'ExpertReview': 'Проверка экспертом',
-      'Canceled': 'Отменено'
+      'ExpertReview': 'Проверка экспертом'
     };
     return labels[state] || state;
   }
@@ -1077,7 +1066,7 @@ export class CandidateDashboardPage implements OnInit {
 
     this.solutionsService.joinSolution(this.joinSolutionId.trim()).subscribe({
       next: () => {
-        alert('Вы успешно присоединились к решению!');
+        this.notificationService.success('Вы успешно присоединились к решению!');
         this.closeJoinModal();
         this.loadSolutions();
         this.joiningSolution = false;
@@ -1086,7 +1075,7 @@ export class CandidateDashboardPage implements OnInit {
       error: (error) => {
         console.error('Failed to join solution:', error);
         const errorMessage = error?.error?.message || error?.message || 'Не удалось присоединиться к решению. Проверьте ID и попробуйте позже.';
-        alert(`Ошибка: ${errorMessage}`);
+        this.notificationService.error(`Ошибка: ${errorMessage}`);
         this.joiningSolution = false;
         this.cdr.markForCheck();
       }
@@ -1107,14 +1096,14 @@ export class CandidateDashboardPage implements OnInit {
 
     this.solutionsService.startSolution(solution.id).subscribe({
       next: () => {
-        alert('Задание взято в работу!');
+        this.notificationService.success('Задание взято в работу!');
         this.closeSolutionModal();
         this.loadSolutions();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to start solution:', error);
-        alert('Не удалось взять задание в работу. Попробуйте позже.');
+        this.notificationService.error('Не удалось взять задание в работу. Попробуйте позже.');
         this.cdr.markForCheck();
       }
     });
@@ -1122,10 +1111,10 @@ export class CandidateDashboardPage implements OnInit {
 
   copySolutionId(solutionId: string): void {
     navigator.clipboard.writeText(solutionId).then(() => {
-      alert('ID решения скопирован в буфер обмена!');
+      this.notificationService.success('ID решения скопирован в буфер обмена!');
     }).catch((err) => {
       console.error('Failed to copy solution ID:', err);
-      alert('Не удалось скопировать ID. Попробуйте вручную.');
+      this.notificationService.error('Не удалось скопировать ID. Попробуйте вручную.');
     });
   }
 
@@ -1137,14 +1126,14 @@ export class CandidateDashboardPage implements OnInit {
 
     this.solutionsService.sendToReview(solution.id).subscribe({
       next: () => {
-        alert('Решение отправлено на проверку!');
+        this.notificationService.success('Решение отправлено на проверку!');
         this.closeSolutionModal();
         this.loadSolutions();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to send to review:', error);
-        alert('Не удалось отправить решение на проверку. Попробуйте позже.');
+        this.notificationService.error('Не удалось отправить решение на проверку. Попробуйте позже.');
         this.sendingToReview = false;
         this.cdr.markForCheck();
       }
@@ -1181,7 +1170,7 @@ export class CandidateDashboardPage implements OnInit {
 
     this.solutionsService.updateSolution(solution.id, patchRequest).subscribe({
       next: (updated) => {
-        alert('Ссылка сохранена!');
+        this.notificationService.success('Ссылка сохранена!');
         this.selectedSolution = updated;
         this.loadSolutions();
         this.savingSolutionUrl = false;
@@ -1189,7 +1178,7 @@ export class CandidateDashboardPage implements OnInit {
       },
       error: (error) => {
         console.error('Failed to save solution URL:', error);
-        alert('Не удалось сохранить ссылку. Попробуйте позже.');
+        this.notificationService.error('Не удалось сохранить ссылку. Попробуйте позже.');
         this.savingSolutionUrl = false;
         this.cdr.markForCheck();
       }
@@ -1267,14 +1256,14 @@ export class CandidateDashboardPage implements OnInit {
 
       await this.solutionsService.createSolution(request).toPromise();
 
-      alert('Задание успешно взято!');
+      this.notificationService.success('Задание успешно взято!');
       this.closeAssignmentModal();
       // Перезагружаем решения для обновления счётчиков в табах
       this.loadSolutions();
       this.cdr.markForCheck();
     } catch (error) {
       console.error('Failed to take assignment:', error);
-      alert('Не удалось взять задание. Попробуйте позже.');
+      this.notificationService.error('Не удалось взять задание. Попробуйте позже.');
       this.cdr.markForCheck();
     } finally {
       this.takingAssignment = false;
@@ -1328,7 +1317,7 @@ export class CandidateDashboardPage implements OnInit {
       this.cdr.markForCheck();
     } catch (error) {
       console.error('Failed to update profile:', error);
-      alert('Не удалось обновить профиль. Попробуйте позже.');
+      this.notificationService.error('Не удалось обновить профиль. Попробуйте позже.');
       this.cdr.markForCheck();
     } finally {
       this.savingProfile = false;
