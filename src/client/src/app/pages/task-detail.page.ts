@@ -118,7 +118,7 @@ import { Task, Team } from '../core/models/domain.models';
       </div>
 
       <!-- Team Modal -->
-      <div *ngIf="showTeamModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-8 z-50">
+      <div *ngIf="showTeamModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-8 z-[9999]">
         <div class="bg-white border-2 border-purple-600 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
           <!-- Header -->
           <div class="border-b-2 border-purple-600 p-6 flex justify-between items-center bg-purple-50">

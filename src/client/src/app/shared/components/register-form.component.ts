@@ -143,7 +143,7 @@ import { NotificationService } from '../../core/services/notification.service';
     </form>
 
     <!-- Technology Modal -->
-    <div *ngIf="showTechModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeTechModal()">
+    <div *ngIf="showTechModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeTechModal()">
       <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
         <h3 class="text-xl font-bold mb-4 uppercase text-indigo-600">Выберите технологии</h3>
         

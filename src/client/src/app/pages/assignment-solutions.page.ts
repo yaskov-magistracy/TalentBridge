@@ -228,7 +228,7 @@ import { NotificationService } from '../core/services/notification.service';
       <!-- Review Modal -->
       <div
         *ngIf="showReviewModal && selectedSolution"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]"
         (click)="closeReviewModal()"
       >
         <div
@@ -456,7 +456,7 @@ import { NotificationService } from '../core/services/notification.service';
       <!-- Solution Detail Modal (for expertReview tab) -->
       <div
         *ngIf="showSolutionDetailModal && selectedSolution"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]"
         (click)="closeSolutionDetailModal()"
       >
         <div

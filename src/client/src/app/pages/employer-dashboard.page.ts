@@ -248,7 +248,7 @@ import { NotificationService } from '../core/services/notification.service';
       </div>
 
       <!-- Expert Review Modal -->
-      <div *ngIf="showExpertReviewModal && selectedSubmission" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-8 z-50">
+      <div *ngIf="showExpertReviewModal && selectedSubmission" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-8 z-[9999]">
         <div class="bg-white border-2 border-indigo-600 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
           <!-- Header -->
           <div class="border-b-2 border-indigo-600 p-6 flex justify-between items-center bg-indigo-50">
@@ -338,7 +338,7 @@ import { NotificationService } from '../core/services/notification.service';
       </div>
 
       <!-- Edit Assignment Modal -->
-      <div *ngIf="showEditAssignmentModal && editingAssignment" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeEditAssignmentModal()">
+      <div *ngIf="showEditAssignmentModal && editingAssignment" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeEditAssignmentModal()">
         <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
           <!-- Header -->
           <div class="flex justify-between items-start mb-6">
@@ -504,7 +504,7 @@ import { NotificationService } from '../core/services/notification.service';
       </div>
 
       <!-- Create Assignment Modal -->
-      <div *ngIf="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeCreateModal()">
+      <div *ngIf="showCreateModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeCreateModal()">
         <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
           <!-- Header -->
           <div class="flex justify-between items-start mb-6">
@@ -670,7 +670,7 @@ import { NotificationService } from '../core/services/notification.service';
       </div>
 
       <!-- Technology Modal -->
-      <div *ngIf="showTechModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeTechModal()">
+      <div *ngIf="showTechModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeTechModal()">
         <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
           <h3 class="text-xl font-bold mb-4 uppercase text-indigo-600">ВЫБЕРИТЕ ТЕХНОЛОГИИ</h3>
 
