@@ -10,6 +10,7 @@ import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { EmployerCandidate, EmployerProfile, Submission } from '../core/models/domain.models';
 import { AssignmentFullInfo, AssignmentSearchRequest, AssignmentUpdateEntity, AssignmentCreateApiRequest, RelationsPatch, Technology, SolutionState, SolutionSearchRequest } from '../core/models/api.models';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
+import { NotificationService } from '../core/services/notification.service';
 
 @Component({
   selector: 'app-employer-dashboard',
@@ -247,7 +248,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
       </div>
 
       <!-- Expert Review Modal -->
-      <div *ngIf="showExpertReviewModal && selectedSubmission" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-8 z-50">
+      <div *ngIf="showExpertReviewModal && selectedSubmission" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-8 z-[9999]">
         <div class="bg-white border-2 border-indigo-600 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
           <!-- Header -->
           <div class="border-b-2 border-indigo-600 p-6 flex justify-between items-center bg-indigo-50">
@@ -337,7 +338,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
       </div>
 
       <!-- Edit Assignment Modal -->
-      <div *ngIf="showEditAssignmentModal && editingAssignment" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeEditAssignmentModal()">
+      <div *ngIf="showEditAssignmentModal && editingAssignment" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeEditAssignmentModal()">
         <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
           <!-- Header -->
           <div class="flex justify-between items-start mb-6">
@@ -503,7 +504,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
       </div>
 
       <!-- Create Assignment Modal -->
-      <div *ngIf="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeCreateModal()">
+      <div *ngIf="showCreateModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeCreateModal()">
         <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
           <!-- Header -->
           <div class="flex justify-between items-start mb-6">
@@ -669,7 +670,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
       </div>
 
       <!-- Technology Modal -->
-      <div *ngIf="showTechModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeTechModal()">
+      <div *ngIf="showTechModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeTechModal()">
         <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
           <h3 class="text-xl font-bold mb-4 uppercase text-indigo-600">ВЫБЕРИТЕ ТЕХНОЛОГИИ</h3>
 
@@ -717,6 +718,7 @@ export class EmployerDashboardPage implements OnInit {
   private readonly technologiesService = inject(TechnologiesService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly repository = inject(TalentBridgeRepository);
+  private readonly notificationService = inject(NotificationService);
 
   profile: EmployerProfile | null = null;
   editProfile: EmployerProfile = {
@@ -880,14 +882,14 @@ export class EmployerDashboardPage implements OnInit {
 
   approveSubmission() {
     if (this.selectedSubmission) {
-      alert('Решение одобрено!');
+      this.notificationService.success('Решение одобрено!');
       this.closeExpertReviewModal();
     }
   }
 
   rejectSubmission() {
     if (this.selectedSubmission) {
-      alert('Решение отклонено!');
+      this.notificationService.warning('Решение отклонено!');
       this.closeExpertReviewModal();
     }
   }
@@ -918,7 +920,7 @@ export class EmployerDashboardPage implements OnInit {
 
     // Проверка валидности формы
     if (!this.isFormValid()) {
-      alert('Заполните все обязательные поля корректно');
+      this.notificationService.warning('Заполните все обязательные поля корректно');
       return;
     }
 
@@ -944,14 +946,14 @@ export class EmployerDashboardPage implements OnInit {
 
     this.assignmentsService.updateAssignment(this.editingAssignment.id, patchRequest).subscribe({
       next: () => {
-        alert('Задание успешно обновлено!');
+        this.notificationService.success('Задание успешно обновлено!');
         this.closeEditAssignmentModal();
         this.loadPublishedAssignments();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to update assignment:', error);
-        alert('Не удалось обновить задание. Попробуйте позже.');
+        this.notificationService.error('Не удалось обновить задание. Попробуйте позже.');
         this.savingAssignment = false;
         this.cdr.markForCheck();
       }
@@ -988,7 +990,7 @@ export class EmployerDashboardPage implements OnInit {
 
   createAssignment(): void {
     if (!this.isCreateFormValid()) {
-      alert('Заполните все обязательные поля корректно');
+      this.notificationService.warning('Заполните все обязательные поля корректно');
       return;
     }
 
@@ -1008,14 +1010,14 @@ export class EmployerDashboardPage implements OnInit {
 
     this.assignmentsService.createAssignment(createRequest).subscribe({
       next: () => {
-        alert('Задание успешно создано!');
+        this.notificationService.success('Задание успешно создано!');
         this.closeCreateModal();
         this.loadPublishedAssignments();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to create assignment:', error);
-        alert('Не удалось создать задание. Попробуйте позже.');
+        this.notificationService.error('Не удалось создать задание. Попробуйте позже.');
         this.creatingAssignment = false;
         this.cdr.markForCheck();
       }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,6 +7,7 @@ import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
 import { Task } from '../core/models/domain.models';
+import { NotificationService } from '../core/services/notification.service';
 
 @Component({
   selector: 'app-edit-task',
@@ -161,7 +162,8 @@ export class EditTaskPage implements OnInit {
   AVAILABLE_TECHS = AVAILABLE_TECHS;
   task: Task | null = null;
   selectedTechs: string[] = [];
-  
+  private notificationService = inject(NotificationService);
+
   form = {
     title: '',
     description: '',
@@ -211,7 +213,7 @@ export class EditTaskPage implements OnInit {
 
   submit(): void {
     if (!this.isFormValid()) return;
-    alert('Задание успешно обновлено!');
+    this.notificationService.success('Задание успешно обновлено!');
     this.router.navigate(['/employer-dashboard']);
   }
 

@@ -1,11 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
 import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
+import { NotificationService } from '../core/services/notification.service';
 
 @Component({
   selector: 'app-candidate-dashboard',
@@ -74,7 +76,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
           </div>
 
           <!-- Profile Edit Modal -->
-          <div *ngIf="showProfileEdit" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeProfileEdit()">
+          <div *ngIf="showProfileEdit" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeProfileEdit()">
             <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
               <div class="flex justify-between items-center mb-6">
                 <h3 class="text-2xl font-bold uppercase text-indigo-600">РЕДАКТИРОВАНИЕ ПРОФИЛЯ</h3>
@@ -172,7 +174,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
         </div>
 
         <!-- Technology Modal -->
-        <div *ngIf="showTechModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeTechModal()">
+        <div *ngIf="showTechModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeTechModal()">
           <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
             <h3 class="text-xl font-bold mb-4 uppercase text-indigo-600">Выберите навыки</h3>
 
@@ -222,12 +224,17 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
         </div>
 
         <!-- Assignment Detail Modal -->
-        <div *ngIf="showAssignmentModal && selectedAssignment" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeAssignmentModal()">
+        <div *ngIf="showAssignmentModal && selectedAssignment" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeAssignmentModal()">
           <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
             <!-- Header -->
             <div class="flex justify-between items-start mb-6">
               <h2 class="text-2xl font-bold text-indigo-600 uppercase">{{ selectedAssignment.name }}</h2>
               <button (click)="closeAssignmentModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Technologies -->
+            <div class="flex flex-wrap gap-2 mb-4">
+              <app-tech-chip *ngFor="let tech of selectedAssignment.technologies" [name]="tech.name"></app-tech-chip>
             </div>
 
             <!-- Info Bar -->
@@ -248,11 +255,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                 class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline">
                 🔗 РЕПОЗИТОРИЙ: {{ selectedAssignment.templateUrl }}
               </a>
-            </div>
-
-            <!-- Technologies -->
-            <div class="flex flex-wrap gap-2 mb-6">
-              <app-tech-chip *ngFor="let tech of selectedAssignment.technologies" [name]="tech.name"></app-tech-chip>
             </div>
 
             <!-- Days Remaining -->
@@ -312,7 +314,7 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
         </div>
 
         <!-- Solution Detail Modal -->
-        <div *ngIf="showSolutionModal && selectedSolution" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeSolutionModal()">
+        <div *ngIf="showSolutionModal && selectedSolution" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeSolutionModal()">
           <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
             <!-- Header -->
             <div class="flex justify-between items-start mb-6">
@@ -320,10 +322,15 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               <button (click)="closeSolutionModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
             </div>
 
+            <!-- Technologies -->
+            <div class="flex flex-wrap gap-2 mb-4">
+              <app-tech-chip *ngFor="let tech of selectedSolution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+            </div>
+
             <!-- Info Bar -->
             <div class="flex flex-wrap gap-4 mb-4 text-sm">
               <div>
-                <span class="font-bold">КОМПАНИЯ:</span>
+                <span class="font-bold">КОМПАНИЯ:</span> {{ selectedSolution.assignment.employer.name }}
               </div>
               <div>
                 <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedSolution.assignment.deadLine | date:'dd.MM.yyyy' }}
@@ -340,16 +347,17 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               </a>
             </div>
 
-            <!-- Technologies -->
-            <div class="flex flex-wrap gap-2 mb-6">
-              <app-tech-chip *ngFor="let tech of selectedSolution.assignment.technologies" [name]="tech.name"></app-tech-chip>
-            </div>
-
             <!-- Days Remaining -->
             <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
               <span class="font-bold text-lg" [class]="getDaysRemaining(selectedSolution.assignment.deadLine) < 0 ? 'text-red-600' : 'text-indigo-600'">
                 ОСТАЛОСЬ ДНЕЙ: {{ getDaysRemaining(selectedSolution.assignment.deadLine) }}
               </span>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+              <h3 class="font-bold text-lg mb-2 uppercase">ОПИСАНИЕ ПРОЕКТА</h3>
+              <p class="text-gray-700 whitespace-pre-line">{{ selectedSolution.assignment.description }}</p>
             </div>
 
             <!-- Team Info for Group Projects -->
@@ -395,12 +403,25 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
               </h3>
             </div>
 
-            <!-- Description -->
-            <div class="mb-6">
-              <h3 class="font-bold text-lg mb-3 uppercase">ОПИСАНИЕ ПРОЕКТА</h3>
-              <div class="border-2 border-gray-300 p-4 bg-gray-50">
-                <p class="text-gray-700 whitespace-pre-line">{{ selectedSolution.assignment.description }}</p>
+            <!-- Solution ID for Joining (for group projects in NotStarted/InProgress tabs) -->
+            <div *ngIf="selectedSolution.assignment.isGrouped && (selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress')" class="mb-6 border-2 border-indigo-400 bg-indigo-50 p-4">
+              <h3 class="font-bold text-lg mb-3 uppercase text-indigo-800">
+                🔗 ID РЕШЕНИЯ (для присоединения к команде)
+              </h3>
+              <div class="flex items-center gap-2">
+                <code class="flex-1 bg-white px-3 py-2 border-2 border-gray-300 text-sm font-mono break-all">
+                  {{ selectedSolution.id }}
+                </code>
+                <button
+                  (click)="copySolutionId(selectedSolution.id)"
+                  class="border-2 border-indigo-600 bg-indigo-600 text-white px-3 py-2 hover:bg-indigo-700 transition-colors text-xs font-bold uppercase whitespace-nowrap"
+                  title="Скопировать ID">
+                  📋 Копировать
+                </button>
               </div>
+              <p class="text-xs text-gray-600 mt-2">
+                Другие участники могут использовать этот ID для присоединения к вашей команде через кнопку "Присоединиться"
+              </p>
             </div>
 
             <!-- Solution URL (for NotStarted and InProgress tabs) -->
@@ -444,11 +465,62 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                 ⚠️ {{ getSendToReviewDisabledReason(selectedSolution) }}
               </div>
             </div>
+
+            <!-- Review Progress (only for review tab) -->
+            <div *ngIf="activeTab === 'review'" class="mt-6 border-2 border-amber-300 p-4 bg-amber-50">
+              <h4 class="font-bold mb-4 uppercase text-amber-700">СТАДИИ ПРОВЕРКИ</h4>
+              <div class="flex items-center justify-between mb-4">
+                <!-- Autotests -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'Autotests')">
+                    {{ getStageNumber(selectedSolution.state, 'Autotests') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'Autotests')">
+                    {{ selectedSolution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
+                  </div>
+                </div>
+                <!-- Line -->
+                <div class="flex-1 h-1 mx-2"
+                  [class]="getLineClass(selectedSolution.state, 'Autotests')"></div>
+                <!-- AI Review -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'AiReview')">
+                    {{ getStageNumber(selectedSolution.state, 'AiReview') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'AiReview')">
+                    {{ selectedSolution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
+                  </div>
+                </div>
+                <!-- Line -->
+                <div class="flex-1 h-1 mx-2"
+                  [class]="getLineClass(selectedSolution.state, 'AiReview')"></div>
+                <!-- Expert Review -->
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
+                    [class]="getReviewStageClass(selectedSolution.state, 'ExpertReview')">
+                    {{ getStageNumber(selectedSolution.state, 'ExpertReview') }}
+                  </div>
+                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
+                    [class]="getStageBadgeClass(selectedSolution.state, 'ExpertReview')">
+                    {{ selectedSolution.state === 'ExpertReview' ? '✓ ' : '' }}ЭКСПЕРТ
+                  </div>
+                </div>
+              </div>
+              <!-- Status Message -->
+              <div class="border-l-4 border-amber-500 bg-amber-50 p-3">
+                <p class="text-xs font-bold uppercase text-amber-700 mb-1">СТАТУС:</p>
+                <p class="text-sm text-amber-900">{{ getStatusMessage(selectedSolution.state) }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Join Solution Modal -->
-        <div *ngIf="showJoinModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeJoinModal()">
+        <div *ngIf="showJoinModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeJoinModal()">
           <div class="bg-white border-2 border-emerald-600 p-8 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
             <!-- Header -->
             <div class="flex justify-between items-start mb-6">
@@ -531,12 +603,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                     class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
                     Проверка {{ getTabCount('review') }}
                   </button>
-                  <button
-                    (click)="onTabChange('canceled')"
-                    [class]="activeTab === 'canceled' ? 'border-2 border-red-600 bg-red-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-red-400'"
-                    class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
-                    Отменённые {{ getTabCount('canceled') }}
-                  </button>
                 </div>
                 <button
                   (click)="openJoinModal()"
@@ -556,16 +622,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                 placeholder="Поиск заданий..."/>
             </div>
 
-            <!-- Search Bar for Solutions Tabs -->
-            <div *ngIf="activeTab !== 'available'" class="mb-6">
-              <input
-                type="text"
-                [(ngModel)]="solutionsSearchText"
-                (ngModelChange)="onSolutionsSearch()"
-                class="w-full border-2 border-black p-3"
-                placeholder="Поиск..."/>
-            </div>
-
             <!-- Available Assignments -->
             <div *ngIf="activeTab === 'available'">
               <div class="space-y-4">
@@ -573,6 +629,9 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                   <div (click)="openAssignmentModal(assignment)" class="cursor-pointer">
                     <div class="mb-3">
                       <h3 class="font-bold text-lg mb-1">{{ assignment.name }}</h3>
+                      <div class="flex flex-wrap gap-2 mb-2">
+                        <app-tech-chip *ngFor="let tech of assignment.technologies" [name]="tech.name"></app-tech-chip>
+                      </div>
                       <p class="text-sm mb-2"><span class="font-bold">КОМПАНИЯ:</span> {{ assignment.employer.name }}</p>
                       <p class="text-sm mb-2">
                         <span class="font-bold">ДЕДЛАЙН:</span> {{ assignment.deadLine | date:'dd.MM.yyyy' }}
@@ -583,9 +642,6 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                       <p class="text-sm mb-3" *ngIf="!assignment.isGrouped">
                         <span class="font-bold">ПРОЕКТ:</span> ИНДИВИДУАЛЬНЫЙ
                       </p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                      <app-tech-chip *ngFor="let tech of assignment.technologies" [name]="tech.name"></app-tech-chip>
                     </div>
                   </div>
                 </div>
@@ -602,12 +658,14 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                   <div (click)="openSolutionModal(solution)" class="cursor-pointer flex-1">
                     <div class="mb-3">
                       <h3 class="font-bold text-lg mb-1">{{ solution.assignment.name }}</h3>
-                      <p class="text-sm mb-2"><span class="font-bold">КОМПАНИЯ:</span></p>
+                      <div class="flex flex-wrap gap-2 mb-2">
+                        <app-tech-chip *ngFor="let tech of solution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+                      </div>
+                      <p class="text-sm mb-2">
+                        <span class="font-bold">КОМПАНИЯ:</span> {{ solution.assignment.employer.name }}
+                      </p>
                       <p class="text-sm mb-2">
                         <span class="font-bold">ДЕДЛАЙН:</span> {{ solution.assignment.deadLine | date:'dd.MM.yyyy' }}
-                      </p>
-                      <p class="text-sm mb-2" *ngIf="activeTab === 'review'">
-                        <span class="font-bold">СТАТУС:</span> {{ getStateLabel(solution.state) }}
                       </p>
                       <p class="text-sm mb-2" *ngIf="solution.team">
                         <span class="font-bold">КОМАНДА:</span> {{ solution.team.name }}
@@ -622,8 +680,20 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                      <app-tech-chip *ngFor="let tech of solution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+                    <!-- Review Stage Badges (moved to bottom for review tab) -->
+                    <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review'">
+                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
+                        [class]="getStageBadgeClass(solution.state, 'Autotests')">
+                        {{ solution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
+                      </span>
+                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
+                        [class]="getStageBadgeClass(solution.state, 'AiReview')">
+                        {{ solution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
+                      </span>
+                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
+                        [class]="getStageBadgeClass(solution.state, 'ExpertReview')">
+                        {{ solution.state === 'ExpertReview' ? '✓ ' : '' }}ЭКСПЕРТ
+                      </span>
                     </div>
                   </div>
                   <!-- Start Button for Waiting Start Tab -->
@@ -662,9 +732,18 @@ export class CandidateDashboardPage implements OnInit {
   showProfileEdit = false;
   showTechModal = false;
   savingProfile = false;
+  private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
+  private candidatesService = inject(CandidatesService);
+  private technologiesService = inject(TechnologiesService);
+  private assignmentsService = inject(AssignmentsService);
+  private solutionsService = inject(SolutionsService);
+  private cdr = inject(ChangeDetectorRef);
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   candidate: CandidateFullInfo | null = null;
-  profileForm: FormGroup;
+  profileForm!: FormGroup;
 
   // Tech modal
   techSearchQuery = '';
@@ -679,7 +758,7 @@ export class CandidateDashboardPage implements OnInit {
   profileTechs: Technology[] = [];
 
   // Tabs
-  activeTab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'canceled' = 'available';
+  activeTab: 'available' | 'waiting-start' | 'in-progress' | 'review' = 'available';
 
   // Available assignments tab
   availableAssignments: AssignmentFullInfo[] = [];
@@ -687,7 +766,6 @@ export class CandidateDashboardPage implements OnInit {
 
   // Solutions tabs
   solutions: SolutionFullInfo[] = [];
-  solutionsSearchText = '';
 
   // Assignment modal
   selectedAssignment: AssignmentFullInfo | null = null;
@@ -702,7 +780,7 @@ export class CandidateDashboardPage implements OnInit {
   sendingToReview = false;
   solutionUrl = '';
   savingSolutionUrl = false;
-  
+
   // Join solution modal
   showJoinModal = false;
   joinSolutionId = '';
@@ -714,15 +792,7 @@ export class CandidateDashboardPage implements OnInit {
   readonly TEAM_DESC_MIN_LENGTH = 5;
   readonly TEAM_DESC_MAX_LENGTH = 200;
 
-  constructor(
-    private authService: AuthService,
-    private candidatesService: CandidatesService,
-    private technologiesService: TechnologiesService,
-    private assignmentsService: AssignmentsService,
-    private solutionsService: SolutionsService,
-    private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
-  ) {
+  ngOnInit() {
     this.profileForm = this.fb.group({
       surname: ['', [Validators.required, Validators.maxLength(50)]],
       name: ['', [Validators.required, Validators.maxLength(50)]],
@@ -730,11 +800,7 @@ export class CandidateDashboardPage implements OnInit {
       city: [''],
       about: ['']
     });
-  }
-
-  ngOnInit() {
     this.loadCandidate();
-    this.loadAvailableAssignments();
     this.loadSolutions();
   }
 
@@ -758,7 +824,8 @@ export class CandidateDashboardPage implements OnInit {
     const searchRequest: AssignmentSearchRequest = {
       text: this.availableSearchText || undefined,
       take: 100,
-      skip: 0
+      skip: 0,
+      excludedIds: this.solutions.map(s => s.assignment.id)
     };
     this.assignmentsService.searchAssignments(searchRequest).subscribe({
       next: (response) => {
@@ -774,7 +841,6 @@ export class CandidateDashboardPage implements OnInit {
 
   private loadSolutions(): void {
     const searchRequest: SolutionSearchRequest = {
-      text: this.solutionsSearchText || undefined,
       candidateId: this.authService.currentUser()?.userId,
       take: 100,
       skip: 0
@@ -783,6 +849,8 @@ export class CandidateDashboardPage implements OnInit {
       next: (response) => {
         this.solutions = response.items || [];
         this.cdr.markForCheck();
+        // Загружаем задания после загрузки решений
+        this.loadAvailableAssignments();
       },
       error: (error) => {
         console.error('Failed to load solutions:', error);
@@ -791,11 +859,11 @@ export class CandidateDashboardPage implements OnInit {
     });
   }
 
-  onTabChange(tab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'canceled'): void {
+  onTabChange(tab: 'available' | 'waiting-start' | 'in-progress' | 'review'): void {
     this.activeTab = tab;
-    // При переключении на таб Available - загружаем задания, иначе - решения
+    // При переключении на таб Available - загружаем решения, а задания загрузятся автоматически
     if (tab === 'available') {
-      this.loadAvailableAssignments();
+      this.loadSolutions();
     } else {
       this.loadSolutions();
     }
@@ -805,13 +873,6 @@ export class CandidateDashboardPage implements OnInit {
     clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => {
       this.loadAvailableAssignments();
-    }, 300);
-  }
-
-  onSolutionsSearch(): void {
-    clearTimeout(this.searchTimeout);
-    this.searchTimeout = setTimeout(() => {
-      this.loadSolutions();
     }, 300);
   }
 
@@ -830,9 +891,7 @@ export class CandidateDashboardPage implements OnInit {
         case 'in-progress':
           return state === 'InProgress';
         case 'review':
-          return state === 'AiReview' || state === 'ExpertReview';
-        case 'canceled':
-          return state === 'Canceled';
+          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
         default:
           return false;
       }
@@ -850,9 +909,7 @@ export class CandidateDashboardPage implements OnInit {
         case 'in-progress':
           return state === 'InProgress';
         case 'review':
-          return state === 'AiReview' || state === 'ExpertReview';
-        case 'canceled':
-          return state === 'Canceled';
+          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
         default:
           return false;
       }
@@ -883,16 +940,88 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   getStateLabel(state: SolutionState): string {
-    const labels: Record<SolutionState, string> = {
+    const labels: Record<string, string> = {
       'NotStarted': 'Ожидает начала',
       'InProgress': 'В работе',
       'Reopened': 'Открыто повторно',
       'Autotests': 'Автотесты',
       'AiReview': 'AI проверка',
-      'ExpertReview': 'Проверка экспертом',
-      'Canceled': 'Отменено'
+      'ExpertReview': 'Проверка экспертом'
     };
     return labels[state] || state;
+  }
+
+  getStageBadgeClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'border-emerald-500 bg-emerald-50 text-emerald-700';
+    } else if (currentIndex === stageIndex) {
+      // Текущий этап
+      return 'border-amber-500 bg-amber-50 text-amber-700';
+    } else {
+      // Ожидает
+      return 'border-gray-300 bg-gray-100 text-gray-500';
+    }
+  }
+
+  getReviewStageClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'border-emerald-500 bg-emerald-500 text-white';
+    } else if (currentIndex === stageIndex) {
+      // Текущий этап
+      return 'border-amber-500 bg-amber-50 text-amber-700';
+    } else {
+      // Ожидает
+      return 'border-gray-300 bg-white text-gray-400';
+    }
+  }
+
+  getLineClass(currentState: SolutionState, stage: 'Autotests' | 'AiReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      // Этап пройден
+      return 'bg-emerald-500';
+    } else {
+      // Ожидает
+      return 'bg-gray-300';
+    }
+  }
+
+  getStageNumber(currentState: SolutionState, stage: 'Autotests' | 'AiReview' | 'ExpertReview'): string {
+    const stateOrder: SolutionState[] = ['Autotests', 'AiReview', 'ExpertReview'];
+    const currentIndex = stateOrder.indexOf(currentState);
+    const stageIndex = stateOrder.indexOf(stage);
+
+    if (currentIndex > stageIndex) {
+      return '✓';
+    } else {
+      return stage === 'Autotests' ? '1' : stage === 'AiReview' ? '2' : '3';
+    }
+  }
+
+  getStatusMessage(state: SolutionState): string {
+    switch (state) {
+      case 'Autotests':
+        return 'Решение проходит автоматические тесты. Ожидайте завершения проверки.';
+      case 'AiReview':
+        return 'Автотесты пройдены. Решение анализируется искусственным интеллектом.';
+      case 'ExpertReview':
+        return 'Решение на проверке у эксперта. Ожидайте обратную связь.';
+      default:
+        return 'Неизвестный статус проверки.';
+    }
   }
 
   openAssignmentModal(assignment: AssignmentFullInfo): void {
@@ -937,7 +1066,7 @@ export class CandidateDashboardPage implements OnInit {
 
     this.solutionsService.joinSolution(this.joinSolutionId.trim()).subscribe({
       next: () => {
-        alert('Вы успешно присоединились к решению!');
+        this.notificationService.success('Вы успешно присоединились к решению!');
         this.closeJoinModal();
         this.loadSolutions();
         this.joiningSolution = false;
@@ -946,7 +1075,7 @@ export class CandidateDashboardPage implements OnInit {
       error: (error) => {
         console.error('Failed to join solution:', error);
         const errorMessage = error?.error?.message || error?.message || 'Не удалось присоединиться к решению. Проверьте ID и попробуйте позже.';
-        alert(`Ошибка: ${errorMessage}`);
+        this.notificationService.error(`Ошибка: ${errorMessage}`);
         this.joiningSolution = false;
         this.cdr.markForCheck();
       }
@@ -957,7 +1086,7 @@ export class CandidateDashboardPage implements OnInit {
     if (!solution.id) return;
 
     // Для групповых проектов с недостаточным количеством участников - предупреждение
-    if (solution.isGroup && solution.candidates.length < solution.assignment.candidatesCapacity) {
+    if (solution.assignment.isGrouped && solution.candidates.length < solution.assignment.candidatesCapacity) {
       const confirmed = confirm(
         `ВНИМАНИЕ: В команде только ${solution.candidates.length} из ${solution.assignment.candidatesCapacity} участников.\n\n` +
         `Вы всё равно хотите взять задание в работу?`
@@ -967,16 +1096,25 @@ export class CandidateDashboardPage implements OnInit {
 
     this.solutionsService.startSolution(solution.id).subscribe({
       next: () => {
-        alert('Задание взято в работу!');
+        this.notificationService.success('Задание взято в работу!');
         this.closeSolutionModal();
         this.loadSolutions();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to start solution:', error);
-        alert('Не удалось взять задание в работу. Попробуйте позже.');
+        this.notificationService.error('Не удалось взять задание в работу. Попробуйте позже.');
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  copySolutionId(solutionId: string): void {
+    navigator.clipboard.writeText(solutionId).then(() => {
+      this.notificationService.success('ID решения скопирован в буфер обмена!');
+    }).catch((err) => {
+      console.error('Failed to copy solution ID:', err);
+      this.notificationService.error('Не удалось скопировать ID. Попробуйте вручную.');
     });
   }
 
@@ -988,14 +1126,14 @@ export class CandidateDashboardPage implements OnInit {
 
     this.solutionsService.sendToReview(solution.id).subscribe({
       next: () => {
-        alert('Решение отправлено на проверку!');
+        this.notificationService.success('Решение отправлено на проверку!');
         this.closeSolutionModal();
         this.loadSolutions();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to send to review:', error);
-        alert('Не удалось отправить решение на проверку. Попробуйте позже.');
+        this.notificationService.error('Не удалось отправить решение на проверку. Попробуйте позже.');
         this.sendingToReview = false;
         this.cdr.markForCheck();
       }
@@ -1032,7 +1170,7 @@ export class CandidateDashboardPage implements OnInit {
 
     this.solutionsService.updateSolution(solution.id, patchRequest).subscribe({
       next: (updated) => {
-        alert('Ссылка сохранена!');
+        this.notificationService.success('Ссылка сохранена!');
         this.selectedSolution = updated;
         this.loadSolutions();
         this.savingSolutionUrl = false;
@@ -1040,7 +1178,7 @@ export class CandidateDashboardPage implements OnInit {
       },
       error: (error) => {
         console.error('Failed to save solution URL:', error);
-        alert('Не удалось сохранить ссылку. Попробуйте позже.');
+        this.notificationService.error('Не удалось сохранить ссылку. Попробуйте позже.');
         this.savingSolutionUrl = false;
         this.cdr.markForCheck();
       }
@@ -1118,14 +1256,14 @@ export class CandidateDashboardPage implements OnInit {
 
       await this.solutionsService.createSolution(request).toPromise();
 
-      alert('Задание успешно взято!');
+      this.notificationService.success('Задание успешно взято!');
       this.closeAssignmentModal();
       // Перезагружаем решения для обновления счётчиков в табах
       this.loadSolutions();
       this.cdr.markForCheck();
     } catch (error) {
       console.error('Failed to take assignment:', error);
-      alert('Не удалось взять задание. Попробуйте позже.');
+      this.notificationService.error('Не удалось взять задание. Попробуйте позже.');
       this.cdr.markForCheck();
     } finally {
       this.takingAssignment = false;
@@ -1179,7 +1317,7 @@ export class CandidateDashboardPage implements OnInit {
       this.cdr.markForCheck();
     } catch (error) {
       console.error('Failed to update profile:', error);
-      alert('Не удалось обновить профиль. Попробуйте позже.');
+      this.notificationService.error('Не удалось обновить профиль. Попробуйте позже.');
       this.cdr.markForCheck();
     } finally {
       this.savingProfile = false;

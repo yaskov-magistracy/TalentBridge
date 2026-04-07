@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
+import { NotificationService } from '../core/services/notification.service';
 
 @Component({
   selector: 'app-create-task',
@@ -157,7 +158,8 @@ import { AVAILABLE_TECHS } from '../shared/utils/constants';
 export class CreateTaskPage {
   AVAILABLE_TECHS = AVAILABLE_TECHS;
   selectedTechs: string[] = [];
-  
+  private notificationService = inject(NotificationService);
+
   form = {
     title: '',
     description: '',
@@ -188,7 +190,7 @@ export class CreateTaskPage {
 
   submit(): void {
     if (!this.isFormValid()) return;
-    alert('Задание создано и опубликовано!');
+    this.notificationService.success('Задание создано и опубликовано!');
     this.router.navigate(['/employer-dashboard']);
   }
 
