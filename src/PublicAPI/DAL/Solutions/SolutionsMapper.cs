@@ -27,7 +27,8 @@ internal static class SolutionsMapper
             entity.Team == null ? null : ToDomain(entity.Team),
             AssignmentsMapper.ToDomainFull(entity.Assignment),
             CandidatesMapper.ToDomain(entity.CandidateOwner),
-            entity.Candidates.Select(CandidatesMapper.ToDomain).ToList()
+            entity.Candidates.Select(CandidatesMapper.ToDomain).ToList(),
+            entity.CandidatesJoinRequested?.Select(CandidatesMapper.ToDomain).ToList()
         );
 
     public static SolutionEntity ToEntity(SolutionCreateEntity createEntity)

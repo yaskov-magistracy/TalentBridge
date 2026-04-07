@@ -16,5 +16,6 @@ internal class CandidateEntity : IEntity
     public string About { get; set; }
     public List<TechnologyEntity>? Technologies { get; set; }
     public List<SolutionEntity>? Solutions { get; set; }
-    public List<SolutionEntity>? OwnedSolutions { get; set; }
+    public List<SolutionEntity>? SolutionsOwned { get; set; }
+    public List<SolutionEntity>? SolutionsJoinRequested { get; set; }
 }

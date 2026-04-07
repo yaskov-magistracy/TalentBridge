@@ -26,6 +26,9 @@ public class SolutionsController(
     /// <summary>
     /// Поиск по решениям
     /// </summary>
+    /// <remarks>
+    /// `Text` - ищет по Team(Name + Description) 
+    /// </remarks>
     [HttpPost("search")]
     public async Task<ActionResult<SolutionSearchResponse>> Search([FromBody] SolutionSearchRequest searchRequest)
     {
@@ -61,7 +64,7 @@ public class SolutionsController(
     }
     
     /// <summary>
-    /// Вступить в команду решения
+    /// Вступить в команду решения (без подтверждения)
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
     [HttpPatch("{id:Guid}/join")]
@@ -69,6 +72,32 @@ public class SolutionsController(
     {
         var candidateId = User.GetId();
         var solution = await solutionsService.Join(candidateId, id);
+        return solution.ActionResult;
+    }
+    
+    /// <summary>
+    /// Кинуть заявку на вступление (её подтверждает админ)
+    /// </summary>
+    [AuthorizeRoles(AccountRole.Candidate)]
+    [HttpPatch("{id:Guid}/join/request")]
+    public async Task<ActionResult<SolutionFullInfo>> JoinRequest([FromRoute] Guid id)
+    {
+        var candidateId = User.GetId();
+        var solution = await solutionsService.JoinRequest(candidateId, id);
+        return solution.ActionResult;
+    }
+    
+    /// <summary>
+    /// Подтвердить заявку на вступление (может только админ)
+    /// </summary>
+    [AuthorizeRoles(AccountRole.Candidate)]
+    [HttpPatch("{id:Guid}/join/request/accept")]
+    public async Task<ActionResult<SolutionFullInfo>> JoinRequestAccept(
+        [FromRoute] Guid id,
+        [FromBody] SolutionJoinRequestAcceptApiRequest request)
+    {
+        var candidateOwnerId = User.GetId();
+        var solution = await solutionsService.JoinRequestAccept(candidateOwnerId, request.CandidateJoinRequestedId, id);
         return solution.ActionResult;
     }
     

@@ -32,7 +32,8 @@ public record SolutionFullInfo(
     SolutionTeam? Team,
     AssignmentFullInfo Assignment,
     Candidate CandidateOwner,
-    List<Candidate> Candidates
+    List<Candidate> Candidates,
+    List<Candidate>? CandidatesJoinRequested
 ) : Solution(Id, SolutionUrl, StartedAt, State, Team);
 
 

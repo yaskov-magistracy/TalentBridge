@@ -114,6 +114,8 @@ public class DatabaseAccessor(
             new TeamCreateRequest("Ещё не собранная команда", "Ищу интересных людей для работы вместе")
         ))).Value;
         ClearAttachedItems();
+        await solutionsService.JoinRequest(candidate2.Id, notFullTeamSolution.Id);
+        ClearAttachedItems();
     }
 
     private static readonly TechnologyCreateEntity[] TechnologyCreateEntities =

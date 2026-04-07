@@ -11,6 +11,8 @@ public interface ISolutionsService
     Task<Result<SolutionFullInfo>> Add(SolutionCreateRequest request);
     Task<Result<SolutionFullInfo>> Update(Guid candidateId, Guid id, SolutionPatchRequest request);
     Task<Result<SolutionFullInfo>> Join(Guid candidateId, Guid id);
+    Task<Result<SolutionFullInfo>> JoinRequest(Guid candidateId, Guid id);
+    Task<Result<SolutionFullInfo>> JoinRequestAccept(Guid candidateOwnerId, Guid candidateJoinRequestedId, Guid id);
     Task<Result<SolutionFullInfo>> Start(Guid candidateId, Guid id);
     Task<Result<SolutionFullInfo>> SendToReview(Guid candidateId, Guid id);
 }
@@ -85,6 +87,43 @@ public class SolutionsService(
         await solutionsRepository.Update(
             id,
             new(Candidates: new(ToAdd: [candidateId])));
+        var updated = await solutionsRepository.GetFull(id);
+        return Results.Ok(updated!);
+    }
+
+    public async Task<Result<SolutionFullInfo>> JoinRequest(Guid candidateId, Guid id)
+    {
+        var solution = await solutionsRepository.GetFull(id);
+        if (solution == null)
+            return Results.NotFound<SolutionFullInfo>();
+        if (solution.CandidatesJoinRequested?.Any(e => e.Id == candidateId) is true)
+            return Results.Ok(solution);
+        if (solution.Candidates.Count >= solution.Assignment.CandidatesCapacity)
+            return Results.BadRequest<SolutionFullInfo>($"Solution team is full");
+
+        await solutionsRepository.Update(id, new(
+            CandidatesJoinRequested: new(ToAdd: [candidateId])));
+        var updated = await solutionsRepository.GetFull(id);
+        return Results.Ok(updated!);
+    }
+
+    public async Task<Result<SolutionFullInfo>> JoinRequestAccept(Guid candidateOwnerId, Guid candidateJoinRequestedId, Guid id)
+    {
+        var solution = await solutionsRepository.GetFull(id);
+        if (solution == null)
+            return Results.NotFound<SolutionFullInfo>();
+        if (solution.CandidateOwner.Id != candidateOwnerId)
+            return Results.Forbidden<SolutionFullInfo>("Only team leader can accept");
+        if (solution.Candidates.Any(e => e.Id == candidateJoinRequestedId))
+            return Results.Ok(solution);
+        if (solution.CandidatesJoinRequested?.Any(e => e.Id == candidateJoinRequestedId) != true)
+            return Results.BadRequest<SolutionFullInfo>($"There is no requested to join candidate with id: {candidateJoinRequestedId}");
+        
+        await solutionsRepository
+            .Update(id, new(
+                Candidates: new(ToAdd: [candidateJoinRequestedId]),
+                CandidatesJoinRequested: new (ToRemove: [candidateJoinRequestedId])));
+        
         var updated = await solutionsRepository.GetFull(id);
         return Results.Ok(updated!);
     }

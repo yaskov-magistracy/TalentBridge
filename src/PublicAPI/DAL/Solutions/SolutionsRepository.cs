@@ -1,3 +1,4 @@
+using DAL.Candidates;
 using Domain.Solutions;
 using Domain.Solutions.DTO;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,8 @@ public class SolutionsRepository(
         .Include(e => e.Assignment).ThenInclude(a => a.Employer)
         .Include(e => e.Assignment).ThenInclude(a => a.Technologies)
         .Include(e => e.CandidateOwner)
-        .Include(e => e.Candidates);
+        .Include(e => e.Candidates)
+        .Include(e => e.CandidatesJoinRequested);
 
     public async Task<SolutionShortInfo?> Get(Guid id)
     {
@@ -44,7 +46,11 @@ public class SolutionsRepository(
         if (request.AssignmentId != null)
             query = query.Where(e => e.AssignmentId == request.AssignmentId);
         if (request.CandidateId != null)
-            query = query.Where(e => e.CandidateOwnerId == request.CandidateId);
+            query = query.Where(e => e.Candidates.Any(c => c.Id == request.CandidateId));
+        if (request.CandidateOwnerId != null)
+            query = query.Where(e => e.CandidateOwnerId == request.CandidateOwnerId);
+        if (request.CandidateJoinRequestedId != null)
+            query = query.Where(e => e.CandidatesJoinRequested!.Any(c => c.Id == request.CandidateJoinRequestedId));
 
         var count = await query.CountAsync();
         return new(
@@ -76,10 +82,26 @@ public class SolutionsRepository(
             existed.Team!.Name = patchEntity.Team.Name;
         if (patchEntity.Team?.Description != null)
             existed.Team!.Description = patchEntity.Team.Description;
-        if (patchEntity.Candidates is {} relationsPatch)
+        if (patchEntity.Candidates is {} candidatesRelationsPatch)
         {
-            relationsPatch.ApplyRemove(existed.Candidates);
-            (existed.Candidates, var toAdd) = relationsPatch.ApplyAdd(existed.Candidates);
+            candidatesRelationsPatch.ApplyRemove(existed.Candidates);
+            (existed.Candidates, var toAdd) = candidatesRelationsPatch.ApplyAdd(existed.Candidates);
+            for (int i = 0; i < existed.Candidates.Count; i++)
+            {
+                var alreadyAttached =
+                    existed.CandidatesJoinRequested?.FirstOrDefault(e => e.Id == existed.Candidates[i].Id);
+                if (alreadyAttached == null)
+                    continue;
+                
+                toAdd.RemoveAt(toAdd.FindIndex(e => e.Id == alreadyAttached.Id));
+                existed.Candidates[i] = alreadyAttached;
+            }
+            dataContext.Candidates.AttachRangeIfNotEmpty(toAdd);
+        }
+        if (patchEntity.CandidatesJoinRequested is { } candidateJoinRequestedRelationsPatch)
+        {
+            candidateJoinRequestedRelationsPatch.ApplyRemove(existed.CandidatesJoinRequested);
+            (existed.CandidatesJoinRequested, var toAdd) = candidateJoinRequestedRelationsPatch.ApplyAdd(existed.CandidatesJoinRequested);
             dataContext.Candidates.AttachRangeIfNotEmpty(toAdd);
         }
 

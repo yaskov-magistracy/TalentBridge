@@ -17,8 +17,8 @@ internal class SolutionEntity : IEntity
     
     [ForeignKey(nameof(CandidateOwner))] public Guid CandidateOwnerId { get; set; }
     public CandidateEntity CandidateOwner { get; set; }
-    
     public List<CandidateEntity> Candidates { get; set; }
+    public List<CandidateEntity>? CandidatesJoinRequested { get; set; }
 }
 
 internal class SolutionTeamEntity

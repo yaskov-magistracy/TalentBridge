@@ -14,11 +14,14 @@ internal class SolutionEntityConfiguration : IEntityTypeConfiguration<SolutionEn
             .HasForeignKey(e => e.AssignmentId);
 
         builder.HasOne(e => e.CandidateOwner)
-            .WithMany(e2 => e2.OwnedSolutions)
+            .WithMany(e2 => e2.SolutionsOwned)
             .HasForeignKey(e => e.CandidateOwnerId);
 
         builder.HasMany(e => e.Candidates)
             .WithMany(e2 => e2.Solutions);
+        
+        builder.HasMany(e => e.CandidatesJoinRequested)
+            .WithMany(e2 => e2.SolutionsJoinRequested);
 
         builder.OwnsOne(e => e.Team);
     }
