@@ -276,7 +276,31 @@ import { NotificationService } from '../core/services/notification.service';
               <h3 class="font-bold text-lg mb-3 uppercase text-amber-800">
                 📋 ГРУППОВОЙ ПРОЕКТ (до {{ selectedAssignment.candidatesCapacity }} чел.)
               </h3>
+
+              <!-- Existing Teams List -->
+              <div *ngIf="assignmentTeams.length > 0" class="mb-4">
+                <p class="text-sm font-bold uppercase text-amber-700 mb-2">Команды, выполняющие это задание:</p>
+                <div class="space-y-2">
+                  <div *ngFor="let team of displayTeams" class="flex justify-between items-center bg-white border border-amber-300 p-2">
+                    <span class="text-sm font-semibold">{{ team.name }}</span>
+                    <button
+                      (click)="joinTeamSolution(team.solutionId)"
+                      class="border border-emerald-600 bg-emerald-600 text-white px-3 py-1 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap">
+                      Присоединиться
+                    </button>
+                  </div>
+                  <button
+                    *ngIf="assignmentTeams.length > 3"
+                    (click)="navigateToJoinSolution()"
+                    class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold underline">
+                    Показать все ({{ assignmentTeams.length }})
+                  </button>
+                </div>
+              </div>
+
+              <!-- Create New Team Form -->
               <div class="space-y-3">
+                <p class="text-sm font-bold uppercase text-amber-700">Или создайте свою команду:</p>
                 <div>
                   <label class="block font-bold mb-2 text-sm uppercase">НАЗВАНИЕ КОМАНДЫ</label>
                   <input
@@ -807,6 +831,9 @@ export class CandidateDashboardPage implements OnInit {
   teamName = '';
   teamDescription = '';
   takingAssignment = false;
+  assignmentTeams: { solutionId: string; name: string; membersCount: number }[] = [];
+  displayTeams: { solutionId: string; name: string; membersCount: number }[] = [];
+  loadingAssignmentTeams = false;
 
   // Solution modal
   selectedSolution: SolutionFullInfo | null = null;
@@ -1100,6 +1127,13 @@ export class CandidateDashboardPage implements OnInit {
     // Сбрасываем форму команды
     this.teamName = '';
     this.teamDescription = '';
+    this.assignmentTeams = [];
+    this.displayTeams = [];
+
+    // Загружаем команды для группового проекта
+    if (assignment.isGrouped) {
+      this.loadAssignmentTeams(assignment.id);
+    }
   }
 
   closeAssignmentModal(): void {
@@ -1119,7 +1153,59 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   navigateToJoinSolution(): void {
+    this.closeAssignmentModal();
     this.router.navigate(['/join-solution']);
+  }
+
+  private loadAssignmentTeams(assignmentId: string): void {
+    this.loadingAssignmentTeams = true;
+    this.assignmentTeams = [];
+    this.displayTeams = [];
+
+    const searchRequest: SolutionSearchRequest = {
+      assignmentId: assignmentId,
+      take: 100,
+      skip: 0
+    };
+
+    this.solutionsService.searchSolutions(searchRequest).subscribe({
+      next: (response) => {
+        const solutions = response.items || [];
+        // Фильтруем только групповые решения с командой
+        this.assignmentTeams = solutions
+          .filter(s => s.assignment.isGrouped && s.team)
+          .map(s => ({
+            solutionId: s.id,
+            name: s.team!.name,
+            membersCount: s.candidates.length
+          }));
+
+        // Показываем максимум 3 команды
+        this.displayTeams = this.assignmentTeams.slice(0, 3);
+        this.loadingAssignmentTeams = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to load assignment teams:', error);
+        this.loadingAssignmentTeams = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  joinTeamSolution(solutionId: string): void {
+    this.closeAssignmentModal();
+    this.solutionsService.requestJoinSolution(solutionId).subscribe({
+      next: () => {
+        this.notificationService.success('Запрос на присоединение к команде отправлен');
+        this.loadSolutions();
+      },
+      error: (error) => {
+        console.error('Failed to join team solution:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Не удалось отправить запрос. Попробуйте позже.';
+        this.notificationService.error(`Ошибка: ${errorMessage}`);
+      }
+    });
   }
 
   startSolution(solution: SolutionFullInfo): void {

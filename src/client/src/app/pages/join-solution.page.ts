@@ -319,8 +319,8 @@ export class JoinSolutionPage implements OnInit {
     this.solutionsService.searchSolutions(searchRequest).subscribe({
       next: (response) => {
         // Фильтруем только групповые проекты с местом
-        this.searchResults = (response.items || []).filter(s => 
-          s.assignment.isGrouped && 
+        this.searchResults = (response.items || []).filter(s =>
+          s.assignment.isGrouped &&
           s.candidates.length < s.assignment.candidatesCapacity
         );
         this.loadingSearch = false;
