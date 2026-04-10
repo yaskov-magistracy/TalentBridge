@@ -390,7 +390,7 @@ import { NotificationService } from '../core/services/notification.service';
               </h3>
 
               <!-- Pending Requests Section (только для владельца решения) -->
-              <div *ngIf="selectedSolution.candidatesJoinRequested.length > 0 && selectedSolution.candidateOwner.id === currentUserId" class="mb-4">
+              <div *ngIf="selectedSolution.candidatesJoinRequested.length > 0 && selectedSolution.candidateOwner.id === currentUserId" class="mb-4 border-2 border-emerald-400 bg-emerald-50 p-3">
                 <div class="flex justify-between items-center mb-2">
                   <p class="text-sm font-bold uppercase text-emerald-700">⏳ ЗАЯВКИ НА РАССМОТРЕНИИ ({{ selectedSolution.candidatesJoinRequested.length }})</p>
                   <button
@@ -413,11 +413,14 @@ import { NotificationService } from '../core/services/notification.service';
                     </div>
                     <button
                       (click)="approveCandidate(candidate.id)"
-                      [disabled]="approvingCandidateId === candidate.id"
+                      [disabled]="approvingCandidateId === candidate.id || selectedSolution.candidates.length >= selectedSolution.assignment.candidatesCapacity"
                       class="border border-emerald-600 bg-emerald-600 text-white px-3 py-1 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                       {{ approvingCandidateId === candidate.id ? 'ОДОБРЕНИЕ...' : 'ОДОБРИТЬ' }}
                     </button>
                   </div>
+                </div>
+                <div *ngIf="selectedSolution.candidates.length >= selectedSolution.assignment.candidatesCapacity" class="mt-2 text-xs text-red-600 font-bold">
+                  ⚠️ Нет свободных мест в команде
                 </div>
               </div>
 
@@ -456,27 +459,6 @@ import { NotificationService } from '../core/services/notification.service';
               <h3 class="font-bold text-lg uppercase text-indigo-800">
                 👤 ИНДИВИДУАЛЬНЫЙ ПРОЕКТ
               </h3>
-            </div>
-
-            <!-- Solution ID for Joining (for group projects in NotStarted/InProgress tabs) -->
-            <div *ngIf="selectedSolution.assignment.isGrouped && (selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress')" class="mb-6 border-2 border-indigo-400 bg-indigo-50 p-4">
-              <h3 class="font-bold text-lg mb-3 uppercase text-indigo-800">
-                🔗 ID РЕШЕНИЯ (для присоединения к команде)
-              </h3>
-              <div class="flex items-center gap-2">
-                <code class="flex-1 bg-white px-3 py-2 border-2 border-gray-300 text-sm font-mono break-all">
-                  {{ selectedSolution.id }}
-                </code>
-                <button
-                  (click)="copySolutionId(selectedSolution.id)"
-                  class="border-2 border-indigo-600 bg-indigo-600 text-white px-3 py-2 hover:bg-indigo-700 transition-colors text-xs font-bold uppercase whitespace-nowrap"
-                  title="Скопировать ID">
-                  📋 Копировать
-                </button>
-              </div>
-              <p class="text-xs text-gray-600 mt-2">
-                Другие участники могут использовать этот ID для присоединения к вашей команде через кнопку "Присоединиться"
-              </p>
             </div>
 
             <!-- Solution URL (for NotStarted and InProgress tabs) -->
@@ -645,13 +627,16 @@ import { NotificationService } from '../core/services/notification.service';
                 </div>
                 <button
                   (click)="approveCandidate(candidate.id)"
-                  [disabled]="approvingCandidateId === candidate.id"
+                  [disabled]="approvingCandidateId === candidate.id || (selectedSolution && selectedSolution.candidates.length >= selectedSolution.assignment.candidatesCapacity)"
                   class="border-2 border-emerald-600 bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
                   {{ approvingCandidateId === candidate.id ? 'ОДОБРЕНИЕ...' : 'ОДОБРИТЬ' }}
                 </button>
               </div>
               <div *ngIf="pendingCandidates.length === 0" class="text-center py-8 text-gray-500">
                 Нет заявок на рассмотрение
+              </div>
+              <div *ngIf="selectedSolution && selectedSolution.candidates.length >= selectedSolution.assignment.candidatesCapacity" class="text-center text-xs text-red-600 font-bold mt-2">
+                ⚠️ Нет свободных мест в команде
               </div>
             </div>
 
@@ -780,7 +765,9 @@ import { NotificationService } from '../core/services/notification.service';
 
             <!-- Solutions Tabs -->
             <div *ngIf="activeTab !== 'available'" class="space-y-4">
-              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="solution.assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'">
+              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="solution.assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'"
+                   [class.ring-4]="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId"
+                   [class.ring-emerald-400]="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId">
                 <div class="flex justify-between items-start gap-4">
                   <div (click)="openSolutionModal(solution)" class="cursor-pointer flex-1">
                     <div class="mb-3">
@@ -806,6 +793,12 @@ import { NotificationService } from '../core/services/notification.service';
                       <p class="text-sm mb-3" *ngIf="solution.assignment.isGrouped && activeTab !== 'review'">
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
+                      <!-- Pending Requests Badge -->
+                      <div *ngIf="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId" class="mb-2">
+                        <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
+                          ⏳ ЗАЯВОК НА РАССМОТРЕНИИ: {{ solution.candidatesJoinRequested.length }}
+                        </span>
+                      </div>
                     </div>
                     <!-- Review Stage Badges (moved to bottom for review tab) -->
                     <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review'">
@@ -1308,6 +1301,12 @@ export class CandidateDashboardPage implements OnInit {
   approveCandidate(candidateId: string): void {
     if (!this.selectedSolution) return;
 
+    // Проверяем, есть ли свободные места
+    if (this.selectedSolution.candidates.length >= this.selectedSolution.assignment.candidatesCapacity) {
+      this.notificationService.warning('Нет свободных мест в команде');
+      return;
+    }
+
     this.approvingCandidateId = candidateId;
     this.cdr.markForCheck();
 
@@ -1317,8 +1316,15 @@ export class CandidateDashboardPage implements OnInit {
         this.approvingCandidateId = null;
         // Обновляем модалку и списки
         if (this.selectedSolution?.candidatesJoinRequested) {
+          // Находим одобренного кандидата
+          const approvedCandidate = this.selectedSolution.candidatesJoinRequested.find(c => c.id === candidateId);
+          // Удаляем из pending
           this.selectedSolution.candidatesJoinRequested = this.selectedSolution.candidatesJoinRequested.filter(c => c.id !== candidateId);
           this.pendingCandidates = this.pendingCandidates.filter(c => c.id !== candidateId);
+          // Добавляем в команду (если есть место)
+          if (this.selectedSolution.candidates.length < this.selectedSolution.assignment.candidatesCapacity && approvedCandidate) {
+            this.selectedSolution.candidates.push(approvedCandidate as CandidateFullInfo);
+          }
         }
         this.loadSolutions();
         this.cdr.markForCheck();
