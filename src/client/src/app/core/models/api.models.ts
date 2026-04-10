@@ -209,8 +209,8 @@ export interface TechnologyUpdateEntity {
 
 export interface TechnologySearchRequest {
   name?: string;
-  page?: number;
-  pageSize?: number;
+  take?: number;
+  skip?: number;
 }
 
 export interface TechnologySearchResponse {

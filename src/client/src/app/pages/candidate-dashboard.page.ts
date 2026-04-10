@@ -6,7 +6,6 @@ import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
 import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
-import { AVAILABLE_TECHS } from '../shared/utils/constants';
 import { NotificationService } from '../core/services/notification.service';
 
 @Component({
@@ -555,20 +554,82 @@ import { NotificationService } from '../core/services/notification.service';
           </div>
         </div>
 
+        <!-- Show All Technologies Modal -->
+        <div *ngIf="showAllTechsModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeShowAllModal()">
+          <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-xl font-bold uppercase text-indigo-600">ВСЕ ТЕХНОЛОГИИ</h3>
+              <button (click)="closeShowAllModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Search Input -->
+            <div class="mb-4">
+              <input
+                type="text"
+                [(ngModel)]="showAllTechsSearch"
+                (ngModelChange)="onShowAllTechsSearch()"
+                class="w-full border-2 border-black p-3 text-sm"
+                placeholder="Поиск технологий..."
+                autofocus/>
+            </div>
+
+            <!-- Technologies Grid -->
+            <div class="grid grid-cols-3 gap-2 overflow-y-auto max-h-96">
+              <label *ngFor="let tech of filteredShowAllTechs" class="flex items-center gap-2 text-xs cursor-pointer border-2 p-2 hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  [checked]="selectedTechs.some(t => t.id === tech.id)"
+                  (change)="toggleTech(tech)"
+                  class="w-4 h-4"/>
+                <span>{{ tech.name }}</span>
+              </label>
+              <div *ngIf="filteredShowAllTechs.length === 0" class="col-span-3 text-center py-8 text-gray-500">
+                Технологии не найдены
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 flex gap-2">
+              <button
+                type="button"
+                (click)="closeShowAllModal()"
+                class="flex-1 border-2 border-indigo-600 bg-indigo-600 text-white px-4 py-2 hover:bg-indigo-700 transition-colors uppercase font-semibold">
+                ГОТОВО
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="flex gap-8">
           <!-- Left Sidebar - Technology Filter -->
           <div class="w-64 flex-shrink-0">
             <div class="border-2 border-indigo-600 bg-white p-6 shadow-md">
               <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-indigo-600">Фильтр по технологиям</h3>
-              <div class="space-y-2">
-                <label *ngFor="let tech of AVAILABLE_TECHS" class="flex items-center gap-2 text-xs cursor-pointer">
+              
+              <!-- Loading Indicator -->
+              <div *ngIf="loadingFilterTechs" class="text-center py-4 text-gray-500 text-xs">
+                Загрузка...
+              </div>
+              
+              <!-- Technologies List -->
+              <div *ngIf="!loadingFilterTechs" class="space-y-2">
+                <label *ngFor="let tech of displayFilterTechs" class="flex items-center gap-2 text-xs cursor-pointer">
                   <input
                     type="checkbox"
-                    [checked]="selectedTechs.some(t => t.name === tech)"
-                    (change)="toggleTech({ id: '', name: tech })"
+                    [checked]="selectedTechs.some(t => t.id === tech.id)"
+                    (change)="toggleTech(tech)"
                     class="w-4 h-4 border-2 border-black"/>
-                  <span>{{ tech }}</span>
+                  <span>{{ tech.name }}</span>
                 </label>
+                
+                <!-- Show All Button -->
+                <button
+                  *ngIf="allFilterTechs.length > 20"
+                  (click)="openShowAllModal()"
+                  class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline mt-1">
+                  Показать все ({{ allFilterTechs.length }})
+                </button>
               </div>
             </div>
           </div>
@@ -728,7 +789,6 @@ import { NotificationService } from '../core/services/notification.service';
   `
 })
 export class CandidateDashboardPage implements OnInit {
-  AVAILABLE_TECHS = AVAILABLE_TECHS;
   showProfileEdit = false;
   showTechModal = false;
   savingProfile = false;
@@ -753,6 +813,16 @@ export class CandidateDashboardPage implements OnInit {
   loadingTechs = false;
   hasSearched = false;
   private searchTimeout: any;
+
+  // Фильтр технологий (sidebar)
+  allFilterTechs: Technology[] = [];
+  displayFilterTechs: Technology[] = [];
+  loadingFilterTechs = false;
+
+  // Show All Technologies Modal
+  showAllTechsModal = false;
+  showAllTechsSearch = '';
+  filteredShowAllTechs: Technology[] = [];
 
   // Для редактирования профиля (отдельно от фильтра)
   profileTechs: Technology[] = [];
@@ -801,6 +871,7 @@ export class CandidateDashboardPage implements OnInit {
       about: ['']
     });
     this.loadCandidate();
+    this.loadFilterTechnologies();
     this.loadSolutions();
   }
 
@@ -837,6 +908,46 @@ export class CandidateDashboardPage implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private loadFilterTechnologies(): void {
+    this.loadingFilterTechs = true;
+    this.technologiesService.searchTechnologies({ take: 1000, skip: 0 }).subscribe({
+      next: (response) => {
+        this.allFilterTechs = (response.items || []).sort((a, b) => a.name.localeCompare(b.name));
+        // Показываем первые 20 технологий в sidebar
+        this.displayFilterTechs = this.allFilterTechs.slice(0, 20);
+        this.loadingFilterTechs = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to load filter technologies:', error);
+        this.loadingFilterTechs = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openShowAllModal(): void {
+    this.showAllTechsModal = true;
+    this.showAllTechsSearch = '';
+    this.filteredShowAllTechs = [...this.allFilterTechs];
+  }
+
+  closeShowAllModal(): void {
+    this.showAllTechsModal = false;
+    this.showAllTechsSearch = '';
+  }
+
+  onShowAllTechsSearch(): void {
+    const query = this.showAllTechsSearch.trim().toLowerCase();
+    if (query) {
+      this.filteredShowAllTechs = this.allFilterTechs.filter(t => 
+        t.name.toLowerCase().includes(query)
+      );
+    } else {
+      this.filteredShowAllTechs = [...this.allFilterTechs];
+    }
   }
 
   private loadSolutions(): void {
