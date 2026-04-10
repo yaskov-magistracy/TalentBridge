@@ -11,6 +11,7 @@ import { LandingPage } from './pages/landing.page';
 import { SubmissionResultsPage } from './pages/submission-results.page';
 import { TaskDetailPage } from './pages/task-detail.page';
 import { AssignmentSolutionsPage } from './pages/assignment-solutions.page';
+import { JoinSolutionPage } from './pages/join-solution.page';
 import { authGuard, requireAuthGuard } from './core/guards';
 
 export const routes: Routes = [
@@ -24,6 +25,7 @@ export const routes: Routes = [
 	{ path: 'create-task', component: CreateTaskPage, canActivate: [requireAuthGuard('Employer')] },
 	{ path: 'edit-task/:id', component: EditTaskPage, canActivate: [requireAuthGuard('Employer')] },
 	{ path: 'assignment/:id/solutions', component: AssignmentSolutionsPage, canActivate: [requireAuthGuard('Employer')] },
+	{ path: 'join-solution', component: JoinSolutionPage, canActivate: [requireAuthGuard('Candidate')] },
 	{ path: 'candidate/:id', component: CandidateProfilePage },
 	{ path: 'candidates-ranking', component: CandidatesRankingPage, canActivate: [requireAuthGuard('Employer')] },
 	{ path: '**', redirectTo: '' }

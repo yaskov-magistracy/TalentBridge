@@ -49,6 +49,13 @@ export class SolutionsService {
   }
 
   /**
+   * Запросить вступление в команду решения (требует подтверждения)
+   */
+  requestJoinSolution(id: string): Observable<SolutionFullInfo> {
+    return this.apiClient.patch<SolutionFullInfo>(`/solutions/${id}/join/request`, {});
+  }
+
+  /**
    * Начать решение (для лидера команды)
    */
   startSolution(id: string): Observable<SolutionFullInfo> {

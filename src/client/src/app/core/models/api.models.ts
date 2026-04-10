@@ -182,6 +182,8 @@ export type ExpertReviewStatus = 'pending' | 'approved' | 'rejected';
 export interface SolutionSearchRequest {
   assignmentId?: string;
   candidateId?: string;
+  candidateOwnerId?: string;
+  candidateJoinRequestedId?: string;
   text?: string;
   take?: number;
   skip?: number;

@@ -518,42 +518,6 @@ import { NotificationService } from '../core/services/notification.service';
           </div>
         </div>
 
-        <!-- Join Solution Modal -->
-        <div *ngIf="showJoinModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeJoinModal()">
-          <div class="bg-white border-2 border-emerald-600 p-8 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
-            <!-- Header -->
-            <div class="flex justify-between items-start mb-6">
-              <h2 class="text-2xl font-bold text-emerald-600 uppercase">Присоединиться к решению</h2>
-              <button (click)="closeJoinModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
-            </div>
-
-            <!-- Description -->
-            <p class="text-sm text-gray-600 mb-4">
-              Введите ID решения, к которому хотите присоединиться
-            </p>
-
-            <!-- Solution ID Input -->
-            <div class="mb-6">
-              <label class="block font-bold mb-2 text-sm uppercase tracking-wider">ID РЕШЕНИЯ</label>
-              <input
-                type="text"
-                [(ngModel)]="joinSolutionId"
-                class="w-full border-2 border-black p-3 text-sm"
-                placeholder="3fa85f64-5717-4562-b3fc-2c963f66afa6"/>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex gap-4">
-              <button
-                (click)="joinSolution()"
-                [disabled]="joiningSolution || !joinSolutionId.trim()"
-                class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-emerald-600 text-white hover:bg-emerald-700">
-                {{ joiningSolution ? 'ПРИСОЕДИНЕНИЕ...' : 'ПРИСОЕДИНИТЬСЯ' }}
-              </button>
-            </div>
-          </div>
-        </div>
-
         <!-- Show All Technologies Modal -->
         <div *ngIf="showAllTechsModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeShowAllModal()">
           <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
@@ -666,7 +630,7 @@ import { NotificationService } from '../core/services/notification.service';
                   </button>
                 </div>
                 <button
-                  (click)="openJoinModal()"
+                  (click)="navigateToJoinSolution()"
                   class="flex-shrink-0 border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors uppercase font-bold text-xs whitespace-nowrap">
                   🔗 ПРИСОЕДИНИТЬСЯ
                 </button>
@@ -850,11 +814,6 @@ export class CandidateDashboardPage implements OnInit {
   sendingToReview = false;
   solutionUrl = '';
   savingSolutionUrl = false;
-
-  // Join solution modal
-  showJoinModal = false;
-  joinSolutionId = '';
-  joiningSolution = false;
 
   // Validators for team form
   readonly TEAM_NAME_MIN_LENGTH = 2;
@@ -1159,38 +1118,8 @@ export class CandidateDashboardPage implements OnInit {
     this.selectedSolution = null;
   }
 
-  openJoinModal(): void {
-    this.showJoinModal = true;
-    this.joinSolutionId = '';
-  }
-
-  closeJoinModal(): void {
-    this.showJoinModal = false;
-    this.joinSolutionId = '';
-  }
-
-  joinSolution(): void {
-    if (!this.joinSolutionId.trim()) return;
-
-    this.joiningSolution = true;
-    this.cdr.markForCheck();
-
-    this.solutionsService.joinSolution(this.joinSolutionId.trim()).subscribe({
-      next: () => {
-        this.notificationService.success('Вы успешно присоединились к решению!');
-        this.closeJoinModal();
-        this.loadSolutions();
-        this.joiningSolution = false;
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        console.error('Failed to join solution:', error);
-        const errorMessage = error?.error?.message || error?.message || 'Не удалось присоединиться к решению. Проверьте ID и попробуйте позже.';
-        this.notificationService.error(`Ошибка: ${errorMessage}`);
-        this.joiningSolution = false;
-        this.cdr.markForCheck();
-      }
-    });
+  navigateToJoinSolution(): void {
+    this.router.navigate(['/join-solution']);
   }
 
   startSolution(solution: SolutionFullInfo): void {
