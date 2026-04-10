@@ -56,6 +56,16 @@ export class SolutionsService {
   }
 
   /**
+   * Одобрить заявку на вступление в команду
+   */
+  acceptJoinRequest(solutionId: string, candidateId: string): Observable<SolutionFullInfo> {
+    return this.apiClient.patch<SolutionFullInfo>(
+      `/solutions/${solutionId}/join/request/accept`,
+      { candidateJoinRequestedId: candidateId }
+    );
+  }
+
+  /**
    * Начать решение (для лидера команды)
    */
   startSolution(id: string): Observable<SolutionFullInfo> {

@@ -389,6 +389,38 @@ import { NotificationService } from '../core/services/notification.service';
                 📋 КОМАНДА ({{ selectedSolution.candidates?.length || 0 }} / {{ selectedSolution.assignment.candidatesCapacity }} чел.)
               </h3>
 
+              <!-- Pending Requests Section (только для владельца решения) -->
+              <div *ngIf="selectedSolution.candidatesJoinRequested.length > 0 && selectedSolution.candidateOwner.id === currentUserId" class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                  <p class="text-sm font-bold uppercase text-emerald-700">⏳ ЗАЯВКИ НА РАССМОТРЕНИИ ({{ selectedSolution.candidatesJoinRequested.length }})</p>
+                  <button
+                    *ngIf="selectedSolution.candidatesJoinRequested.length > 3"
+                    (click)="openPendingCandidatesModal()"
+                    class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline">
+                    Показать всех
+                  </button>
+                </div>
+                <div class="space-y-2">
+                  <div *ngFor="let candidate of selectedSolution.candidatesJoinRequested.slice(0, 3)" class="flex justify-between items-center bg-white border border-emerald-300 p-2">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        {{ candidate.surname.charAt(0) }}{{ candidate.name.charAt(0) }}
+                      </div>
+                      <div>
+                        <p class="text-sm font-semibold">{{ candidate.surname }} {{ candidate.name }}</p>
+                        <p class="text-xs text-gray-500">{{ candidate.city || 'Город не указан' }}</p>
+                      </div>
+                    </div>
+                    <button
+                      (click)="approveCandidate(candidate.id)"
+                      [disabled]="approvingCandidateId === candidate.id"
+                      class="border border-emerald-600 bg-emerald-600 text-white px-3 py-1 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                      {{ approvingCandidateId === candidate.id ? 'ОДОБРЕНИЕ...' : 'ОДОБРИТЬ' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <!-- Team Warning -->
               <div *ngIf="selectedSolution.candidates && selectedSolution.candidates.length < selectedSolution.assignment.candidatesCapacity"
                    class="mb-4 border-2 border-red-400 bg-red-50 p-3 text-red-700 text-sm font-bold">
@@ -589,17 +621,63 @@ import { NotificationService } from '../core/services/notification.service';
           </div>
         </div>
 
+        <!-- Pending Candidates Modal -->
+        <div *ngIf="showPendingCandidatesModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closePendingCandidatesModal()">
+          <div class="bg-white border-2 border-emerald-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-xl font-bold uppercase text-emerald-600">ЗАЯВКИ НА РАССМОТРЕНИИ</h3>
+              <button (click)="closePendingCandidatesModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Candidates List -->
+            <div class="space-y-2 overflow-y-auto max-h-96">
+              <div *ngFor="let candidate of pendingCandidates" class="flex justify-between items-center bg-gray-50 border border-emerald-300 p-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {{ candidate.surname.charAt(0) }}{{ candidate.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <p class="font-semibold">{{ candidate.surname }} {{ candidate.name }}{{ candidate.patronymic ? ' ' + candidate.patronymic : '' }}</p>
+                    <p class="text-xs text-gray-500">{{ candidate.city || 'Город не указан' }}</p>
+                    <p class="text-xs text-gray-400">{{ candidate.login }}</p>
+                  </div>
+                </div>
+                <button
+                  (click)="approveCandidate(candidate.id)"
+                  [disabled]="approvingCandidateId === candidate.id"
+                  class="border-2 border-emerald-600 bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                  {{ approvingCandidateId === candidate.id ? 'ОДОБРЕНИЕ...' : 'ОДОБРИТЬ' }}
+                </button>
+              </div>
+              <div *ngIf="pendingCandidates.length === 0" class="text-center py-8 text-gray-500">
+                Нет заявок на рассмотрение
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 flex gap-2">
+              <button
+                type="button"
+                (click)="closePendingCandidatesModal()"
+                class="flex-1 border-2 border-emerald-600 bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-700 transition-colors uppercase font-semibold">
+                ЗАКРЫТЬ
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="flex gap-8">
           <!-- Left Sidebar - Technology Filter -->
           <div class="w-64 flex-shrink-0">
             <div class="border-2 border-indigo-600 bg-white p-6 shadow-md">
               <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-indigo-600">Фильтр по технологиям</h3>
-              
+
               <!-- Loading Indicator -->
               <div *ngIf="loadingFilterTechs" class="text-center py-4 text-gray-500 text-xs">
                 Загрузка...
               </div>
-              
+
               <!-- Technologies List -->
               <div *ngIf="!loadingFilterTechs" class="space-y-2">
                 <label *ngFor="let tech of displayFilterTechs" class="flex items-center gap-2 text-xs cursor-pointer">
@@ -610,7 +688,7 @@ import { NotificationService } from '../core/services/notification.service';
                     class="w-4 h-4 border-2 border-black"/>
                   <span>{{ tech.name }}</span>
                 </label>
-                
+
                 <!-- Show All Button -->
                 <button
                   *ngIf="allFilterTechs.length > 20"
@@ -842,6 +920,11 @@ export class CandidateDashboardPage implements OnInit {
   solutionUrl = '';
   savingSolutionUrl = false;
 
+  // Pending candidates
+  showPendingCandidatesModal = false;
+  pendingCandidates: CandidateFullInfo[] = [];
+  approvingCandidateId: string | null = null;
+
   // Validators for team form
   readonly TEAM_NAME_MIN_LENGTH = 2;
   readonly TEAM_NAME_MAX_LENGTH = 50;
@@ -928,7 +1011,7 @@ export class CandidateDashboardPage implements OnInit {
   onShowAllTechsSearch(): void {
     const query = this.showAllTechsSearch.trim().toLowerCase();
     if (query) {
-      this.filteredShowAllTechs = this.allFilterTechs.filter(t => 
+      this.filteredShowAllTechs = this.allFilterTechs.filter(t =>
         t.name.toLowerCase().includes(query)
       );
     } else {
@@ -1204,6 +1287,48 @@ export class CandidateDashboardPage implements OnInit {
         console.error('Failed to join team solution:', error);
         const errorMessage = error?.error?.message || error?.message || 'Не удалось отправить запрос. Попробуйте позже.';
         this.notificationService.error(`Ошибка: ${errorMessage}`);
+      }
+    });
+  }
+
+  get currentUserId(): string | null {
+    return this.authService.currentUser()?.userId || null;
+  }
+
+  openPendingCandidatesModal(): void {
+    this.pendingCandidates = this.selectedSolution?.candidatesJoinRequested || [];
+    this.showPendingCandidatesModal = true;
+  }
+
+  closePendingCandidatesModal(): void {
+    this.showPendingCandidatesModal = false;
+    this.pendingCandidates = [];
+  }
+
+  approveCandidate(candidateId: string): void {
+    if (!this.selectedSolution) return;
+
+    this.approvingCandidateId = candidateId;
+    this.cdr.markForCheck();
+
+    this.solutionsService.acceptJoinRequest(this.selectedSolution.id, candidateId).subscribe({
+      next: () => {
+        this.notificationService.success('Кандидат одобрен');
+        this.approvingCandidateId = null;
+        // Обновляем модалку и списки
+        if (this.selectedSolution?.candidatesJoinRequested) {
+          this.selectedSolution.candidatesJoinRequested = this.selectedSolution.candidatesJoinRequested.filter(c => c.id !== candidateId);
+          this.pendingCandidates = this.pendingCandidates.filter(c => c.id !== candidateId);
+        }
+        this.loadSolutions();
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to approve candidate:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Не удалось одобрить кандидата. Попробуйте позже.';
+        this.notificationService.error(`Ошибка: ${errorMessage}`);
+        this.approvingCandidateId = null;
+        this.cdr.markForCheck();
       }
     });
   }

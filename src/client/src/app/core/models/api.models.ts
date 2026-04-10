@@ -157,8 +157,8 @@ export interface SolutionFullInfo {
   team?: SolutionTeamInfo;
   assignment: AssignmentFullInfo;
   candidateOwner: CandidateFullInfo;
-  candidateOwnerId: string;
   candidates: CandidateFullInfo[];
+  candidatesJoinRequested: CandidateFullInfo[];
 }
 
 export interface SolutionTeamInfo {
