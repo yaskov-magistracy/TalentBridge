@@ -1,6 +1,6 @@
 namespace Infrastructure.DTO.Search.Ranges;
 
-public class RangeSearchQuery<T>
+public record RangeSearchQuery<T>
 {
     public T From { get; }
     public T To { get; }

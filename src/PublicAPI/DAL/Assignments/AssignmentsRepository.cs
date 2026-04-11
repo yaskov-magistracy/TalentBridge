@@ -50,6 +50,15 @@ public class AssignmentsRepository(
             query = query.Where(x => !request.ExcludedIds.Contains(x.Id));
         if (request.Text != null) 
             query = query.Where(e => EF.Functions.ILike(e.Name, $"%{request.Text}%"));
+        if (request.TechnologiesIds != null)
+            query = query.Where(e => request.TechnologiesIds.All(t => e.Technologies!.Any(t2 => t2.Id == t)));
+        if (request.DeadLineRangeIncluded != null)
+            query = query.Where(e => e.DeadLine >= request.DeadLineRangeIncluded.From
+                                     && e.DeadLine <= request.DeadLineRangeIncluded.To); 
+        if (request.IsGrouped is true)
+            query = query.Where(e => e.CandidatesCapacity > 1);
+        if (request.IsGrouped is false)
+            query = query.Where(e => e.CandidatesCapacity == 1);
         
         var count = await query.CountAsync();
         return new(
