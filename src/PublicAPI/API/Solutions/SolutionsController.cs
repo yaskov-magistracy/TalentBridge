@@ -67,7 +67,7 @@ public class SolutionsController(
     /// Вступить в команду решения (без подтверждения)
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
-    [HttpPatch("{id:Guid}/join")]
+    [HttpPost("{id:Guid}/join")]
     public async Task<ActionResult<SolutionFullInfo>> Join([FromRoute] Guid id)
     {
         var candidateId = User.GetId();
@@ -79,7 +79,7 @@ public class SolutionsController(
     /// Кинуть заявку на вступление (её подтверждает лидер)
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
-    [HttpPatch("{id:Guid}/join/request")]
+    [HttpPost("{id:Guid}/join/request")]
     public async Task<ActionResult<SolutionFullInfo>> JoinRequest([FromRoute] Guid id)
     {
         var candidateId = User.GetId();
@@ -91,7 +91,7 @@ public class SolutionsController(
     /// Подтвердить заявку на вступление (может только лидер)
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
-    [HttpPatch("{id:Guid}/join/request/accept")]
+    [HttpPost("{id:Guid}/join/request/accept")]
     public async Task<ActionResult<SolutionFullInfo>> JoinRequestAccept(
         [FromRoute] Guid id,
         [FromBody] SolutionJoinRequestAcceptApiRequest request)
@@ -105,7 +105,7 @@ public class SolutionsController(
     /// Начать решение (может только лидер)
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
-    [HttpPatch("{id:Guid}/start")]
+    [HttpPost("{id:Guid}/start")]
     public async Task<ActionResult<SolutionFullInfo>> Start([FromRoute] Guid id)
     {
         var candidateId = User.GetId();
@@ -117,7 +117,7 @@ public class SolutionsController(
     /// Отправить на проверку. Сейчас сразу Эксперту
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
-    [HttpPatch("{id:Guid}/send-to-review")]
+    [HttpPost("{id:Guid}/send-to-review")]
     public async Task<ActionResult<SolutionFullInfo>> SendToReview([FromRoute] Guid id)
     {
         var candidateId = User.GetId();
@@ -132,7 +132,7 @@ public class SolutionsController(
     /// Проверяет что Эксперт от той же компании, что и Assignment
     /// </remarks>
     [AuthorizeRoles(AccountRole.Expert)]
-    [HttpPatch("{id:Guid}/submit-review")]
+    [HttpPost("{id:Guid}/submit-review")]
     public async Task<ActionResult<SolutionFullInfo>> SubmitReview(
         [FromRoute] Guid id,
         [FromBody] SolutionSubmitReviewRequest request)

@@ -13,6 +13,7 @@ public record SolutionSearchRequest(
     Guid? CandidateJoinRequestedId = null,
     Guid? ExcludeCandidateJoinRequestedId = null,
     bool? IsAvailableToJoin = null,
+    SolutionState? State = null,
     string? Text = null,
     int Take = 100,
     int Skip = 0

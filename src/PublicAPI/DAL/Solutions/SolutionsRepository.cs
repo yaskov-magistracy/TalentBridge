@@ -67,6 +67,8 @@ public class SolutionsRepository(
             query = query.Where(e => e.Candidates.Count < e.Assignment.CandidatesCapacity);
         if (request.IsAvailableToJoin is false)
             query = query.Where(e => e.Candidates.Count == e.Assignment.CandidatesCapacity);
+        if (request.State != null)
+            query = query.Where(e => e.State == SolutionsMapper.ToEntity(request.State.Value));
         
         var count = await query.CountAsync();
         return new(
