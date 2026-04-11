@@ -310,10 +310,15 @@ export class JoinSolutionPage implements OnInit {
     this.loadingSearch = true;
     this.cdr.markForCheck();
 
+    const currentUserId = this.authService.currentUser()?.userId;
+
     const searchRequest: SolutionSearchRequest = {
       text: this.searchText || undefined,
       take: 100,
-      skip: 0
+      skip: 0,
+      isAvailableToJoin: true,
+      excludeCandidateOwnerId: currentUserId,
+      excludeCandidateJoinRequestedId: currentUserId
     };
 
     this.solutionsService.searchSolutions(searchRequest).subscribe({
@@ -347,6 +352,8 @@ export class JoinSolutionPage implements OnInit {
 
     const searchRequest: SolutionSearchRequest = {
       candidateJoinRequestedId: currentUserId,
+      excludeCandidateOwnerId: currentUserId,
+      excludeCandidateId: currentUserId,
       text: this.searchText || undefined,
       take: 100,
       skip: 0
