@@ -45,6 +45,8 @@ public class SolutionsRepository(
                                          || EF.Functions.ILike(e.Team.Description, $"%{request.Text}%")));
         if (request.AssignmentId != null)
             query = query.Where(e => e.AssignmentId == request.AssignmentId);
+        if (request.TechnologiesIds != null)
+            query = query.Where(e => request.TechnologiesIds.All(t => e.Assignment.Technologies!.Any(t2 => t2.Id == t)));
         if (request.ExcludeAssignmentsIds != null)
             query = query.Where(e => !request.ExcludeAssignmentsIds.Contains(e.AssignmentId));
         if (request.CandidateId != null)

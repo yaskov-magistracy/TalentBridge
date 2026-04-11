@@ -4,6 +4,7 @@ namespace Domain.Solutions.DTO;
 
 public record SolutionSearchRequest(
     Guid? AssignmentId = null,
+    List<Guid>? TechnologiesIds = null,
     List<Guid>? ExcludeAssignmentsIds = null,
     Guid? CandidateId = null,
     Guid? ExcludeCandidateId = null,
