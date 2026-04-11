@@ -46,13 +46,13 @@ import { NotificationService } from '../core/services/notification.service';
         <div class="border-b-2 border-indigo-200 mb-6">
           <div class="flex gap-2">
             <button
-              (click)="activeTab = 'search'"
+              (click)="onTabChange('search')"
               [class]="activeTab === 'search' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
               class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
               Поиск {{ getTabCount('search') }}
             </button>
             <button
-              (click)="activeTab = 'pending'"
+              (click)="onTabChange('pending')"
               [class]="activeTab === 'pending' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
               class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
               Ожидают подтверждения {{ getTabCount('pending') }}
@@ -306,14 +306,28 @@ export class JoinSolutionPage implements OnInit {
     }, 300);
   }
 
+  onTabChange(tab: 'search' | 'pending'): void {
+    this.activeTab = tab;
+    if (tab === 'search') {
+      this.loadSearchResults();
+    } else {
+      this.loadPendingResults();
+    }
+  }
+
   loadSearchResults(): void {
     this.loadingSearch = true;
     this.cdr.markForCheck();
 
+    const currentUserId = this.authService.currentUser()?.userId;
+
     const searchRequest: SolutionSearchRequest = {
       text: this.searchText || undefined,
       take: 100,
-      skip: 0
+      skip: 0,
+      isAvailableToJoin: true,
+      excludeCandidateOwnerId: currentUserId,
+      excludeCandidateJoinRequestedId: currentUserId
     };
 
     this.solutionsService.searchSolutions(searchRequest).subscribe({
@@ -347,6 +361,8 @@ export class JoinSolutionPage implements OnInit {
 
     const searchRequest: SolutionSearchRequest = {
       candidateJoinRequestedId: currentUserId,
+      excludeCandidateOwnerId: currentUserId,
+      excludeCandidateId: currentUserId,
       text: this.searchText || undefined,
       take: 100,
       skip: 0
