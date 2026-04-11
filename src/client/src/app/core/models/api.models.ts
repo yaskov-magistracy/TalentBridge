@@ -157,8 +157,8 @@ export interface SolutionFullInfo {
   team?: SolutionTeamInfo;
   assignment: AssignmentFullInfo;
   candidateOwner: CandidateFullInfo;
-  candidateOwnerId: string;
   candidates: CandidateFullInfo[];
+  candidatesJoinRequested: CandidateFullInfo[];
 }
 
 export interface SolutionTeamInfo {
@@ -182,6 +182,8 @@ export type ExpertReviewStatus = 'pending' | 'approved' | 'rejected';
 export interface SolutionSearchRequest {
   assignmentId?: string;
   candidateId?: string;
+  candidateOwnerId?: string;
+  candidateJoinRequestedId?: string;
   text?: string;
   take?: number;
   skip?: number;
@@ -209,8 +211,8 @@ export interface TechnologyUpdateEntity {
 
 export interface TechnologySearchRequest {
   name?: string;
-  page?: number;
-  pageSize?: number;
+  take?: number;
+  skip?: number;
 }
 
 export interface TechnologySearchResponse {

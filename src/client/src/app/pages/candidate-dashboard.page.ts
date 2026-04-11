@@ -6,7 +6,6 @@ import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
 import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
-import { AVAILABLE_TECHS } from '../shared/utils/constants';
 import { NotificationService } from '../core/services/notification.service';
 
 @Component({
@@ -277,7 +276,31 @@ import { NotificationService } from '../core/services/notification.service';
               <h3 class="font-bold text-lg mb-3 uppercase text-amber-800">
                 📋 ГРУППОВОЙ ПРОЕКТ (до {{ selectedAssignment.candidatesCapacity }} чел.)
               </h3>
+
+              <!-- Existing Teams List -->
+              <div *ngIf="assignmentTeams.length > 0" class="mb-4">
+                <p class="text-sm font-bold uppercase text-amber-700 mb-2">Команды, выполняющие это задание:</p>
+                <div class="space-y-2">
+                  <div *ngFor="let team of displayTeams" class="flex justify-between items-center bg-white border border-amber-300 p-2">
+                    <span class="text-sm font-semibold">{{ team.name }}</span>
+                    <button
+                      (click)="joinTeamSolution(team.solutionId)"
+                      class="border border-emerald-600 bg-emerald-600 text-white px-3 py-1 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap">
+                      Присоединиться
+                    </button>
+                  </div>
+                  <button
+                    *ngIf="assignmentTeams.length > 3"
+                    (click)="navigateToJoinSolution()"
+                    class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold underline">
+                    Показать все ({{ assignmentTeams.length }})
+                  </button>
+                </div>
+              </div>
+
+              <!-- Create New Team Form -->
               <div class="space-y-3">
+                <p class="text-sm font-bold uppercase text-amber-700">Или создайте свою команду:</p>
                 <div>
                   <label class="block font-bold mb-2 text-sm uppercase">НАЗВАНИЕ КОМАНДЫ</label>
                   <input
@@ -366,6 +389,41 @@ import { NotificationService } from '../core/services/notification.service';
                 📋 КОМАНДА ({{ selectedSolution.candidates?.length || 0 }} / {{ selectedSolution.assignment.candidatesCapacity }} чел.)
               </h3>
 
+              <!-- Pending Requests Section (только для владельца решения) -->
+              <div *ngIf="selectedSolution.candidatesJoinRequested.length > 0 && selectedSolution.candidateOwner.id === currentUserId" class="mb-4 border-2 border-emerald-400 bg-emerald-50 p-3">
+                <div class="flex justify-between items-center mb-2">
+                  <p class="text-sm font-bold uppercase text-emerald-700">⏳ ЗАЯВКИ НА РАССМОТРЕНИИ ({{ selectedSolution.candidatesJoinRequested.length }})</p>
+                  <button
+                    *ngIf="selectedSolution.candidatesJoinRequested.length > 3"
+                    (click)="openPendingCandidatesModal()"
+                    class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline">
+                    Показать всех
+                  </button>
+                </div>
+                <div class="space-y-2">
+                  <div *ngFor="let candidate of selectedSolution.candidatesJoinRequested.slice(0, 3)" class="flex justify-between items-center bg-white border border-emerald-300 p-2">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        {{ candidate.surname.charAt(0) }}{{ candidate.name.charAt(0) }}
+                      </div>
+                      <div>
+                        <p class="text-sm font-semibold">{{ candidate.surname }} {{ candidate.name }}</p>
+                        <p class="text-xs text-gray-500">{{ candidate.city || 'Город не указан' }}</p>
+                      </div>
+                    </div>
+                    <button
+                      (click)="approveCandidate(candidate.id)"
+                      [disabled]="approvingCandidateId === candidate.id || selectedSolution.candidates.length >= selectedSolution.assignment.candidatesCapacity"
+                      class="border border-emerald-600 bg-emerald-600 text-white px-3 py-1 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                      {{ approvingCandidateId === candidate.id ? 'ОДОБРЕНИЕ...' : 'ОДОБРИТЬ' }}
+                    </button>
+                  </div>
+                </div>
+                <div *ngIf="selectedSolution.candidates.length >= selectedSolution.assignment.candidatesCapacity" class="mt-2 text-xs text-red-600 font-bold">
+                  ⚠️ Нет свободных мест в команде
+                </div>
+              </div>
+
               <!-- Team Warning -->
               <div *ngIf="selectedSolution.candidates && selectedSolution.candidates.length < selectedSolution.assignment.candidatesCapacity"
                    class="mb-4 border-2 border-red-400 bg-red-50 p-3 text-red-700 text-sm font-bold">
@@ -401,27 +459,6 @@ import { NotificationService } from '../core/services/notification.service';
               <h3 class="font-bold text-lg uppercase text-indigo-800">
                 👤 ИНДИВИДУАЛЬНЫЙ ПРОЕКТ
               </h3>
-            </div>
-
-            <!-- Solution ID for Joining (for group projects in NotStarted/InProgress tabs) -->
-            <div *ngIf="selectedSolution.assignment.isGrouped && (selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress')" class="mb-6 border-2 border-indigo-400 bg-indigo-50 p-4">
-              <h3 class="font-bold text-lg mb-3 uppercase text-indigo-800">
-                🔗 ID РЕШЕНИЯ (для присоединения к команде)
-              </h3>
-              <div class="flex items-center gap-2">
-                <code class="flex-1 bg-white px-3 py-2 border-2 border-gray-300 text-sm font-mono break-all">
-                  {{ selectedSolution.id }}
-                </code>
-                <button
-                  (click)="copySolutionId(selectedSolution.id)"
-                  class="border-2 border-indigo-600 bg-indigo-600 text-white px-3 py-2 hover:bg-indigo-700 transition-colors text-xs font-bold uppercase whitespace-nowrap"
-                  title="Скопировать ID">
-                  📋 Копировать
-                </button>
-              </div>
-              <p class="text-xs text-gray-600 mt-2">
-                Другие участники могут использовать этот ID для присоединения к вашей команде через кнопку "Присоединиться"
-              </p>
             </div>
 
             <!-- Solution URL (for NotStarted and InProgress tabs) -->
@@ -519,37 +556,97 @@ import { NotificationService } from '../core/services/notification.service';
           </div>
         </div>
 
-        <!-- Join Solution Modal -->
-        <div *ngIf="showJoinModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeJoinModal()">
-          <div class="bg-white border-2 border-emerald-600 p-8 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
+        <!-- Show All Technologies Modal -->
+        <div *ngIf="showAllTechsModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeShowAllModal()">
+          <div class="bg-white border-2 border-indigo-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
             <!-- Header -->
-            <div class="flex justify-between items-start mb-6">
-              <h2 class="text-2xl font-bold text-emerald-600 uppercase">Присоединиться к решению</h2>
-              <button (click)="closeJoinModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-xl font-bold uppercase text-indigo-600">ВСЕ ТЕХНОЛОГИИ</h3>
+              <button (click)="closeShowAllModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
             </div>
 
-            <!-- Description -->
-            <p class="text-sm text-gray-600 mb-4">
-              Введите ID решения, к которому хотите присоединиться
-            </p>
-
-            <!-- Solution ID Input -->
-            <div class="mb-6">
-              <label class="block font-bold mb-2 text-sm uppercase tracking-wider">ID РЕШЕНИЯ</label>
+            <!-- Search Input -->
+            <div class="mb-4">
               <input
                 type="text"
-                [(ngModel)]="joinSolutionId"
+                [(ngModel)]="showAllTechsSearch"
+                (ngModelChange)="onShowAllTechsSearch()"
                 class="w-full border-2 border-black p-3 text-sm"
-                placeholder="3fa85f64-5717-4562-b3fc-2c963f66afa6"/>
+                placeholder="Поиск технологий..."
+                autofocus/>
             </div>
 
-            <!-- Actions -->
-            <div class="flex gap-4">
+            <!-- Technologies Grid -->
+            <div class="grid grid-cols-3 gap-2 overflow-y-auto max-h-96">
+              <label *ngFor="let tech of filteredShowAllTechs" class="flex items-center gap-2 text-xs cursor-pointer border-2 p-2 hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  [checked]="selectedTechs.some(t => t.id === tech.id)"
+                  (change)="toggleTech(tech)"
+                  class="w-4 h-4"/>
+                <span>{{ tech.name }}</span>
+              </label>
+              <div *ngIf="filteredShowAllTechs.length === 0" class="col-span-3 text-center py-8 text-gray-500">
+                Технологии не найдены
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 flex gap-2">
               <button
-                (click)="joinSolution()"
-                [disabled]="joiningSolution || !joinSolutionId.trim()"
-                class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-emerald-600 text-white hover:bg-emerald-700">
-                {{ joiningSolution ? 'ПРИСОЕДИНЕНИЕ...' : 'ПРИСОЕДИНИТЬСЯ' }}
+                type="button"
+                (click)="closeShowAllModal()"
+                class="flex-1 border-2 border-indigo-600 bg-indigo-600 text-white px-4 py-2 hover:bg-indigo-700 transition-colors uppercase font-semibold">
+                ГОТОВО
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Candidates Modal -->
+        <div *ngIf="showPendingCandidatesModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closePendingCandidatesModal()">
+          <div class="bg-white border-2 border-emerald-600 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-xl font-bold uppercase text-emerald-600">ЗАЯВКИ НА РАССМОТРЕНИИ</h3>
+              <button (click)="closePendingCandidatesModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Candidates List -->
+            <div class="space-y-2 overflow-y-auto max-h-96">
+              <div *ngFor="let candidate of pendingCandidates" class="flex justify-between items-center bg-gray-50 border border-emerald-300 p-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {{ candidate.surname.charAt(0) }}{{ candidate.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <p class="font-semibold">{{ candidate.surname }} {{ candidate.name }}{{ candidate.patronymic ? ' ' + candidate.patronymic : '' }}</p>
+                    <p class="text-xs text-gray-500">{{ candidate.city || 'Город не указан' }}</p>
+                    <p class="text-xs text-gray-400">{{ candidate.login }}</p>
+                  </div>
+                </div>
+                <button
+                  (click)="approveCandidate(candidate.id)"
+                  [disabled]="approvingCandidateId === candidate.id || (selectedSolution && selectedSolution.candidates.length >= selectedSolution.assignment.candidatesCapacity)"
+                  class="border-2 border-emerald-600 bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                  {{ approvingCandidateId === candidate.id ? 'ОДОБРЕНИЕ...' : 'ОДОБРИТЬ' }}
+                </button>
+              </div>
+              <div *ngIf="pendingCandidates.length === 0" class="text-center py-8 text-gray-500">
+                Нет заявок на рассмотрение
+              </div>
+              <div *ngIf="selectedSolution && selectedSolution.candidates.length >= selectedSolution.assignment.candidatesCapacity" class="text-center text-xs text-red-600 font-bold mt-2">
+                ⚠️ Нет свободных мест в команде
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-6 flex gap-2">
+              <button
+                type="button"
+                (click)="closePendingCandidatesModal()"
+                class="flex-1 border-2 border-emerald-600 bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-700 transition-colors uppercase font-semibold">
+                ЗАКРЫТЬ
               </button>
             </div>
           </div>
@@ -560,15 +657,30 @@ import { NotificationService } from '../core/services/notification.service';
           <div class="w-64 flex-shrink-0">
             <div class="border-2 border-indigo-600 bg-white p-6 shadow-md">
               <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-indigo-600">Фильтр по технологиям</h3>
-              <div class="space-y-2">
-                <label *ngFor="let tech of AVAILABLE_TECHS" class="flex items-center gap-2 text-xs cursor-pointer">
+
+              <!-- Loading Indicator -->
+              <div *ngIf="loadingFilterTechs" class="text-center py-4 text-gray-500 text-xs">
+                Загрузка...
+              </div>
+
+              <!-- Technologies List -->
+              <div *ngIf="!loadingFilterTechs" class="space-y-2">
+                <label *ngFor="let tech of displayFilterTechs" class="flex items-center gap-2 text-xs cursor-pointer">
                   <input
                     type="checkbox"
-                    [checked]="selectedTechs.some(t => t.name === tech)"
-                    (change)="toggleTech({ id: '', name: tech })"
+                    [checked]="selectedTechs.some(t => t.id === tech.id)"
+                    (change)="toggleTech(tech)"
                     class="w-4 h-4 border-2 border-black"/>
-                  <span>{{ tech }}</span>
+                  <span>{{ tech.name }}</span>
                 </label>
+
+                <!-- Show All Button -->
+                <button
+                  *ngIf="allFilterTechs.length > 20"
+                  (click)="openShowAllModal()"
+                  class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline mt-1">
+                  Показать все ({{ allFilterTechs.length }})
+                </button>
               </div>
             </div>
           </div>
@@ -605,7 +717,7 @@ import { NotificationService } from '../core/services/notification.service';
                   </button>
                 </div>
                 <button
-                  (click)="openJoinModal()"
+                  (click)="navigateToJoinSolution()"
                   class="flex-shrink-0 border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors uppercase font-bold text-xs whitespace-nowrap">
                   🔗 ПРИСОЕДИНИТЬСЯ
                 </button>
@@ -653,7 +765,9 @@ import { NotificationService } from '../core/services/notification.service';
 
             <!-- Solutions Tabs -->
             <div *ngIf="activeTab !== 'available'" class="space-y-4">
-              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="solution.assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'">
+              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="solution.assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'"
+                   [class.ring-4]="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId"
+                   [class.ring-emerald-400]="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId">
                 <div class="flex justify-between items-start gap-4">
                   <div (click)="openSolutionModal(solution)" class="cursor-pointer flex-1">
                     <div class="mb-3">
@@ -679,6 +793,12 @@ import { NotificationService } from '../core/services/notification.service';
                       <p class="text-sm mb-3" *ngIf="solution.assignment.isGrouped && activeTab !== 'review'">
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
+                      <!-- Pending Requests Badge -->
+                      <div *ngIf="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId" class="mb-2">
+                        <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
+                          ⏳ ЗАЯВОК НА РАССМОТРЕНИИ: {{ solution.candidatesJoinRequested.length }}
+                        </span>
+                      </div>
                     </div>
                     <!-- Review Stage Badges (moved to bottom for review tab) -->
                     <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review'">
@@ -728,7 +848,6 @@ import { NotificationService } from '../core/services/notification.service';
   `
 })
 export class CandidateDashboardPage implements OnInit {
-  AVAILABLE_TECHS = AVAILABLE_TECHS;
   showProfileEdit = false;
   showTechModal = false;
   savingProfile = false;
@@ -754,6 +873,16 @@ export class CandidateDashboardPage implements OnInit {
   hasSearched = false;
   private searchTimeout: any;
 
+  // Фильтр технологий (sidebar)
+  allFilterTechs: Technology[] = [];
+  displayFilterTechs: Technology[] = [];
+  loadingFilterTechs = false;
+
+  // Show All Technologies Modal
+  showAllTechsModal = false;
+  showAllTechsSearch = '';
+  filteredShowAllTechs: Technology[] = [];
+
   // Для редактирования профиля (отдельно от фильтра)
   profileTechs: Technology[] = [];
 
@@ -773,6 +902,9 @@ export class CandidateDashboardPage implements OnInit {
   teamName = '';
   teamDescription = '';
   takingAssignment = false;
+  assignmentTeams: { solutionId: string; name: string; membersCount: number }[] = [];
+  displayTeams: { solutionId: string; name: string; membersCount: number }[] = [];
+  loadingAssignmentTeams = false;
 
   // Solution modal
   selectedSolution: SolutionFullInfo | null = null;
@@ -781,10 +913,10 @@ export class CandidateDashboardPage implements OnInit {
   solutionUrl = '';
   savingSolutionUrl = false;
 
-  // Join solution modal
-  showJoinModal = false;
-  joinSolutionId = '';
-  joiningSolution = false;
+  // Pending candidates
+  showPendingCandidatesModal = false;
+  pendingCandidates: CandidateFullInfo[] = [];
+  approvingCandidateId: string | null = null;
 
   // Validators for team form
   readonly TEAM_NAME_MIN_LENGTH = 2;
@@ -801,6 +933,7 @@ export class CandidateDashboardPage implements OnInit {
       about: ['']
     });
     this.loadCandidate();
+    this.loadFilterTechnologies();
     this.loadSolutions();
   }
 
@@ -837,6 +970,46 @@ export class CandidateDashboardPage implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private loadFilterTechnologies(): void {
+    this.loadingFilterTechs = true;
+    this.technologiesService.searchTechnologies({ take: 1000, skip: 0 }).subscribe({
+      next: (response) => {
+        this.allFilterTechs = (response.items || []).sort((a, b) => a.name.localeCompare(b.name));
+        // Показываем первые 20 технологий в sidebar
+        this.displayFilterTechs = this.allFilterTechs.slice(0, 20);
+        this.loadingFilterTechs = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to load filter technologies:', error);
+        this.loadingFilterTechs = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openShowAllModal(): void {
+    this.showAllTechsModal = true;
+    this.showAllTechsSearch = '';
+    this.filteredShowAllTechs = [...this.allFilterTechs];
+  }
+
+  closeShowAllModal(): void {
+    this.showAllTechsModal = false;
+    this.showAllTechsSearch = '';
+  }
+
+  onShowAllTechsSearch(): void {
+    const query = this.showAllTechsSearch.trim().toLowerCase();
+    if (query) {
+      this.filteredShowAllTechs = this.allFilterTechs.filter(t =>
+        t.name.toLowerCase().includes(query)
+      );
+    } else {
+      this.filteredShowAllTechs = [...this.allFilterTechs];
+    }
   }
 
   private loadSolutions(): void {
@@ -1030,6 +1203,13 @@ export class CandidateDashboardPage implements OnInit {
     // Сбрасываем форму команды
     this.teamName = '';
     this.teamDescription = '';
+    this.assignmentTeams = [];
+    this.displayTeams = [];
+
+    // Загружаем команды для группового проекта
+    if (assignment.isGrouped) {
+      this.loadAssignmentTeams(assignment.id);
+    }
   }
 
   closeAssignmentModal(): void {
@@ -1048,35 +1228,112 @@ export class CandidateDashboardPage implements OnInit {
     this.selectedSolution = null;
   }
 
-  openJoinModal(): void {
-    this.showJoinModal = true;
-    this.joinSolutionId = '';
+  navigateToJoinSolution(): void {
+    this.closeAssignmentModal();
+    this.router.navigate(['/join-solution']);
   }
 
-  closeJoinModal(): void {
-    this.showJoinModal = false;
-    this.joinSolutionId = '';
-  }
+  private loadAssignmentTeams(assignmentId: string): void {
+    this.loadingAssignmentTeams = true;
+    this.assignmentTeams = [];
+    this.displayTeams = [];
 
-  joinSolution(): void {
-    if (!this.joinSolutionId.trim()) return;
+    const searchRequest: SolutionSearchRequest = {
+      assignmentId: assignmentId,
+      take: 100,
+      skip: 0
+    };
 
-    this.joiningSolution = true;
-    this.cdr.markForCheck();
+    this.solutionsService.searchSolutions(searchRequest).subscribe({
+      next: (response) => {
+        const solutions = response.items || [];
+        // Фильтруем только групповые решения с командой
+        this.assignmentTeams = solutions
+          .filter(s => s.assignment.isGrouped && s.team)
+          .map(s => ({
+            solutionId: s.id,
+            name: s.team!.name,
+            membersCount: s.candidates.length
+          }));
 
-    this.solutionsService.joinSolution(this.joinSolutionId.trim()).subscribe({
-      next: () => {
-        this.notificationService.success('Вы успешно присоединились к решению!');
-        this.closeJoinModal();
-        this.loadSolutions();
-        this.joiningSolution = false;
+        // Показываем максимум 3 команды
+        this.displayTeams = this.assignmentTeams.slice(0, 3);
+        this.loadingAssignmentTeams = false;
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Failed to join solution:', error);
-        const errorMessage = error?.error?.message || error?.message || 'Не удалось присоединиться к решению. Проверьте ID и попробуйте позже.';
+        console.error('Failed to load assignment teams:', error);
+        this.loadingAssignmentTeams = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  joinTeamSolution(solutionId: string): void {
+    this.closeAssignmentModal();
+    this.solutionsService.requestJoinSolution(solutionId).subscribe({
+      next: () => {
+        this.notificationService.success('Запрос на присоединение к команде отправлен');
+        this.loadSolutions();
+      },
+      error: (error) => {
+        console.error('Failed to join team solution:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Не удалось отправить запрос. Попробуйте позже.';
         this.notificationService.error(`Ошибка: ${errorMessage}`);
-        this.joiningSolution = false;
+      }
+    });
+  }
+
+  get currentUserId(): string | null {
+    return this.authService.currentUser()?.userId || null;
+  }
+
+  openPendingCandidatesModal(): void {
+    this.pendingCandidates = this.selectedSolution?.candidatesJoinRequested || [];
+    this.showPendingCandidatesModal = true;
+  }
+
+  closePendingCandidatesModal(): void {
+    this.showPendingCandidatesModal = false;
+    this.pendingCandidates = [];
+  }
+
+  approveCandidate(candidateId: string): void {
+    if (!this.selectedSolution) return;
+
+    // Проверяем, есть ли свободные места
+    if (this.selectedSolution.candidates.length >= this.selectedSolution.assignment.candidatesCapacity) {
+      this.notificationService.warning('Нет свободных мест в команде');
+      return;
+    }
+
+    this.approvingCandidateId = candidateId;
+    this.cdr.markForCheck();
+
+    this.solutionsService.acceptJoinRequest(this.selectedSolution.id, candidateId).subscribe({
+      next: () => {
+        this.notificationService.success('Кандидат одобрен');
+        this.approvingCandidateId = null;
+        // Обновляем модалку и списки
+        if (this.selectedSolution?.candidatesJoinRequested) {
+          // Находим одобренного кандидата
+          const approvedCandidate = this.selectedSolution.candidatesJoinRequested.find(c => c.id === candidateId);
+          // Удаляем из pending
+          this.selectedSolution.candidatesJoinRequested = this.selectedSolution.candidatesJoinRequested.filter(c => c.id !== candidateId);
+          this.pendingCandidates = this.pendingCandidates.filter(c => c.id !== candidateId);
+          // Добавляем в команду (если есть место)
+          if (this.selectedSolution.candidates.length < this.selectedSolution.assignment.candidatesCapacity && approvedCandidate) {
+            this.selectedSolution.candidates.push(approvedCandidate as CandidateFullInfo);
+          }
+        }
+        this.loadSolutions();
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to approve candidate:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Не удалось одобрить кандидата. Попробуйте позже.';
+        this.notificationService.error(`Ошибка: ${errorMessage}`);
+        this.approvingCandidateId = null;
         this.cdr.markForCheck();
       }
     });
