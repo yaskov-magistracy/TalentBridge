@@ -76,7 +76,7 @@ public class SolutionsController(
     }
     
     /// <summary>
-    /// Кинуть заявку на вступление (её подтверждает админ)
+    /// Кинуть заявку на вступление (её подтверждает лидер)
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
     [HttpPatch("{id:Guid}/join/request")]
@@ -88,7 +88,7 @@ public class SolutionsController(
     }
     
     /// <summary>
-    /// Подтвердить заявку на вступление (может только админ)
+    /// Подтвердить заявку на вступление (может только лидер)
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
     [HttpPatch("{id:Guid}/join/request/accept")]
