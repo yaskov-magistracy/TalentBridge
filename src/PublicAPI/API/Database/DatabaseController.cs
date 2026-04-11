@@ -17,6 +17,7 @@ public class DatabaseController(
     /// логин/пароль <br/>
     /// Работодатель: employer/employer <br/>
     /// Кандидат: candidate/candidate <br/>
+    /// Эксперт: expert/expert <br/>
     /// </remarks>
     [HttpPost("recreate")]
     public async Task<NoContentResult> Recreate()

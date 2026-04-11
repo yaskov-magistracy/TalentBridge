@@ -1,4 +1,5 @@
 using Domain.Assignments;
+using Domain.Experts;
 using Domain.Solutions.DTO;
 using Infrastructure.Results;
 
@@ -14,11 +15,13 @@ public interface ISolutionsService
     Task<Result<SolutionFullInfo>> JoinRequest(Guid candidateId, Guid id);
     Task<Result<SolutionFullInfo>> JoinRequestAccept(Guid candidateOwnerId, Guid candidateJoinRequestedId, Guid id);
     Task<Result<SolutionFullInfo>> Start(Guid candidateId, Guid id);
-    Task<Result<SolutionFullInfo>> SendToReview(Guid candidateId, Guid id);
+    Task<Result<SolutionFullInfo>> SendToReview(Guid candidateOwnerId, Guid id);
+    Task<Result<SolutionFullInfo>> SubmitReview(Guid expertId, Guid id, SolutionSubmitReviewRequest request);
 }
 
 public class SolutionsService(
     ISolutionsRepository solutionsRepository,
+    IExpertsRepository expertsRepository,
     IAssignmentsRepository assignmentsRepository
 ) : ISolutionsService
 {
@@ -145,18 +148,45 @@ public class SolutionsService(
         return Results.Ok(updated);
     }
 
-    public async Task<Result<SolutionFullInfo>> SendToReview(Guid candidateId, Guid id)
+    public async Task<Result<SolutionFullInfo>> SendToReview(Guid candidateOwnerId, Guid id)
     {
         var solution = await solutionsRepository.Get(id);
         if (solution == null)
             return Results.NotFound<SolutionFullInfo>();
-        if (solution.CandidateOwnerId != candidateId)
+        if (solution.CandidateOwnerId != candidateOwnerId)
             return Results.Forbidden<SolutionFullInfo>();
-        if (solution.State != SolutionState.InProgress && solution.State != SolutionState.Reopened)
+        if (solution.State != SolutionState.InProgress)
             return Results.BadRequest<SolutionFullInfo>($"State of Solution is incorrect: {solution.State}");
 
         var updated = await solutionsRepository
-            .Update(id, new(State: SolutionState.Autotests));
+            .Update(id, new(State: SolutionState.ExpertReview));
         return Results.Ok(updated);
+    }
+
+    public async Task<Result<SolutionFullInfo>> SubmitReview(Guid expertId, Guid id, SolutionSubmitReviewRequest request)
+    {
+        var solution = await solutionsRepository.GetFull(id);
+        if (solution == null)
+            return Results.NotFound<SolutionFullInfo>("Solution not found");
+        
+        var expert = await expertsRepository.GetFull(expertId);
+        if (expert == null)
+            return Results.BadRequest<SolutionFullInfo>("Expert not found");
+
+        if (expert.Employer.Id != solution.Assignment.Employer.Id)
+            return Results.NotFound<SolutionFullInfo>($"Expert does not has access to EmployerId: {solution.Assignment.Employer.Id}");
+
+        var newState = request.ResultState switch
+        {
+            SolutionSubmitReviewResultState.Done => SolutionState.Done,
+            SolutionSubmitReviewResultState.Rejected => SolutionState.Rejected,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        await solutionsRepository.Update(id, new(
+            ExpertId: expertId,
+            ExpertReview: request.Review,
+            State: newState));
+        var updated = await solutionsRepository.GetFull(id);
+        return Results.Ok(updated!);
     }
 }

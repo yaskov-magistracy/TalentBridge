@@ -9,10 +9,13 @@ public class EmployersRepository(
     ) : IEmployersRepository
 {
     private DbSet<EmployerEntity> Employers => dataContext.Employers;
+    private IQueryable<EmployerEntity> EmployersSearch => Employers.AsNoTracking();
+    private IQueryable<EmployerEntity> EmployersFullSearch => EmployersFull.AsNoTracking();
+    private IQueryable<EmployerEntity> EmployersFull => Employers;
     
     public async Task<Employer?> Get(Guid id)
     {
-        var entity = await Employers.FirstOrDefaultAsync(e => e.Id == id);
+        var entity = await EmployersSearch.FirstOrDefaultAsync(e => e.Id == id);
         return entity != null
             ? EmployersMapper.ToDomain(entity)
             : null;
@@ -20,7 +23,7 @@ public class EmployersRepository(
 
     public async Task<Employer?> Get(string login)
     {
-        var entity = await Employers.FirstOrDefaultAsync(e => e.Login == login);
+        var entity = await EmployersSearch.FirstOrDefaultAsync(e => e.Login == login);
         return entity != null
             ? EmployersMapper.ToDomain(entity)
             : null;

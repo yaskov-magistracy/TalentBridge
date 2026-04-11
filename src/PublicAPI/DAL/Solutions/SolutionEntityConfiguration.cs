@@ -24,5 +24,8 @@ internal class SolutionEntityConfiguration : IEntityTypeConfiguration<SolutionEn
             .WithMany(e2 => e2.SolutionsJoinRequested);
 
         builder.OwnsOne(e => e.Team);
+
+        builder.HasOne(e => e.Expert)
+            .WithMany(e2 => e2.Solutions);
     }
 }

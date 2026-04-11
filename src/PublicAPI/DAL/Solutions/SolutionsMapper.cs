@@ -1,5 +1,6 @@
 using DAL.Assignments;
 using DAL.Candidates;
+using DAL.Experts;
 using Domain.Solutions;
 using Domain.Solutions.DTO;
 
@@ -28,7 +29,9 @@ internal static class SolutionsMapper
             AssignmentsMapper.ToDomainFull(entity.Assignment),
             CandidatesMapper.ToDomain(entity.CandidateOwner),
             entity.Candidates.Select(CandidatesMapper.ToDomain).ToList(),
-            entity.CandidatesJoinRequested?.Select(CandidatesMapper.ToDomain).ToList()
+            entity.CandidatesJoinRequested?.Select(CandidatesMapper.ToDomain).ToList(),
+            entity.ExpertReview,
+            entity.Expert == null ? null : ExpertsMapper.ToDomain(entity.Expert)
         );
 
     public static SolutionEntity ToEntity(SolutionCreateEntity createEntity)
@@ -67,11 +70,11 @@ internal static class SolutionsMapper
         {
             SolutionState.NotStarted => SolutionEntityState.NotStarted,
             SolutionState.InProgress => SolutionEntityState.InProgress,
-            SolutionState.Reopened => SolutionEntityState.Reopened,
             SolutionState.Autotests => SolutionEntityState.Autotests,
             SolutionState.AiReview => SolutionEntityState.AiReview,
             SolutionState.ExpertReview => SolutionEntityState.ExpertReview,
-            SolutionState.Canceled => SolutionEntityState.Canceled,
+            SolutionState.Done => SolutionEntityState.Done,
+            SolutionState.Rejected => SolutionEntityState.Rejected,
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
         };
     
@@ -80,11 +83,11 @@ internal static class SolutionsMapper
         {
             SolutionEntityState.NotStarted => SolutionState.NotStarted,
             SolutionEntityState.InProgress => SolutionState.InProgress,
-            SolutionEntityState.Reopened => SolutionState.Reopened,
             SolutionEntityState.Autotests => SolutionState.Autotests,
             SolutionEntityState.AiReview => SolutionState.AiReview,
             SolutionEntityState.ExpertReview => SolutionState.ExpertReview,
-            SolutionEntityState.Canceled => SolutionState.Canceled,
+            SolutionEntityState.Done => SolutionState.Done,
+            SolutionEntityState.Rejected => SolutionState.Rejected,
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
         };
 }

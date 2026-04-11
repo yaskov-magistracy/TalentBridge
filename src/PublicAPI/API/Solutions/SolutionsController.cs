@@ -114,7 +114,7 @@ public class SolutionsController(
     }
     
     /// <summary>
-    /// Отправить на проверку
+    /// Отправить на проверку. Сейчас сразу Эксперту
     /// </summary>
     [AuthorizeRoles(AccountRole.Candidate)]
     [HttpPatch("{id:Guid}/send-to-review")]
@@ -122,6 +122,23 @@ public class SolutionsController(
     {
         var candidateId = User.GetId();
         var solution = await solutionsService.SendToReview(candidateId, id);
+        return solution.ActionResult;
+    }
+    
+    /// <summary>
+    /// Дать отзыв на решение. Может только Эксперт
+    /// </summary>
+    /// <remarks>
+    /// Проверяет что Эксперт от той же компании, что и Assignment
+    /// </remarks>
+    [AuthorizeRoles(AccountRole.Expert)]
+    [HttpPatch("{id:Guid}/submit-review")]
+    public async Task<ActionResult<SolutionFullInfo>> SubmitReview(
+        [FromRoute] Guid id,
+        [FromBody] SolutionSubmitReviewRequest request)
+    {
+        var expertId = User.GetId();
+        var solution = await solutionsService.SubmitReview(expertId, id, request);
         return solution.ActionResult;
     }
 }

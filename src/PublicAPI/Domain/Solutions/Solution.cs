@@ -1,5 +1,6 @@
 using Domain.Assignments;
 using Domain.Candidates;
+using Domain.Experts;
 
 namespace Domain.Solutions;
 
@@ -33,7 +34,9 @@ public record SolutionFullInfo(
     AssignmentFullInfo Assignment,
     Candidate CandidateOwner,
     List<Candidate> Candidates,
-    List<Candidate>? CandidatesJoinRequested
+    List<Candidate>? CandidatesJoinRequested,
+    string? ExpertReview,
+    Expert? Expert
 ) : Solution(Id, SolutionUrl, StartedAt, State, Team);
 
 
@@ -46,9 +49,9 @@ public enum SolutionState
 {
     NotStarted,
     InProgress,
-    Reopened,
     Autotests,
     AiReview,
     ExpertReview,
-    Canceled,
+    Done,
+    Rejected,
 }

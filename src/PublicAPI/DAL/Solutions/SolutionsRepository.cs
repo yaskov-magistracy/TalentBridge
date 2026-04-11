@@ -1,4 +1,5 @@
 using DAL.Candidates;
+using DAL.Experts;
 using Domain.Solutions;
 using Domain.Solutions.DTO;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,8 @@ public class SolutionsRepository(
         .Include(e => e.Assignment).ThenInclude(a => a.Technologies)
         .Include(e => e.CandidateOwner)
         .Include(e => e.Candidates)
-        .Include(e => e.CandidatesJoinRequested);
+        .Include(e => e.CandidatesJoinRequested)
+        .Include(e => e.Expert);
 
     public async Task<SolutionShortInfo?> Get(Guid id)
     {
@@ -117,6 +119,13 @@ public class SolutionsRepository(
             candidateJoinRequestedRelationsPatch.ApplyRemove(existed.CandidatesJoinRequested);
             (existed.CandidatesJoinRequested, var toAdd) = candidateJoinRequestedRelationsPatch.ApplyAdd(existed.CandidatesJoinRequested);
             dataContext.Candidates.AttachRangeIfNotEmpty(toAdd);
+        }
+        if (patchEntity.ExpertReview != null)
+            existed.ExpertReview = patchEntity.ExpertReview;
+        if (patchEntity.ExpertId != null)
+        {
+            existed.Expert = new ExpertEntity(){Id = patchEntity.ExpertId.Value};
+            dataContext.Experts.Attach(existed.Expert);
         }
 
         await dataContext.SaveChangesAsync();

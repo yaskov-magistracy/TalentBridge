@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using DAL.Assignments;
+using DAL.Experts;
 
 namespace DAL.Employers;
 
@@ -11,4 +12,5 @@ internal class EmployerEntity
     public string Name { get; set; }
     
     public List<AssignmentEntity>? Assignments { get; set; }
+    public List<ExpertEntity>? Experts { get; set; }
 }

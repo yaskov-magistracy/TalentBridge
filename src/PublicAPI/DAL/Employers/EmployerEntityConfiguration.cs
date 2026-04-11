@@ -8,5 +8,11 @@ internal class EmployerEntityConfiguration : IEntityTypeConfiguration<EmployerEn
     public void Configure(EntityTypeBuilder<EmployerEntity> builder)
     {
         builder.HasKey(e => e.Id);
+
+        builder.HasMany(e => e.Assignments)
+            .WithOne(e2 => e2.Employer);
+
+        builder.HasMany(e => e.Experts)
+            .WithOne(e2 => e2.Employer);
     }
 }

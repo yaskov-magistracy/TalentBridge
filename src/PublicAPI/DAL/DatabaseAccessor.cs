@@ -1,6 +1,7 @@
 ﻿using Domain.Assignments;
 using Domain.Candidates;
 using Domain.Employers;
+using Domain.Experts;
 using Domain.Solutions;
 using Domain.Solutions.DTO;
 using Domain.Technologies;
@@ -16,7 +17,8 @@ public class DatabaseAccessor(
     ICandidatesService candidatesService,
     ITechnologiesService technologiesService,
     IAssignmentsService assignmentsService,
-    ISolutionsService solutionsService
+    ISolutionsService solutionsService,
+    IExpertsService expertsService
 )
 {
     public async Task RecreateDatabase()
@@ -72,6 +74,15 @@ public class DatabaseAccessor(
             "ООО Рога-копыта"
         ))).Value;
         ClearAttachedItems();
+        var expert = (await expertsService.Add(new(
+            "expert",
+            "expert",
+            "Экспертов",
+            "Эксперт",
+            "Экспертович",
+            employer.Id
+        ))).Value;
+        ClearAttachedItems();
         var soloAssignment = (await assignmentsService.Add(new(
             "Тестовое задание для одного человека",
             "Это описание тестового задания для одного человека",
@@ -92,11 +103,11 @@ public class DatabaseAccessor(
             technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
         ))).Value;
         ClearAttachedItems();
-        var soloSolution = (await solutionsService.Add(new(
-            soloAssignment.Id, 
-            candidate.Id,
-            null
-        ))).Value;
+        await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
+            new("В целом неплохое решение. Я бы взял его на работу", SolutionSubmitReviewResultState.Done));
+        ClearAttachedItems();
+        await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
+                new("Плохое решение. Много недочётов. Я бы не брал", SolutionSubmitReviewResultState.Rejected));
         ClearAttachedItems();
         var teamSolution = (await solutionsService.Add(new(
             teamAssignment.Id, 
@@ -115,6 +126,23 @@ public class DatabaseAccessor(
         ))).Value;
         ClearAttachedItems();
         await solutionsService.JoinRequest(candidate2.Id, notFullTeamSolution.Id);
+        ClearAttachedItems();
+    }
+
+    private async Task CreateSolutionAndGoToReview(Guid assignmentId, Guid candidateId, Guid expertId, SolutionSubmitReviewRequest submitReviewRequestRequest)
+    {
+        ClearAttachedItems();
+        var soloSolution = (await solutionsService.Add(new(
+            assignmentId, 
+            candidateId,
+            null
+        ))).Value;
+        ClearAttachedItems();
+        await solutionsService.Start(candidateId, soloSolution.Id);
+        ClearAttachedItems();
+        await solutionsService.SendToReview(candidateId, soloSolution.Id);
+        ClearAttachedItems();
+        await solutionsService.SubmitReview(expertId, soloSolution.Id, submitReviewRequestRequest);
         ClearAttachedItems();
     }
 

@@ -1,5 +1,6 @@
 ﻿using DAL.Candidates;
 using DAL.Employers;
+using DAL.Experts;
 using Domain.Authorization;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,7 @@ public class AccountsRepository(
 {
     private DbSet<CandidateEntity> Candidates => dataContext.Candidates;
     private DbSet<EmployerEntity> Employers => dataContext.Employers;
+    private DbSet<ExpertEntity> Experts => dataContext.Experts;
     
     
     public async Task<Account?> GetCandidate(Guid id)
@@ -45,9 +47,26 @@ public class AccountsRepository(
             : null;
     }
 
+    public async Task<Account?> GetExpert(Guid id)
+    {
+        var entity = await Experts.FirstOrDefaultAsync(e => e.Id == id);
+        return entity != null 
+            ? new Account(entity.Id, entity.Login, entity.PasswordHash, AccountRole.Expert)
+            : null;
+    }
+
+    public async Task<Account?> GetExpert(string login)
+    {
+        var entity = await Experts.FirstOrDefaultAsync(e => e.Login == login);
+        return entity != null 
+            ? new Account(entity.Id, entity.Login, entity.PasswordHash, AccountRole.Expert)
+            : null;
+    }
+
     public async Task<Account?> Find(string login)
     {
         return await GetCandidate(login) 
-               ?? await GetEmployer(login);
+               ?? await GetEmployer(login)
+               ?? await GetExpert(login);
     }
 }

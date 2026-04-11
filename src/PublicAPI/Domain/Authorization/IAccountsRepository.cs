@@ -8,5 +8,7 @@ public interface IAccountsRepository
     Task<Account?> GetCandidate(string login);
     Task<Account?> GetEmployer(Guid id);
     Task<Account?> GetEmployer(string login);
+    Task<Account?> GetExpert(Guid id);
+    Task<Account?> GetExpert(string login);
     Task<Account?> Find(string login);
 }
