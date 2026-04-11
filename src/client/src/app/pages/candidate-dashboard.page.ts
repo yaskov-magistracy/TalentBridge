@@ -656,7 +656,7 @@ import { NotificationService } from '../core/services/notification.service';
           <!-- Left Sidebar - Technology Filter -->
           <div class="w-64 flex-shrink-0">
             <div class="border-2 border-indigo-600 bg-white p-6 shadow-md">
-              <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-indigo-600">Фильтр по технологиям</h3>
+              <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-indigo-600">Технологии</h3>
 
               <!-- Loading Indicator -->
               <div *ngIf="loadingFilterTechs" class="text-center py-4 text-gray-500 text-xs">
@@ -681,6 +681,40 @@ import { NotificationService } from '../core/services/notification.service';
                   class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline mt-1">
                   Показать все ({{ allFilterTechs.length }})
                 </button>
+              </div>
+
+              <!-- Project Type Filter -->
+              <div class="mt-6 pt-4 border-t-2 border-indigo-200">
+                <h4 class="font-bold mb-3 text-xs uppercase tracking-wider text-indigo-600">Тип проекта</h4>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="radio"
+                      name="projectType"
+                      [checked]="projectTypeFilter === 'all'"
+                      (change)="projectTypeFilter = 'all'; applyFilters()"
+                      class="w-4 h-4 border-2 border-black"/>
+                    <span>Все</span>
+                  </label>
+                  <label class="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="radio"
+                      name="projectType"
+                      [checked]="projectTypeFilter === 'group'"
+                      (change)="projectTypeFilter = 'group'; applyFilters()"
+                      class="w-4 h-4 border-2 border-black"/>
+                    <span>Групповые</span>
+                  </label>
+                  <label class="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="radio"
+                      name="projectType"
+                      [checked]="projectTypeFilter === 'individual'"
+                      (change)="projectTypeFilter = 'individual'; applyFilters()"
+                      class="w-4 h-4 border-2 border-black"/>
+                    <span>Индивидуальные</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -877,6 +911,7 @@ export class CandidateDashboardPage implements OnInit {
   allFilterTechs: Technology[] = [];
   displayFilterTechs: Technology[] = [];
   loadingFilterTechs = false;
+  projectTypeFilter: 'all' | 'group' | 'individual' = 'all';
 
   // Show All Technologies Modal
   showAllTechsModal = false;
@@ -954,11 +989,29 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   private loadAvailableAssignments(): void {
+    const today = new Date();
+    const fromDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const toDate = '2099-12-31'; // Very far date
+
+    const technologiesIds = this.selectedTechs.length > 0
+      ? this.selectedTechs.map(t => t.id)
+      : undefined;
+
+    const isGrouped = this.projectTypeFilter === 'all'
+      ? undefined
+      : this.projectTypeFilter === 'group';
+
     const searchRequest: AssignmentSearchRequest = {
       text: this.availableSearchText || undefined,
       take: 100,
       skip: 0,
-      excludedIds: this.solutions.map(s => s.assignment.id)
+      excludedIds: this.solutions.map(s => s.assignment.id),
+      technologiesIds,
+      isGrouped,
+      deadLineRangeIncluded: {
+        from: fromDate,
+        to: toDate
+      }
     };
     this.assignmentsService.searchAssignments(searchRequest).subscribe({
       next: (response) => {
@@ -1013,10 +1066,15 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   private loadSolutions(): void {
+    const technologiesIds = this.selectedTechs.length > 0
+      ? this.selectedTechs.map(t => t.id)
+      : undefined;
+
     const searchRequest: SolutionSearchRequest = {
       candidateId: this.authService.currentUser()?.userId,
       take: 100,
-      skip: 0
+      skip: 0,
+      technologiesIds
     };
     this.solutionsService.searchSolutions(searchRequest).subscribe({
       next: (response) => {
@@ -1047,6 +1105,11 @@ export class CandidateDashboardPage implements OnInit {
     this.searchTimeout = setTimeout(() => {
       this.loadAvailableAssignments();
     }, 300);
+  }
+
+  applyFilters(): void {
+    this.loadAvailableAssignments();
+    this.loadSolutions();
   }
 
   getTabCount(tab: string): number {
@@ -1682,6 +1745,7 @@ export class CandidateDashboardPage implements OnInit {
     } else {
       this.selectedTechs.push(tech);
     }
+    this.applyFilters();
   }
 
   removeTech(techId: string): void {
@@ -1699,28 +1763,19 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   get filteredAvailableAssignments(): AssignmentFullInfo[] {
-    if (this.selectedTechs.length === 0) {
-      return this.availableAssignments;
-    }
-    const selectedTechNames = this.selectedTechs.map(t => t.name);
-    const result = this.availableAssignments.filter(assignment =>
-      assignment.technologies?.some(t => selectedTechNames.includes(t.name))
-    );
-    console.log('filteredAvailableAssignments: selectedTechs =', this.selectedTechs);
-    console.log('filteredAvailableAssignments: result count =', result.length);
-    return result;
+    return this.availableAssignments;
   }
 
   get filteredSolutions(): SolutionFullInfo[] {
-    if (this.selectedTechs.length === 0) {
-      return this.solutions;
+    let result = this.solutions;
+
+    // Filter by project type
+    if (this.projectTypeFilter === 'group') {
+      result = result.filter(solution => solution.assignment.isGrouped === true);
+    } else if (this.projectTypeFilter === 'individual') {
+      result = result.filter(solution => solution.assignment.isGrouped === false);
     }
-    const selectedTechNames = this.selectedTechs.map(t => t.name);
-    const result = this.solutions.filter(solution =>
-      solution.assignment.technologies?.some(t => selectedTechNames.includes(t.name))
-    );
-    console.log('filteredSolutions: selectedTechs =', this.selectedTechs);
-    console.log('filteredSolutions: result count =', result.length);
+
     return result;
   }
 }

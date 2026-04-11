@@ -114,12 +114,20 @@ export interface AssignmentFullInfo {
   technologies: Technology[];
 }
 
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
 export interface AssignmentSearchRequest {
-  employerId?: string;
-  text?: string;
   take?: number;
   skip?: number;
+  employerId?: string;
+  text?: string;
   excludedIds?: string[];
+  technologiesIds?: string[];
+  isGrouped?: boolean;
+  deadLineRangeIncluded?: DateRange;
 }
 
 export interface AssignmentSearchResponse {
@@ -180,13 +188,19 @@ export type AutoTestStatus = 'pending' | 'passed' | 'failed';
 export type ExpertReviewStatus = 'pending' | 'approved' | 'rejected';
 
 export interface SolutionSearchRequest {
-  assignmentId?: string;
-  candidateId?: string;
-  candidateOwnerId?: string;
-  candidateJoinRequestedId?: string;
-  text?: string;
   take?: number;
   skip?: number;
+  assignmentId?: string;
+  technologiesIds?: string[];
+  excludeAssignmentsIds?: string[];
+  candidateId?: string;
+  excludeCandidateId?: string;
+  candidateOwnerId?: string;
+  excludeCandidateOwnerId?: string;
+  candidateJoinRequestedId?: string;
+  excludeCandidateJoinRequestedId?: string;
+  isAvailableToJoin?: boolean;
+  text?: string;
 }
 
 export interface SolutionSearchResponse {
