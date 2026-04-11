@@ -111,7 +111,7 @@ import { NotificationService } from '../core/services/notification.service';
                   : 'border-2 border-indigo-400 bg-white p-6 shadow-md'
               "
             >
-              <div 
+              <div
                 class="flex justify-between items-start gap-4"
                 [class.cursor-pointer]="activeTab === 'expertReview'"
                 (click)="activeTab === 'expertReview' && openSolutionDetailModal(solution)"
@@ -690,7 +690,7 @@ export class AssignmentSolutionsPage implements OnInit {
         case 'expertReview':
           return state === 'ExpertReview';
         case 'completed':
-          return state === 'Reopened' || this.isCompleted(state);
+          return state === 'Rejected' || state === 'Done';
         default:
           return true;
       }
@@ -706,11 +706,11 @@ export class AssignmentSolutionsPage implements OnInit {
     const labels: Record<SolutionState, string> = {
       NotStarted: 'Не начато',
       InProgress: 'В работе',
-      Reopened: 'Открыто повторно',
       Autotests: 'Автотесты',
       AiReview: 'AI проверка',
       ExpertReview: 'Проверка экспертом',
-      Canceled: 'Отменено',
+      Done: 'Успех',
+      Rejected: 'Отклонено'
     };
     return labels[state] || state;
   }
@@ -725,10 +725,6 @@ export class AssignmentSolutionsPage implements OnInit {
       case 'AiReview':
       case 'ExpertReview':
         return `${baseClasses} bg-amber-200 text-amber-700`;
-      case 'Reopened':
-        return `${baseClasses} bg-emerald-200 text-emerald-700`;
-      case 'Canceled':
-        return `${baseClasses} bg-red-200 text-red-700`;
       default:
         return `${baseClasses} bg-gray-200 text-gray-700`;
     }

@@ -181,7 +181,7 @@ export interface CandidateShortInfo {
   name: string;
 }
 
-export type SolutionState = 'NotStarted' | 'InProgress' | 'Reopened' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'Canceled';
+export type SolutionState = 'NotStarted' | 'InProgress' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'Done' | 'Rejected';
 
 // Для совместимости со старыми компонентами
 export type AutoTestStatus = 'pending' | 'passed' | 'failed';
