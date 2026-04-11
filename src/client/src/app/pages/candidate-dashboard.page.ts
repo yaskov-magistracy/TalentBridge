@@ -484,14 +484,14 @@ import { NotificationService } from '../core/services/notification.service';
             <!-- Actions -->
             <div class="flex flex-col gap-2 mt-auto pt-6 border-t-2">
               <button
-                *ngIf="selectedSolution.state === 'NotStarted'"
+                *ngIf="selectedSolution.state === 'NotStarted' && selectedSolution.candidateOwner.id === currentUserId"
                 (click)="startSolution(selectedSolution)"
                 [disabled]="takingAssignment"
                 class="flex-1 border-2 border-indigo-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-indigo-600 text-white hover:bg-indigo-700">
                 {{ takingAssignment ? 'ЗАГРУЗКА...' : 'ВЗЯТЬ В РАБОТУ' }}
               </button>
               <button
-                *ngIf="selectedSolution.state === 'InProgress'"
+                *ngIf="selectedSolution.state === 'InProgress' && selectedSolution.candidateOwner.id === currentUserId"
                 (click)="sendToReview(selectedSolution)"
                 [disabled]="sendingToReview || !canSendToReview(selectedSolution)"
                 class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -851,7 +851,7 @@ import { NotificationService } from '../core/services/notification.service';
                     </div>
                   </div>
                   <!-- Start Button for Waiting Start Tab -->
-                  <div *ngIf="activeTab === 'waiting-start'" class="flex-shrink-0">
+                  <div *ngIf="activeTab === 'waiting-start' && solution.candidateOwner.id === currentUserId" class="flex-shrink-0">
                     <button
                       (click)="startSolution(solution)"
                       [disabled]="takingAssignment"
@@ -860,7 +860,7 @@ import { NotificationService } from '../core/services/notification.service';
                     </button>
                   </div>
                   <!-- Send to Review Button for In Progress Tab -->
-                  <div *ngIf="activeTab === 'in-progress'" class="flex-shrink-0">
+                  <div *ngIf="activeTab === 'in-progress' && solution.candidateOwner.id === currentUserId" class="flex-shrink-0">
                     <button
                       (click)="sendToReview(solution)"
                       [disabled]="sendingToReview || !canSendToReview(solution)"
@@ -1001,11 +1001,24 @@ export class CandidateDashboardPage implements OnInit {
       ? undefined
       : this.projectTypeFilter === 'group';
 
+    // Исключаем задания, куда уже есть решения или заявки на вступление
+    const currentUserId = this.authService.currentUser()?.userId;
+    const pendingSolutionIds = this.solutions
+      .filter(s => s.candidatesJoinRequested.some(c => c.id === currentUserId))
+      .map(s => s.assignment.id);
+
+    const excludedIds = [
+      ...new Set([
+        ...this.solutions.map(s => s.assignment.id),
+        ...pendingSolutionIds
+      ])
+    ];
+
     const searchRequest: AssignmentSearchRequest = {
       text: this.availableSearchText || undefined,
       take: 100,
       skip: 0,
-      excludedIds: this.solutions.map(s => s.assignment.id),
+      excludedIds,
       technologiesIds,
       isGrouped,
       deadLineRangeIncluded: {
@@ -1301,10 +1314,15 @@ export class CandidateDashboardPage implements OnInit {
     this.assignmentTeams = [];
     this.displayTeams = [];
 
+    const currentUserId = this.authService.currentUser()?.userId;
+
     const searchRequest: SolutionSearchRequest = {
       assignmentId: assignmentId,
       take: 100,
-      skip: 0
+      skip: 0,
+      isAvailableToJoin: true,
+      excludeCandidateOwnerId: currentUserId,
+      excludeCandidateJoinRequestedId: currentUserId
     };
 
     this.solutionsService.searchSolutions(searchRequest).subscribe({
