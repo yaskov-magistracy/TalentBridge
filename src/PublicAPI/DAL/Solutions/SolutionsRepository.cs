@@ -45,13 +45,25 @@ public class SolutionsRepository(
                                          || EF.Functions.ILike(e.Team.Description, $"%{request.Text}%")));
         if (request.AssignmentId != null)
             query = query.Where(e => e.AssignmentId == request.AssignmentId);
+        if (request.ExcludeAssignmentsIds != null)
+            query = query.Where(e => !request.ExcludeAssignmentsIds.Contains(e.AssignmentId));
         if (request.CandidateId != null)
             query = query.Where(e => e.Candidates.Any(c => c.Id == request.CandidateId));
+        if (request.ExcludeCandidateId != null)
+            query = query.Where(e => e.Candidates.All(c => c.Id != request.ExcludeCandidateId));
         if (request.CandidateOwnerId != null)
             query = query.Where(e => e.CandidateOwnerId == request.CandidateOwnerId);
+        if (request.ExcludeCandidateOwnerId != null)
+            query = query.Where(e => e.CandidateOwnerId != request.ExcludeCandidateOwnerId);
         if (request.CandidateJoinRequestedId != null)
             query = query.Where(e => e.CandidatesJoinRequested!.Any(c => c.Id == request.CandidateJoinRequestedId));
-
+        if (request.ExcludeCandidateJoinRequestedId != null)
+            query = query.Where(e => e.CandidatesJoinRequested!.All(c => c.Id != request.ExcludeCandidateJoinRequestedId));
+        if (request.IsAvailableToJoin is true)
+            query = query.Where(e => e.Candidates.Count < e.Assignment.CandidatesCapacity);
+        if (request.IsAvailableToJoin is false)
+            query = query.Where(e => e.Candidates.Count == e.Assignment.CandidatesCapacity);
+        
         var count = await query.CountAsync();
         return new(
             query.Skip(request.Skip).Take(request.Take).AsEnumerable().Select(SolutionsMapper.ToDomainFull).ToArray(),
