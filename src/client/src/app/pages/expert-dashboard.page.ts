@@ -366,8 +366,8 @@ import { NotificationService } from '../core/services/notification.service';
             </div>
 
             <!-- Archive Info -->
-            <div *ngIf="activeTab === 'archive'" class="mb-6 border-2 border-gray-300 bg-gray-50 p-6">
-              <h3 class="font-bold text-lg mb-4 uppercase text-gray-700">СТАТУС РЕШЕНИЯ</h3>
+            <div *ngIf="activeTab === 'archive'" class="mt-6 border-2 p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'">
+              <h3 class="font-bold text-lg mb-4 uppercase" [class]="selectedSolution.state === 'Done' ? 'text-emerald-700' : 'text-red-700'">СТАТУС РЕШЕНИЯ</h3>
               <div *ngIf="selectedSolution.state === 'Done'" class="flex items-center gap-3 text-emerald-700">
                 <span class="text-2xl">✓</span>
                 <span class="font-bold text-lg">РЕШЕНИЕ ПРИНЯТО</span>
@@ -378,8 +378,8 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
 
               <!-- Expert Info -->
-              <div *ngIf="selectedSolution.expert" class="mt-4 pt-4 border-t-2 border-gray-300">
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">ЭКСПЕРТ:</p>
+              <div *ngIf="selectedSolution.expert" class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
+                <p class="text-xs font-bold uppercase tracking-wider mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">ЭКСПЕРТ:</p>
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                     {{ selectedSolution.expert.surname.charAt(0) }}{{ selectedSolution.expert.name.charAt(0) }}
@@ -391,9 +391,9 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
 
               <!-- Expert Review Comment -->
-              <div *ngIf="selectedSolution.expertReview" class="mt-4 pt-4 border-t-2 border-gray-300">
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">КОММЕНТАРИЙ ЭКСПЕРТА:</p>
-                <div class="border-2 border-gray-300 bg-white p-4">
+              <div *ngIf="selectedSolution.expertReview" class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
+                <p class="text-xs font-bold uppercase tracking-wider mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">КОММЕНТАРИЙ ЭКСПЕРТА:</p>
+                <div class="border-2 bg-white p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
                   <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ selectedSolution.expertReview }}</p>
                 </div>
               </div>
