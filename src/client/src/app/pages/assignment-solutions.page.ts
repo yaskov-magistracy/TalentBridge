@@ -206,6 +206,39 @@ import { NotificationService } from '../core/services/notification.service';
                       [name]="tech.name"
                     ></app-tech-chip>
                   </div>
+
+                  <!-- Review Status Badge (for completed tab) -->
+                  <div *ngIf="activeTab === 'completed'" class="mt-3">
+                    <span
+                      *ngIf="solution.state === 'Done'"
+                      class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300"
+                    >
+                      <span>✓</span> РЕВЬЮ ПРОЙДЕНО
+                    </span>
+                    <span
+                      *ngIf="solution.state === 'Rejected'"
+                      class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300"
+                    >
+                      <span>✗</span> РЕВЬЮ НЕ ПРОЙДЕНО
+                    </span>
+                  </div>
+
+                  <!-- Expert Review Comment (for completed tab) -->
+                  <div
+                    *ngIf="activeTab === 'completed' && solution.expertReview"
+                    class="mt-3 p-3 border-2 bg-white"
+                    [class]="solution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'"
+                  >
+                    <p
+                      class="text-xs font-bold uppercase mb-2"
+                      [class]="solution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'"
+                    >
+                      КОММЕНТАРИЙ ЭКСПЕРТА:
+                    </p>
+                    <p class="text-gray-700 whitespace-pre-line text-sm leading-relaxed">
+                      {{ solution.expertReview }}
+                    </p>
+                  </div>
                 </div>
 
                 <!-- Actions -->
@@ -709,8 +742,8 @@ export class AssignmentSolutionsPage implements OnInit {
       Autotests: 'Автотесты',
       AiReview: 'AI проверка',
       ExpertReview: 'Проверка экспертом',
-      Done: 'Успех',
-      Rejected: 'Отклонено'
+      Done: 'Ревью пройдено',
+      Rejected: 'Ревью не пройдено'
     };
     return labels[state] || state;
   }
