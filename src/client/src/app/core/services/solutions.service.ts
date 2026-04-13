@@ -78,4 +78,16 @@ export class SolutionsService {
   sendToReview(id: string): Observable<SolutionFullInfo> {
     return this.apiClient.post<SolutionFullInfo>(`/solutions/${id}/send-to-review`, {});
   }
+
+  /**
+   * Экспертное ревью решения
+   */
+  submitReview(id: string, request: ExpertReviewRequest): Observable<SolutionFullInfo> {
+    return this.apiClient.post<SolutionFullInfo>(`/solutions/${id}/submit-review`, request);
+  }
+}
+
+export interface ExpertReviewRequest {
+  review: string;
+  resultState: 'Done' | 'Rejected';
 }

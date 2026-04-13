@@ -14,8 +14,6 @@ export class AuthService {
 
   readonly isCandidate = computed(() => this.userRole() === 'Candidate');
   readonly isEmployer = computed(() => this.userRole() === 'Employer');
-  readonly isAdmin = computed(() => this.userRole() === 'Admin');
-
   /**
    * Синхронная проверка статуса авторизации (для guards)
    */

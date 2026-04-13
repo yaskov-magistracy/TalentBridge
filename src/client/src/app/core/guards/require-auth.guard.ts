@@ -6,7 +6,7 @@ import { AuthService } from '../services/auth.service';
  * Guard для защищённых страниц (требует авторизации).
  * Перенаправляет на соответствующий дашборд если пользователь не имеет доступа.
  */
-export const requireAuthGuard = (allowedRole?: 'Candidate' | 'Employer'): CanActivateFn => {
+export const requireAuthGuard = (allowedRole?: 'Candidate' | 'Employer' | 'Expert'): CanActivateFn => {
   return () => {
     const authService = inject(AuthService);
     const router = inject(Router);
@@ -25,6 +25,8 @@ export const requireAuthGuard = (allowedRole?: 'Candidate' | 'Employer'): CanAct
           router.navigateByUrl('/candidate-dashboard');
         } else if (userRole === 'Employer') {
           router.navigateByUrl('/employer-dashboard');
+        } else if (userRole === 'Expert') {
+          router.navigateByUrl('/expert-dashboard');
         }
         return false;
       }

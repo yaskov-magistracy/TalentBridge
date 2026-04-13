@@ -16,7 +16,7 @@ import { AuthService } from '../../core';
 
         <div *ngIf="role" class="flex gap-8 items-center">
           <span class="text-sm uppercase tracking-wider border-2 px-3 py-1 font-semibold" [ngClass]="getRoleBadgeClasses()">
-            {{ role === 'candidate' ? 'КАНДИДАТ' : 'РАБОТОДАТЕЛЬ' }}
+            {{ getRoleLabel() }}
           </span>
           <a (click)="logout()" class="text-sm uppercase tracking-wider font-semibold hover:text-indigo-600 transition-colors cursor-pointer">
             ВЫХОД
@@ -27,7 +27,7 @@ import { AuthService } from '../../core';
   `
 })
 export class NavbarComponent {
-  @Input() role: 'candidate' | 'employer' | null = null;
+  @Input() role: 'candidate' | 'employer' | 'expert' | null = null;
 
   constructor(
     private authService: AuthService,
@@ -52,18 +52,40 @@ export class NavbarComponent {
     if (this.role === 'employer') {
       return '/employer-dashboard';
     }
+    if (this.role === 'expert') {
+      return '/expert-dashboard';
+    }
     return '/';
   }
 
   getBorderColor(): string {
-    return this.role === 'candidate' ? 'border-indigo-600' : 'border-emerald-600';
+    if (this.role === 'candidate') {
+      return 'border-indigo-600';
+    }
+    if (this.role === 'employer') {
+      return 'border-emerald-600';
+    }
+    return 'border-amber-600';
   }
 
   getRoleBadgeClasses(): string {
     if (this.role === 'candidate') {
       return 'border-indigo-600 text-indigo-600';
     }
-    return 'border-emerald-600 text-emerald-600';
+    if (this.role === 'employer') {
+      return 'border-emerald-600 text-emerald-600';
+    }
+    return 'border-amber-600 text-amber-600';
+  }
+
+  getRoleLabel(): string {
+    if (this.role === 'candidate') {
+      return 'КАНДИДАТ';
+    }
+    if (this.role === 'employer') {
+      return 'РАБОТОДАТЕЛЬ';
+    }
+    return 'ЭКСПЕРТ';
   }
 }
 

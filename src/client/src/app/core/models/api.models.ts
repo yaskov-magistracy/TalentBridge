@@ -10,7 +10,7 @@ export interface SessionInfo {
   role: AccountRole;
 }
 
-export type AccountRole = 'Candidate' | 'Employer' | 'Admin';
+export type AccountRole = 'Candidate' | 'Employer' | 'Expert';
 
 export interface ChangePasswordRequest {
   currentPassword: string;
@@ -167,6 +167,13 @@ export interface SolutionFullInfo {
   candidateOwner: CandidateFullInfo;
   candidates: CandidateFullInfo[];
   candidatesJoinRequested: CandidateFullInfo[];
+  expertReview?: string;
+  expert?: {
+    id: string;
+    surname: string;
+    name: string;
+    patronymic: string;
+  };
 }
 
 export interface SolutionTeamInfo {

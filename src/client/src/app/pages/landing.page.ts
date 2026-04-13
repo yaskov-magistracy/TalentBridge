@@ -31,7 +31,7 @@ import { RouterLink } from '@angular/router';
           </p>
         </div>
 
-        <div class="grid grid-cols-2 gap-8 mb-24">
+        <div class="grid grid-cols-3 gap-8 mb-24">
           <a routerLink="/junior-auth" class="group relative border-2 border-indigo-600 bg-white p-12 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer text-center">
             <div class="text-6xl mb-6 group-hover:scale-110 transition-transform">👨‍💻</div>
             <h3 class="text-2xl font-bold mb-3 text-indigo-600 uppercase tracking-wider">Я ДЖУН</h3>
@@ -44,6 +44,13 @@ import { RouterLink } from '@angular/router';
             <h3 class="text-2xl font-bold mb-3 text-emerald-600 uppercase tracking-wider">Я РАБОТОДАТЕЛЬ</h3>
             <p class="text-gray-600">Создаю задания и ищу талантливых кандидатов</p>
             <div class="absolute inset-0 border-2 border-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity -m-1"></div>
+          </a>
+
+          <a routerLink="/expert-auth" class="group relative border-2 border-amber-600 bg-white p-12 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer text-center">
+            <div class="text-6xl mb-6 group-hover:scale-110 transition-transform">🎓</div>
+            <h3 class="text-2xl font-bold mb-3 text-amber-600 uppercase tracking-wider">Я ЭКСПЕРТ</h3>
+            <p class="text-gray-600">Провожу ревью и оцениваю решения кандидатов</p>
+            <div class="absolute inset-0 border-2 border-amber-400 opacity-0 group-hover:opacity-100 transition-opacity -m-1"></div>
           </a>
         </div>
 
