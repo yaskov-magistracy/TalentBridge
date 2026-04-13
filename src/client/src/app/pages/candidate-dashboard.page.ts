@@ -553,6 +553,43 @@ import { NotificationService } from '../core/services/notification.service';
                 <p class="text-sm text-amber-900">{{ getStatusMessage(selectedSolution.state) }}</p>
               </div>
             </div>
+
+            <!-- Archive Review Result (only for archive tab) -->
+            <div *ngIf="activeTab === 'archive'" class="mt-6 border-2 p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'">
+              <h4 class="font-bold mb-4 uppercase" [class]="selectedSolution.state === 'Done' ? 'text-emerald-700' : 'text-red-700'">
+                РЕЗУЛЬТАТ ПРОВЕРКИ
+              </h4>
+
+              <!-- Status -->
+              <div class="flex items-center gap-3 mb-4">
+                <span class="text-3xl" *ngIf="selectedSolution.state === 'Done'">✓</span>
+                <span class="text-3xl" *ngIf="selectedSolution.state === 'Rejected'">✗</span>
+                <span class="font-bold text-lg" [class]="selectedSolution.state === 'Done' ? 'text-emerald-700' : 'text-red-700'">
+                  {{ selectedSolution.state === 'Done' ? 'РЕШЕНИЕ ПРИНЯТО' : 'РЕШЕНИЕ ОТКЛОНЕНО' }}
+                </span>
+              </div>
+
+              <!-- Expert Info -->
+              <div *ngIf="selectedSolution.expert" class="mb-4 pt-4 border-t" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
+                <p class="text-xs font-bold uppercase mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">ЭКСПЕРТ:</p>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {{ selectedSolution.expert.surname.charAt(0) }}{{ selectedSolution.expert.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <p class="font-semibold">{{ selectedSolution.expert.surname }} {{ selectedSolution.expert.name }}{{ selectedSolution.expert.patronymic ? ' ' + selectedSolution.expert.patronymic : '' }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Expert Review Comment -->
+              <div *ngIf="selectedSolution.expertReview" class="pt-4 border-t" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
+                <p class="text-xs font-bold uppercase mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">КОММЕНТАРИЙ ЭКСПЕРТА:</p>
+                <div class="bg-white p-4 border-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
+                  <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ selectedSolution.expertReview }}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -749,6 +786,12 @@ import { NotificationService } from '../core/services/notification.service';
                     class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
                     Проверка {{ getTabCount('review') }}
                   </button>
+                  <button
+                    (click)="onTabChange('archive')"
+                    [class]="activeTab === 'archive' ? 'border-2 border-indigo-600 bg-indigo-600 text-white' : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-indigo-400'"
+                    class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors">
+                    Архив {{ getTabCount('archive') }}
+                  </button>
                 </div>
                 <button
                   (click)="navigateToJoinSolution()"
@@ -831,6 +874,15 @@ import { NotificationService } from '../core/services/notification.service';
                       <div *ngIf="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId" class="mb-2">
                         <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
                           ⏳ ЗАЯВОК НА РАССМОТРЕНИИ: {{ solution.candidatesJoinRequested.length }}
+                        </span>
+                      </div>
+                      <!-- Review Status Badge (for archive tab) -->
+                      <div *ngIf="activeTab === 'archive'" class="mb-2">
+                        <span *ngIf="solution.state === 'Done'" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
+                          <span>✓</span> РЕВЬЮ ПРОЙДЕНО
+                        </span>
+                        <span *ngIf="solution.state === 'Rejected'" class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
+                          <span>✗</span> РЕВЬЮ НЕ ПРОЙДЕНО
                         </span>
                       </div>
                     </div>
@@ -922,7 +974,7 @@ export class CandidateDashboardPage implements OnInit {
   profileTechs: Technology[] = [];
 
   // Tabs
-  activeTab: 'available' | 'waiting-start' | 'in-progress' | 'review' = 'available';
+  activeTab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'archive' = 'available';
 
   // Available assignments tab
   availableAssignments: AssignmentFullInfo[] = [];
@@ -1103,14 +1155,9 @@ export class CandidateDashboardPage implements OnInit {
     });
   }
 
-  onTabChange(tab: 'available' | 'waiting-start' | 'in-progress' | 'review'): void {
+  onTabChange(tab: 'available' | 'waiting-start' | 'in-progress' | 'review' | 'archive'): void {
     this.activeTab = tab;
-    // При переключении на таб Available - загружаем решения, а задания загрузятся автоматически
-    if (tab === 'available') {
-      this.loadSolutions();
-    } else {
-      this.loadSolutions();
-    }
+    this.loadSolutions();
   }
 
   onAvailableSearch(): void {
@@ -1141,6 +1188,8 @@ export class CandidateDashboardPage implements OnInit {
           return state === 'InProgress';
         case 'review':
           return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
+        case 'archive':
+          return state === 'Done' || state === 'Rejected';
         default:
           return false;
       }
@@ -1159,6 +1208,8 @@ export class CandidateDashboardPage implements OnInit {
           return state === 'InProgress';
         case 'review':
           return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
+        case 'archive':
+          return state === 'Done' || state === 'Rejected';
         default:
           return false;
       }
