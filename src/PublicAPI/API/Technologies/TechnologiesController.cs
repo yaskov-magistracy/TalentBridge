@@ -1,4 +1,5 @@
-﻿using Domain.Technologies;
+﻿using API.Technologies.DTO;
+using Domain.Technologies;
 using Domain.Technologies.DTO;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,8 +17,8 @@ public class TechnologiesController(
     [HttpGet("{id:Guid}")]
     public async Task<ActionResult<Technology>> Get([FromRoute] Guid id)
     {
-        var assignment = await technologiesService.Get(id);
-        return assignment.ActionResult;
+        var result = await technologiesService.Get(id);
+        return result.ActionResult;
     }
     
     /// <summary>
@@ -26,8 +27,8 @@ public class TechnologiesController(
     [HttpPost("search")]
     public async Task<ActionResult<TechnologySearchResponse>> Search([FromBody] TechnologySearchRequest searchRequest)
     {
-        var assignment = await technologiesService.Search(searchRequest);
-        return assignment.ActionResult;
+        var result = await technologiesService.Search(searchRequest);
+        return result.ActionResult;
     }
     
     /// <summary>
@@ -36,8 +37,18 @@ public class TechnologiesController(
     [HttpPost("")]
     public async Task<ActionResult<Technology>> Add([FromBody] TechnologyCreateEntity request)
     {
-        var assignment = await technologiesService.Add(request);
-        return assignment.ActionResult;
+        var result = await technologiesService.Add(request);
+        return result.ActionResult;
+    }
+    
+    /// <summary>
+    /// Добавить пачку технологий
+    /// </summary>
+    [HttpPost("batch")]
+    public async Task<ActionResult<Technology>> AddBatch([FromBody] TechnologyAddBatchApiRequest request)
+    {
+        var result = await technologiesService.AddBatch(request.ToAdd);
+        return result.ActionResult;
     }
     
     /// <summary>
@@ -46,7 +57,7 @@ public class TechnologiesController(
     [HttpPatch("{id:Guid}")]
     public async Task<ActionResult<Technology>> Update([FromRoute] Guid id, [FromBody] TechnologyUpdateEntity request)
     {
-        var assignment = await technologiesService.Update(id, request);
-        return assignment.ActionResult;
+        var result = await technologiesService.Update(id, request);
+        return result.ActionResult;
     }
 }

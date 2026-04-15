@@ -148,17 +148,64 @@ public class DatabaseAccessor(
 
     private static readonly TechnologyCreateEntity[] TechnologyCreateEntities =
     [
+        // Languages
+        new("JavaScript"),
+        new("TypeScript"),
+        new("Python"),
+        new("Java"),
+        new("C#"),
+        new("Go"),
+        new("Rust"),
+        new("PHP"),
+        new("C++"),
+        new("Kotlin"),
+        new("Swift"),
+    
+        // Backend Frameworks
         new("Node.js"),
         new("Express"),
-        new("PostgreSQL"),
-        new("Docker"),
-        new("React"),
-        new("TypeScript"),
-        new("JavaScript"),
-        new("Tailwind"),
-        new("Python"),
+        new("Spring Boot"),
+        new("Django"),
         new("FastAPI"),
+        new("ASP.NET Core"),
+        new("Laravel"),
+    
+        // Frontend & Mobile
+        new("React"),
+        new("Vue.js"),
+        new("Angular"),
+        new("Next.js"),
+        new("Tailwind"),
+        new("Flutter"),
+    
+        // Databases
+        new("SQL"),
+        new("PostgreSQL"),
+        new("MySQL"),
+        new("MongoDB"),
         new("Redis"),
-        new("C#")
+        new("SQLite"),
+        new("Kibana"),
+        new("Elasticsearch"),
+        new("Microsoft SQL Server"),
+    
+        // Infrastructure & DevOps
+        new("Docker"),
+        new("Kubernetes"),
+        new("Terraform"),
+        new("Ansible"),
+        new("GitHub Actions"),
+        
+        // Cloud Platforms
+        new("AWS"),
+        new("Azure"),
+        new("Google Cloud Platform"),
+        
+        // Architecture & Tools
+        new("Kafka"),
+        new("RabbitMQ"),
+        new("gRPC"),
+        new("GraphQL"),
+        new("Microservices"),
     ];
 }
