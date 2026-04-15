@@ -227,14 +227,18 @@ import { NotificationService } from '../core/services/notification.service';
           <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
             <!-- Header -->
             <div class="flex justify-between items-start mb-6">
+
               <h2 class="text-2xl font-bold text-indigo-600 uppercase">{{ selectedAssignment.name }}</h2>
               <button (click)="closeAssignmentModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
             </div>
 
             <!-- Technologies -->
-            <div class="flex flex-wrap gap-2 mb-4">
-              <app-tech-chip *ngFor="let tech of selectedAssignment.technologies" [name]="tech.name"></app-tech-chip>
-            </div>
+            @if (selectedAssignment.technologies.length) {
+              <div class="flex flex-wrap gap-2 mb-4">
+                <app-tech-chip *ngFor="let tech of selectedAssignment.technologies" [name]="tech.name"></app-tech-chip>
+              </div>
+            }
+
 
             <!-- Info Bar -->
             <div class="flex flex-wrap gap-4 mb-4 text-sm">
@@ -246,15 +250,6 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
-            <!-- Repository Link -->
-            <div *ngIf="selectedAssignment.templateUrl" class="mb-4">
-              <a
-                [href]="selectedAssignment.templateUrl"
-                target="_blank"
-                class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline">
-                🔗 РЕПОЗИТОРИЙ: {{ selectedAssignment.templateUrl }}
-              </a>
-            </div>
 
             <!-- Days Remaining -->
             <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
