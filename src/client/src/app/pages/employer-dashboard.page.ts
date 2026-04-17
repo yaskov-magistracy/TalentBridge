@@ -962,7 +962,18 @@ export class EmployerDashboardPage implements OnInit {
 
   // Create Assignment Modal Methods
   openCreateModal(): void {
+    this.resetCreateModalState();
     this.showCreateModal = true;
+    this.loadAllTechnologies();
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal = false;
+    this.resetCreateModalState();
+  }
+
+  private resetCreateModalState(): void {
+    this.creatingAssignment = false;
     this.createForm = {
       name: '',
       description: '',
@@ -972,11 +983,6 @@ export class EmployerDashboardPage implements OnInit {
       isGrouped: false
     };
     this.createSelectedTechs = [];
-    this.loadAllTechnologies();
-  }
-
-  closeCreateModal(): void {
-    this.showCreateModal = false;
   }
 
   isCreateFormValid(): boolean {
@@ -1011,6 +1017,7 @@ export class EmployerDashboardPage implements OnInit {
     this.assignmentsService.createAssignment(createRequest).subscribe({
       next: () => {
         this.notificationService.success('Задание успешно создано!');
+        this.creatingAssignment = false;
         this.closeCreateModal();
         this.loadPublishedAssignments();
         this.cdr.markForCheck();
