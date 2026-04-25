@@ -1,5 +1,6 @@
 cd cloud 
 sudo docker compose pull
+sudo docker image prune
 
 # Останавливаем контейнеры, если они есть
 running_containers=$(docker ps -q)
