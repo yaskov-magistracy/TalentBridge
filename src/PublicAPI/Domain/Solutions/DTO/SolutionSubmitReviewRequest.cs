@@ -1,12 +1,13 @@
 ﻿namespace Domain.Solutions.DTO;
 
 public record SolutionSubmitReviewRequest(
-    string Review,
+    string Comment,
+    int Score,
     SolutionSubmitReviewResultState ResultState
 );
 
 public enum SolutionSubmitReviewResultState
 {
     Done,
-    Rejected
+    Failed
 }

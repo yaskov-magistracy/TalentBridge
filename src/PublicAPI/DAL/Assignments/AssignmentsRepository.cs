@@ -76,21 +76,23 @@ public class AssignmentsRepository(
         return (await GetFull(newEntity.Id))!;
     }
 
-    public async Task<AssignmentFullInfo> Update(Guid id, AssignmentUpdateEntity updateEntity)
+    public async Task<AssignmentFullInfo> Update(Guid id, AssignmentPatchEntity patchEntity)
     {
         var existed = await Assignments.FirstAsync(e => e.Id == id);
 
-        if (updateEntity.Name != null)
-            existed.Name = updateEntity.Name;
-        if (updateEntity.Description != null)
-            existed.Description = updateEntity.Description;
-        if (updateEntity.TemplateUrl != null)
-            existed.TemplateUrl = updateEntity.TemplateUrl.Value;
-        if (updateEntity.DeadLine != null)
-            existed.DeadLine = updateEntity.DeadLine.Value;
-        if (updateEntity.CandidatesCapacity != null)
-            existed.CandidatesCapacity = updateEntity.CandidatesCapacity.Value;
-        if (updateEntity.Technologies is { } relationsPatch)
+        if (patchEntity.Name != null)
+            existed.Name = patchEntity.Name;
+        if (patchEntity.Description != null)
+            existed.Description = patchEntity.Description;
+        if (patchEntity.TemplateUrl != null)
+            existed.TemplateUrl = patchEntity.TemplateUrl.Value;
+        if (patchEntity.DeadLine != null)
+            existed.DeadLine = patchEntity.DeadLine.Value;
+        if (patchEntity.CandidatesCapacity != null)
+            existed.CandidatesCapacity = patchEntity.CandidatesCapacity.Value;
+        if (patchEntity.AttemptsCapacity != null)
+            existed.AttemptsCapacity = patchEntity.AttemptsCapacity.Value;
+        if (patchEntity.Technologies is { } relationsPatch)
         {
             relationsPatch.ApplyRemove(existed.Technologies);
             (existed.Technologies, var toAdd) = relationsPatch.ApplyAdd(existed.Technologies);

@@ -1,4 +1,6 @@
 using Domain.Assignments;
+using Domain.ExpertReviews;
+using Domain.ExpertReviews.DTO;
 using Domain.Experts;
 using Domain.Solutions.DTO;
 using Infrastructure.Results;
@@ -22,7 +24,8 @@ public interface ISolutionsService
 public class SolutionsService(
     ISolutionsRepository solutionsRepository,
     IExpertsRepository expertsRepository,
-    IAssignmentsRepository assignmentsRepository
+    IAssignmentsRepository assignmentsRepository,
+    IExpertReviewsRepository expertReviewsRepository
 ) : ISolutionsService
 {
     public async Task<Result<SolutionFullInfo>> Get(Guid id)
@@ -50,13 +53,14 @@ public class SolutionsService(
         if (assignment.CandidatesCapacity == 1 && request.Team != null)
             return Results.BadRequest<SolutionFullInfo>("Team is not supported for solo Assignment");
         
-        var newSolution = await solutionsRepository.Add(new(
+        var createdId = await solutionsRepository.Create(new(
             null,
             SolutionState.NotStarted,
             request.Team == null ? null : new(request.Team.Name, request.Team.Description),
             request.AssignmentId,
             request.CandidateOwnerId));
-        return Results.Ok(newSolution);
+        var created = await solutionsRepository.GetFull(createdId);
+        return Results.Ok(created!);
     }
 
     public async Task<Result<SolutionFullInfo>> Update(Guid candidateId, Guid id, SolutionPatchRequest request)
@@ -69,9 +73,10 @@ public class SolutionsService(
         if (request.Team != null && !solution.IsGroup)
             return Results.BadRequest<SolutionFullInfo>("Team is required");
         
-        var updated = await solutionsRepository
-            .Update(id, new(SolutionUrl: request.SolutionUrl));
-        return Results.Ok(updated);
+        await solutionsRepository
+            .Patch(id, new(SolutionUrl: request.SolutionUrl));
+        var updated = await solutionsRepository.GetFull(id);
+        return Results.Ok(updated!);
     }
 
     public async Task<Result<SolutionFullInfo>> Join(Guid candidateId, Guid id)
@@ -87,7 +92,7 @@ public class SolutionsService(
         if (solution.Assignment.CandidatesCapacity == solution.Candidates.Count)
             return Results.BadRequest<SolutionFullInfo>("CandidatesCapacity is full");
         
-        await solutionsRepository.Update(
+        await solutionsRepository.Patch(
             id,
             new(Candidates: new(ToAdd: [candidateId])));
         var updated = await solutionsRepository.GetFull(id);
@@ -104,7 +109,7 @@ public class SolutionsService(
         if (solution.Candidates.Count >= solution.Assignment.CandidatesCapacity)
             return Results.BadRequest<SolutionFullInfo>($"Solution team is full");
 
-        await solutionsRepository.Update(id, new(
+        await solutionsRepository.Patch(id, new(
             CandidatesJoinRequested: new(ToAdd: [candidateId])));
         var updated = await solutionsRepository.GetFull(id);
         return Results.Ok(updated!);
@@ -123,7 +128,7 @@ public class SolutionsService(
             return Results.BadRequest<SolutionFullInfo>($"There is no requested to join candidate with id: {candidateJoinRequestedId}");
         
         await solutionsRepository
-            .Update(id, new(
+            .Patch(id, new(
                 Candidates: new(ToAdd: [candidateJoinRequestedId]),
                 CandidatesJoinRequested: new (ToRemove: [candidateJoinRequestedId])));
         
@@ -141,11 +146,12 @@ public class SolutionsService(
         if (solution.State != SolutionState.NotStarted)
             return Results.BadRequest<SolutionFullInfo>("Solution is already started");
 
-        var updated = await solutionsRepository
-            .Update(id, new(
+        await solutionsRepository
+            .Patch(id, new(
                 State: SolutionState.InProgress,
                 StartedAt: DateOnly.FromDateTime(DateTime.UtcNow)));
-        return Results.Ok(updated);
+        var updated = await solutionsRepository.GetFull(id);
+        return Results.Ok(updated!);
     }
 
     public async Task<Result<SolutionFullInfo>> SendToReview(Guid candidateOwnerId, Guid id)
@@ -158,9 +164,10 @@ public class SolutionsService(
         if (solution.State != SolutionState.InProgress)
             return Results.BadRequest<SolutionFullInfo>($"State of Solution is incorrect: {solution.State}");
 
-        var updated = await solutionsRepository
-            .Update(id, new(State: SolutionState.ExpertReview));
-        return Results.Ok(updated);
+        await solutionsRepository
+            .Patch(id, new(State: SolutionState.ExpertReview));
+        var updated = await solutionsRepository.GetFull(id);
+        return Results.Ok(updated!);
     }
 
     public async Task<Result<SolutionFullInfo>> SubmitReview(Guid expertId, Guid id, SolutionSubmitReviewRequest request)
@@ -176,15 +183,28 @@ public class SolutionsService(
         if (expert.Employer.Id != solution.Assignment.Employer.Id)
             return Results.NotFound<SolutionFullInfo>($"Expert does not has access to EmployerId: {solution.Assignment.Employer.Id}");
 
+        var curAttemptNumber = (solution.ExpertReviews?.Count ?? 0) + 1;
+        var expertReviewCreatedAt = DateTime.UtcNow;
+        await expertReviewsRepository.Create(new(
+            expert.Id,
+            solution.Id,
+            request.Comment, 
+            request.Score,
+            curAttemptNumber,
+            expertReviewCreatedAt, 
+            expertReviewCreatedAt
+        ));
+        var maxAttemptCount = solution.Assignment.AttemptsCapacity;
         var newState = request.ResultState switch
         {
             SolutionSubmitReviewResultState.Done => SolutionState.Done,
-            SolutionSubmitReviewResultState.Rejected => SolutionState.Rejected,
+            SolutionSubmitReviewResultState.Failed when curAttemptNumber != maxAttemptCount => SolutionState.RequiresImprovements,
+            SolutionSubmitReviewResultState.Failed when curAttemptNumber == maxAttemptCount => SolutionState.Failed,
             _ => throw new ArgumentOutOfRangeException()
         };
-        await solutionsRepository.Update(id, new(
-            ExpertId: expertId,
-            ExpertReview: request.Review,
+        // TODO: Начислить рейтинг кандидатам
+        // TODO: Добавить возможность медалировать
+        await solutionsRepository.Patch(id, new(
             State: newState));
         var updated = await solutionsRepository.GetFull(id);
         return Results.Ok(updated!);

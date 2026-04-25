@@ -3,6 +3,7 @@ using DAL.Assignments;
 using DAL.Authorization;
 using DAL.Candidates;
 using DAL.Employers;
+using DAL.ExpertReviews;
 using DAL.Experts;
 using DAL.Solutions;
 using DAL.Technologies;
@@ -10,6 +11,7 @@ using Domain.Assignments;
 using Domain.Authorization;
 using Domain.Candidates;
 using Domain.Employers;
+using Domain.ExpertReviews;
 using Domain.Experts;
 using Domain.Solutions;
 using Domain.Technologies;
@@ -46,5 +48,8 @@ public static class DI
 
         services.AddScoped<ISolutionsRepository, SolutionsRepository>();
         services.AddScoped<ISolutionsService, SolutionsService>();
+        
+        services.AddScoped<IExpertReviewsRepository, ExpertReviewsRepository>();
+        services.AddScoped<IExpertReviewsService, ExpertReviewsService>();
     }
 }

@@ -9,7 +9,8 @@ public record Assignment(
     string Description,
     string? TemplateUrl,
     DateOnly DeadLine,
-    int CandidatesCapacity)
+    int CandidatesCapacity,
+    int AttemptsCapacity)
 {
     public bool IsGrouped => CandidatesCapacity > 1;
 }
@@ -21,6 +22,7 @@ public record AssignmentFullInfo(
     string? TemplateUrl,
     DateOnly DeadLine,
     int CandidatesCapacity,
+    int AttemptsCapacity,
     Employer Employer,
     Technology[]? Technologies
-) : Assignment(Id, Name, Description, TemplateUrl, DeadLine, CandidatesCapacity);
+) : Assignment(Id, Name, Description, TemplateUrl, DeadLine, CandidatesCapacity, AttemptsCapacity);

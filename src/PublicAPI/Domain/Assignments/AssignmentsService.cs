@@ -9,7 +9,7 @@ public interface IAssignmentsService
     Task<Result<AssignmentFullInfo>> Get(Guid id);
     Task<Result<AssignmentSearchResponse>> Search(AssignmentSearchRequest request);
     Task<Result<AssignmentFullInfo>> Add(AssignmentCreateEntity createEntity);
-    Task<Result<AssignmentFullInfo>> Update(Guid employerId, Guid id, AssignmentUpdateEntity updateEntity);
+    Task<Result<AssignmentFullInfo>> Update(Guid employerId, Guid id, AssignmentPatchEntity patchEntity);
 }
 
 public class AssignmentsService(
@@ -40,17 +40,19 @@ public class AssignmentsService(
         return Results.Ok(newTask);
     }
 
-    public async Task<Result<AssignmentFullInfo>> Update(Guid employerId, Guid id, AssignmentUpdateEntity updateEntity)
+    public async Task<Result<AssignmentFullInfo>> Update(Guid employerId, Guid id, AssignmentPatchEntity patchEntity)
     {
         var pair = await assignmentsRepository.GetWithOwner(id);
         if (pair == null)
             return Results.NotFound<AssignmentFullInfo>();
         if (pair.Value.employerId != employerId)
             return Results.Forbidden<AssignmentFullInfo>();
-        if (updateEntity.CandidatesCapacity < 1)
-            return Results.BadRequest<AssignmentFullInfo>($"{nameof(updateEntity.CandidatesCapacity)} can not be less than 1");
+        if (patchEntity.CandidatesCapacity < 1)
+            return Results.BadRequest<AssignmentFullInfo>($"{nameof(patchEntity.CandidatesCapacity)} can not be less than 1");
+        if (patchEntity.AttemptsCapacity < 1)
+            return Results.BadRequest<AssignmentFullInfo>($"{nameof(patchEntity.AttemptsCapacity)} can not be less than 1");
         
-        var updated = await assignmentsRepository.Update(id, updateEntity);
+        var updated = await assignmentsRepository.Update(id, patchEntity);
         return Results.Ok(updated);
     }
 }

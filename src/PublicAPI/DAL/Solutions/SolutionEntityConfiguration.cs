@@ -25,7 +25,7 @@ internal class SolutionEntityConfiguration : IEntityTypeConfiguration<SolutionEn
 
         builder.OwnsOne(e => e.Team);
 
-        builder.HasOne(e => e.Expert)
-            .WithMany(e2 => e2.Solutions);
+        builder.HasMany(e => e.ExpertReviews)
+            .WithOne(e2 => e2.Solution);
     }
 }

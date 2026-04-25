@@ -47,6 +47,7 @@ public class AssignmentsController(
             request.TemplateUrl,
             request.DeadLine,
             request.CandidatesCapacity,
+            request.AttemptsCapacity,
             employerId,
             request.Technologies));
         return assignment.ActionResult;
@@ -57,7 +58,7 @@ public class AssignmentsController(
     /// </summary>
     [AuthorizeRoles(AccountRole.Employer)]
     [HttpPatch("{id:Guid}")]
-    public async Task<ActionResult<AssignmentFullInfo>> Update([FromRoute] Guid id, [FromBody] AssignmentUpdateEntity request)
+    public async Task<ActionResult<AssignmentFullInfo>> Update([FromRoute] Guid id, [FromBody] AssignmentPatchEntity request)
     {
         var employerId = User.GetId();
         var assignment = await assignmentsService.Update(employerId, id, request);

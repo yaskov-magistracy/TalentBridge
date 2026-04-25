@@ -1,5 +1,6 @@
 using DAL.Assignments;
 using DAL.Candidates;
+using DAL.ExpertReviews;
 using DAL.Experts;
 using Domain.Solutions;
 using Domain.Solutions.DTO;
@@ -30,8 +31,7 @@ internal static class SolutionsMapper
             CandidatesMapper.ToDomain(entity.CandidateOwner),
             entity.Candidates.Select(CandidatesMapper.ToDomain).ToList(),
             entity.CandidatesJoinRequested?.Select(CandidatesMapper.ToDomain).ToList(),
-            entity.ExpertReview,
-            entity.Expert == null ? null : ExpertsMapper.ToDomain(entity.Expert)
+            entity.ExpertReviews?.Select(ExpertReviewsMapper.ToDomainInSolution).ToList()
         );
 
     public static SolutionEntity ToEntity(SolutionCreateEntity createEntity)
@@ -73,8 +73,9 @@ internal static class SolutionsMapper
             SolutionState.Autotests => SolutionEntityState.Autotests,
             SolutionState.AiReview => SolutionEntityState.AiReview,
             SolutionState.ExpertReview => SolutionEntityState.ExpertReview,
+            SolutionState.RequiresImprovements => SolutionEntityState.RequiresImprovements,
             SolutionState.Done => SolutionEntityState.Done,
-            SolutionState.Rejected => SolutionEntityState.Rejected,
+            SolutionState.Failed => SolutionEntityState.Failed,
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
         };
     
@@ -86,8 +87,9 @@ internal static class SolutionsMapper
             SolutionEntityState.Autotests => SolutionState.Autotests,
             SolutionEntityState.AiReview => SolutionState.AiReview,
             SolutionEntityState.ExpertReview => SolutionState.ExpertReview,
+            SolutionEntityState.RequiresImprovements => SolutionState.RequiresImprovements,
             SolutionEntityState.Done => SolutionState.Done,
-            SolutionEntityState.Rejected => SolutionState.Rejected,
+            SolutionEntityState.Failed => SolutionState.Failed,
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
         };
 }

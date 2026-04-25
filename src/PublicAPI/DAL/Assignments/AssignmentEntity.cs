@@ -15,6 +15,7 @@ internal class AssignmentEntity
     public string? TemplateUrl { get; set; }
     public DateOnly DeadLine { get; set; }
     public int CandidatesCapacity { get; set; }
+    public int AttemptsCapacity { get; set; }
     
     [ForeignKey(nameof(Employer))] public Guid EmployerId { get; set; }
     public EmployerEntity Employer { get; set; }

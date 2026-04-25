@@ -1,6 +1,8 @@
 ﻿using API.Configuration.Auth;
 using API.Solutions.DTO;
 using Domain.Authorization;
+using Domain.ExpertReviews;
+using Domain.ExpertReviews.DTO;
 using Domain.Solutions;
 using Domain.Solutions.DTO;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +12,8 @@ namespace API.Solutions;
 [Route("api/[controller]")]
 [ApiController]
 public class SolutionsController(
-    ISolutionsService solutionsService    
+    ISolutionsService solutionsService,
+    IExpertReviewsService expertReviewsService
 ) : ControllerBase
 {
     /// <summary>
@@ -140,5 +143,22 @@ public class SolutionsController(
         var expertId = User.GetId();
         var solution = await solutionsService.SubmitReview(expertId, id, request);
         return solution.ActionResult;
+    }
+    
+    /// <summary>
+    /// Отредачить свой отзыв.
+    /// </summary>
+    /// <remarks>
+    /// Проверяет что Эксперт создал этот отзыв
+    /// </remarks>
+    [AuthorizeRoles(AccountRole.Expert)]
+    [HttpPatch("{id:Guid}/edit-review")]
+    public async Task<ActionResult<SolutionFullInfo>> EditReview(
+        [FromRoute] Guid id,
+        [FromBody] ExpertReviewPatchEntity request)
+    {
+        var expertId = User.GetId();
+        var review = await expertReviewsService.Patch(expertId, id, request);
+        return review.ActionResult;
     }
 }

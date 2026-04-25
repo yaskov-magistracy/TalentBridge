@@ -7,7 +7,6 @@ using Domain.Solutions.DTO;
 using Domain.Technologies;
 using Domain.Technologies.DTO;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DAL;
 
@@ -89,6 +88,7 @@ public class DatabaseAccessor(
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             1,
+            1,
             employer.Id,
             technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()
         ))).Value;
@@ -99,15 +99,16 @@ public class DatabaseAccessor(
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(15)),
             2,
+            1,
             employer.Id,
             technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
         ))).Value;
         ClearAttachedItems();
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
-            new("В целом неплохое решение. Я бы взял его на работу", SolutionSubmitReviewResultState.Done));
+            new("В целом неплохое решение. Я бы взял его на работу", 9, SolutionSubmitReviewResultState.Done));
         ClearAttachedItems();
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
-                new("Плохое решение. Много недочётов. Я бы не брал", SolutionSubmitReviewResultState.Rejected));
+                new("Плохое решение. Много недочётов. Я бы не брал", 3, SolutionSubmitReviewResultState.Failed));
         ClearAttachedItems();
         var teamSolution = (await solutionsService.Add(new(
             teamAssignment.Id, 

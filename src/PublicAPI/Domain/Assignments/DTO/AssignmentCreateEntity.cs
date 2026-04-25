@@ -6,6 +6,7 @@ public record AssignmentCreateEntity(
     string? TemplateUrl,
     DateOnly DeadLine,
     int CandidatesCapacity,
+    int AttemptsCapacity,
     Guid EmployerId,
     Guid[]? Technologies)
 {

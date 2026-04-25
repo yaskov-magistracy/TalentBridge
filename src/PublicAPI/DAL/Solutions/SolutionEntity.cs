@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using DAL.Assignments;
 using DAL.Candidates;
+using DAL.ExpertReviews;
 using DAL.Experts;
 
 namespace DAL.Solutions;
@@ -21,9 +22,7 @@ internal class SolutionEntity : IEntity
     public List<CandidateEntity> Candidates { get; set; }
     public List<CandidateEntity>? CandidatesJoinRequested { get; set; }
     
-    public string? ExpertReview { get; set; }
-    [ForeignKey(nameof(Expert))] public Guid? ExpertId { get; set; }
-    public ExpertEntity? Expert { get; set; }
+    public List<ExpertReviewEntity>? ExpertReviews { get; set; }
 }
 
 internal class SolutionTeamEntity
@@ -39,6 +38,7 @@ internal enum SolutionEntityState
     Autotests,
     AiReview,
     ExpertReview,
+    RequiresImprovements,
     Done,
-    Rejected,
+    Failed,
 }

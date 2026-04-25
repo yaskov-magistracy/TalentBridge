@@ -9,5 +9,5 @@ public interface IAssignmentsRepository
     Task<AssignmentFullInfo?> GetFull(Guid id);
     Task<AssignmentSearchResponse> Search(AssignmentSearchRequest request);
     Task<AssignmentFullInfo> Add(AssignmentCreateEntity createEntity);
-    Task<AssignmentFullInfo> Update(Guid id, AssignmentUpdateEntity updateEntity);
+    Task<AssignmentFullInfo> Update(Guid id, AssignmentPatchEntity patchEntity);
 }

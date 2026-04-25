@@ -8,9 +8,7 @@ public record SolutionPatchEntity(
     DateOnly? StartedAt = null,
     SolutionTeamPatchEntity? Team = null,
     RelationsPatch? Candidates = null,
-    RelationsPatch? CandidatesJoinRequested = null,
-    string? ExpertReview = null,
-    Guid? ExpertId = null
+    RelationsPatch? CandidatesJoinRequested = null
 );
 
 public record SolutionTeamPatchEntity(
