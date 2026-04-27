@@ -15,6 +15,7 @@ internal class AssignmentEntity
     public string? TemplateUrl { get; set; }
     public DateOnly DeadLine { get; set; }
     public int CandidatesCapacity { get; set; }
+    public AssignmentEntityDifficulty Difficulty { get; set; }
     public float[] AttemptsCoefficients { get; set; }
     
     [ForeignKey(nameof(Employer))] public Guid EmployerId { get; set; }
@@ -22,4 +23,11 @@ internal class AssignmentEntity
     
     public List<TechnologyEntity>? Technologies { get; set; }
     public List<SolutionEntity>? Solutions { get; set; }
+}
+
+public enum AssignmentEntityDifficulty
+{
+    Normal,
+    Advanced,
+    Hard
 }

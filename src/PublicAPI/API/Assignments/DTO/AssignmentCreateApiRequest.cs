@@ -1,4 +1,6 @@
-﻿namespace API.Assignments.DTO;
+﻿using Domain.Assignments;
+
+namespace API.Assignments.DTO;
 
 public record AssignmentCreateApiRequest(
     string Name,
@@ -6,6 +8,7 @@ public record AssignmentCreateApiRequest(
     string? TemplateUrl,
     DateOnly DeadLine,
     int CandidatesCapacity,
+    AssignmentDifficulty Difficulty,
     float[] AttemptsCoefficients,
     Guid[]? Technologies = null
 )

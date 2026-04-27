@@ -47,6 +47,7 @@ public class AssignmentsController(
             request.TemplateUrl,
             request.DeadLine,
             request.CandidatesCapacity,
+            request.Difficulty,
             request.AttemptsCoefficients,
             employerId,
             request.Technologies));

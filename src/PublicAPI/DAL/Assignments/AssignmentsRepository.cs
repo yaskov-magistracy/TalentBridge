@@ -90,6 +90,8 @@ public class AssignmentsRepository(
             existed.DeadLine = patchEntity.DeadLine.Value;
         if (patchEntity.CandidatesCapacity != null)
             existed.CandidatesCapacity = patchEntity.CandidatesCapacity.Value;
+        if (patchEntity.Difficulty != null)
+            existed.Difficulty = AssignmentsMapper.ToEntity(patchEntity.Difficulty.Value);
         if (patchEntity.AttemptsCoefficients != null)
             existed.AttemptsCoefficients = patchEntity.AttemptsCoefficients;
         if (patchEntity.Technologies is { } relationsPatch)
