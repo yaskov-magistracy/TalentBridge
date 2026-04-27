@@ -49,8 +49,8 @@ public class AssignmentsService(
             return Results.Forbidden<AssignmentFullInfo>();
         if (patchEntity.CandidatesCapacity < 1)
             return Results.BadRequest<AssignmentFullInfo>($"{nameof(patchEntity.CandidatesCapacity)} can not be less than 1");
-        if (patchEntity.AttemptsCapacity < 1)
-            return Results.BadRequest<AssignmentFullInfo>($"{nameof(patchEntity.AttemptsCapacity)} can not be less than 1");
+        if (patchEntity.AttemptsCoefficients?.Any(e => e < 0 || e > 1) is true)
+            return Results.BadRequest<AssignmentFullInfo>($"{nameof(patchEntity.AttemptsCoefficients)} should be in range (0:1]");
         
         var updated = await assignmentsRepository.Update(id, patchEntity);
         return Results.Ok(updated);

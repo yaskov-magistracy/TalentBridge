@@ -8,7 +8,7 @@ public record AssignmentPatchEntity(
     NullablePatch<string?>? TemplateUrl,
     DateOnly? DeadLine,
     int? CandidatesCapacity,
-    int? AttemptsCapacity,
+    float[]? AttemptsCoefficients,
     RelationsPatch? Technologies)
 {
     

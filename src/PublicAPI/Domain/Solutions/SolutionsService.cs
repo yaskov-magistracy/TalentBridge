@@ -194,7 +194,7 @@ public class SolutionsService(
             expertReviewCreatedAt, 
             expertReviewCreatedAt
         ));
-        var maxAttemptCount = solution.Assignment.AttemptsCapacity;
+        var maxAttemptCount = solution.Assignment.AttemptsCoefficients.Length;
         var newState = request.ResultState switch
         {
             SolutionSubmitReviewResultState.Done => SolutionState.Done,
