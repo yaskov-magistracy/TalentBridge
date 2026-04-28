@@ -14,7 +14,8 @@ internal static class CandidatesMapper
             entity.Name,
             entity.Patronymic,
             entity.City,
-            entity.About
+            entity.About,
+            entity.Rating
         );
     
     public static CandidateFullInfo ToDomainFull(CandidateEntity entity)
@@ -26,6 +27,7 @@ internal static class CandidatesMapper
             entity.Patronymic,
             entity.City,
             entity.About,
+            entity.Rating,
             entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray()
         );
 
@@ -40,6 +42,7 @@ internal static class CandidatesMapper
             Patronymic = createEntity.Patronymic,
             City = createEntity.City,
             About = createEntity.About,
+            Rating = 0,
             Technologies = createEntity.Technologies?.Select(e => new TechnologyEntity()
             {
                 Id = e

@@ -1,4 +1,5 @@
 using Domain.Assignments;
+using Domain.Candidates;
 using Domain.ExpertReviews;
 using Domain.ExpertReviews.DTO;
 using Domain.Experts;
@@ -25,7 +26,8 @@ public class SolutionsService(
     ISolutionsRepository solutionsRepository,
     IExpertsRepository expertsRepository,
     IAssignmentsRepository assignmentsRepository,
-    IExpertReviewsRepository expertReviewsRepository
+    IExpertReviewsRepository expertReviewsRepository,
+    ICandidatesService candidatesService
 ) : ISolutionsService
 {
     public async Task<Result<SolutionFullInfo>> Get(Guid id)
@@ -202,10 +204,11 @@ public class SolutionsService(
             SolutionSubmitReviewResultState.Failed when curAttemptNumber == maxAttemptCount => SolutionState.Failed,
             _ => throw new ArgumentOutOfRangeException()
         };
-        // TODO: Начислить рейтинг кандидатам
         // TODO: Добавить возможность медалировать
         await solutionsRepository.Patch(id, new(
             State: newState));
+        foreach (var candidate in solution.Candidates)
+            await candidatesService.UpdateRating(candidate.Id);
         var updated = await solutionsRepository.GetFull(id);
         return Results.Ok(updated!);
     }

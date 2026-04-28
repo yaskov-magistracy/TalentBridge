@@ -37,7 +37,11 @@ public record SolutionFullInfo(
     List<Candidate> Candidates,
     List<Candidate>? CandidatesJoinRequested,
     List<ExpertReviewInSolution>? ExpertReviews
-) : Solution(Id, SolutionUrl, StartedAt, State, Team);
+) : Solution(Id, SolutionUrl, StartedAt, State, Team)
+{
+    internal ExpertReviewInSolution GetLastReview()
+        => ExpertReviews!.OrderByDescending(e => e.CreatedAt).First();
+}
 
 
 public record SolutionTeam(

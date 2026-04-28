@@ -1,6 +1,7 @@
 ﻿using Domain.Authorization;
 using Domain.Authorization.DTO;
 using Domain.Candidates.DTO;
+using Domain.Solutions;
 using Infrastructure.Results;
 
 namespace Domain.Candidates;
@@ -12,14 +13,16 @@ public interface ICandidatesService
     Task<Result<Candidate>> Get(string login);
     Task<Result<CandidateFullInfo>> GetFull(string login);
     Task<Result<CandidateFullInfo>> Add(CandidateCreateRequest request);
-    Task<Result<CandidateFullInfo>> Patch(Guid id, CandidateUpdateEntity updateEntity);
+    Task<Result<CandidateFullInfo>> Patch(Guid id, CandidatePatchEntity patchEntity);
     Task<EmptyResult> ChangePassword(Guid id, ChangePasswordRequest request);
+    Task<Result<float>> UpdateRating(Guid id);
 }
 
 public class CandidatesService(
     ICandidatesRepository candidatesRepository,
     IAccountsRepository accountsRepository,
-    IPasswordHasher passwordHasher
+    IPasswordHasher passwordHasher,
+    ISolutionsRepository solutionsRepository
     ) : ICandidatesService
 {
     public async Task<Result<Candidate>> Get(Guid id)
@@ -64,7 +67,7 @@ public class CandidatesService(
         if (existed != null)
             return Results.BadRequest<CandidateFullInfo>("Login is already in use");
         
-        var res = await candidatesRepository.Add(new(
+        var res = await candidatesRepository.Create(new(
             request.Login, 
             passwordHasher.HashPassword(request.Password),
             request.Surname,
@@ -77,13 +80,13 @@ public class CandidatesService(
         return Results.Ok(res);
     }
 
-    public async Task<Result<CandidateFullInfo>> Patch(Guid id, CandidateUpdateEntity request)
+    public async Task<Result<CandidateFullInfo>> Patch(Guid id, CandidatePatchEntity request)
     {
         var existed = await candidatesRepository.Get(id);
         if (existed == null)
             return Results.NotFound<CandidateFullInfo>("");
         
-        var updated = await candidatesRepository.Update(id, request);
+        var updated = await candidatesRepository.Patch(id, request);
         return Results.Ok(updated);
     }
 
@@ -98,9 +101,35 @@ public class CandidatesService(
         if (!passwordHasher.VerifyPassword(request.OldPassword, existed.PasswordHash))
             return EmptyResults.BadRequest("Old password is not correct");
 
-        var updated = await candidatesRepository.Update(
+        var updated = await candidatesRepository.Patch(
             id,
             new(PasswordHash: passwordHasher.HashPassword(request.NewPassword)));
         return EmptyResults.NoContent();
+    }
+
+    public async Task<Result<float>> UpdateRating(Guid id)
+    {
+        var searchResponse = await solutionsRepository.Search(new()
+        {
+            CandidateId = id,
+            State = SolutionState.Done,
+        });
+
+        var totalScores = 0f;
+        var totalDiffCoefficients = 0f;
+        foreach (var solution in searchResponse.Items)
+        {
+            var lastReview = solution.GetLastReview();
+            var diffCoeff = solution.Assignment.GetDifficultyCoefficient();
+            var attemptCoeff = solution.Assignment.AttemptsCoefficients[lastReview.AttemptNumber - 1];
+            totalScores += lastReview.Score * diffCoeff * attemptCoeff;
+            totalDiffCoefficients += diffCoeff;
+        }
+        var newRating = MathF.Max(100f, totalScores / totalDiffCoefficients * 10);
+        await candidatesRepository.Patch(id, new()
+        {
+            Rating = newRating,
+        });
+        return Results.Ok(newRating);
     }
 }

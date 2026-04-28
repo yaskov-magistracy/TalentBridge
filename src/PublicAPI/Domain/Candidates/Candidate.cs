@@ -9,7 +9,8 @@ public record Candidate(
     string Name,
     string? Patronymic,
     string City,
-    string About
+    string About,
+    float Rating
 );
 
 public record CandidateFullInfo(
@@ -20,5 +21,6 @@ public record CandidateFullInfo(
     string? Patronymic,
     string City,
     string About,
+    float Rating,
     Technology[]? Technologies
-) : Candidate(Id, Login, Surname, Name, Patronymic, City, About);
+) : Candidate(Id, Login, Surname, Name, Patronymic, City, About, Rating);

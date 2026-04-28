@@ -14,6 +14,14 @@ public record Assignment(
     float[] AttemptsCoefficients)
 {
     public bool IsGrouped => CandidatesCapacity > 1;
+
+    internal float GetDifficultyCoefficient() => Difficulty switch
+    {
+        AssignmentDifficulty.Normal => 1f,
+        AssignmentDifficulty.Advanced => 1.5f,
+        AssignmentDifficulty.Hard => 2f,
+        _ => throw new ArgumentException()
+    };
 }
 
 public record AssignmentFullInfo(

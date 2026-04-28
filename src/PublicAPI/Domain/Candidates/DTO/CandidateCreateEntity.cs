@@ -9,7 +9,7 @@ public record CandidateCreateEntity(
     string Name,
     string? Patronymic,
     string City,
-    string About, 
+    string About,
     Guid[]? Technologies)
 {
     

@@ -17,7 +17,7 @@ public class CandidatesRepository(
     
     public async Task<Candidate?> Get(Guid id)
     {
-        var entity = await Candidates.FirstOrDefaultAsync(e => e.Id == id);
+        var entity = await CandidatesSearch.FirstOrDefaultAsync(e => e.Id == id);
         return entity != null
             ? CandidatesMapper.ToDomain(entity)
             : null;
@@ -33,7 +33,7 @@ public class CandidatesRepository(
 
     public async Task<Candidate?> Get(string login)
     {
-        var entity = await Candidates.FirstOrDefaultAsync(e => e.Login == login);
+        var entity = await CandidatesSearch.FirstOrDefaultAsync(e => e.Login == login);
         return entity != null
             ? CandidatesMapper.ToDomain(entity)
             : null;
@@ -47,7 +47,7 @@ public class CandidatesRepository(
             : null;
     }
 
-    public async Task<CandidateFullInfo> Add(CandidateCreateEntity createEntity)
+    public async Task<CandidateFullInfo> Create(CandidateCreateEntity createEntity)
     {
         var newEntity = CandidatesMapper.ToEntity(createEntity);
         dataContext.Technologies.AttachRangeIfNotEmpty(newEntity.Technologies);
@@ -56,23 +56,25 @@ public class CandidatesRepository(
         return CandidatesMapper.ToDomainFull(newEntity);
     }
 
-    public async Task<CandidateFullInfo> Update(Guid id, CandidateUpdateEntity updateEntity)
+    public async Task<CandidateFullInfo> Patch(Guid id, CandidatePatchEntity patchEntity)
     {
         var existed = await CandidatesFull.FirstAsync(e => e.Id == id);
 
-        if (updateEntity.PasswordHash != null)
-            existed.PasswordHash = updateEntity.PasswordHash;
-        if (updateEntity.Surname != null)
-            existed.Surname = updateEntity.Surname;
-        if (updateEntity.Name != null)
-            existed.Name = updateEntity.Name;
-        if (updateEntity.Patronymic != null)
-            existed.Patronymic = updateEntity.Patronymic.Value;
-        if (updateEntity.City != null)
-            existed.City = updateEntity.City;
-        if (updateEntity.About != null)
-            existed.About = updateEntity.About;
-        if (updateEntity.Technologies is {} relationsPatch)
+        if (patchEntity.PasswordHash != null)
+            existed.PasswordHash = patchEntity.PasswordHash;
+        if (patchEntity.Surname != null)
+            existed.Surname = patchEntity.Surname;
+        if (patchEntity.Name != null)
+            existed.Name = patchEntity.Name;
+        if (patchEntity.Patronymic != null)
+            existed.Patronymic = patchEntity.Patronymic.Value;
+        if (patchEntity.City != null)
+            existed.City = patchEntity.City;
+        if (patchEntity.About != null)
+            existed.About = patchEntity.About;
+        if (patchEntity.Rating != null)
+            existed.Rating = patchEntity.Rating.Value;
+        if (patchEntity.Technologies is {} relationsPatch)
         {
             relationsPatch.ApplyRemove(existed.Technologies);
             (existed.Technologies, var toAdd) = relationsPatch.ApplyAdd(existed.Technologies);

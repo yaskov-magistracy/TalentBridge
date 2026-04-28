@@ -53,6 +53,7 @@ public class CandidatesController(
                 request.Patronymic,
                 request.City,
                 request.About,
+                null,
                 request.Technologies));
         return res.ActionResult;
     }
