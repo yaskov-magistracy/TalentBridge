@@ -17,6 +17,7 @@ internal static class AssignmentsMapper
             CandidatesCapacity = createEntity.CandidatesCapacity,
             Difficulty = ToEntity(createEntity.Difficulty),
             AttemptsCoefficients = createEntity.AttemptsCoefficients,
+            MaxAttemptNumberToGrantMedal = createEntity.MaxAttemptNumberToGrantMedal,
             Employer = new()
             {
                 Id = createEntity.EmployerId
@@ -36,7 +37,8 @@ internal static class AssignmentsMapper
             assignment.DeadLine,
             assignment.CandidatesCapacity,
             ToDomain(assignment.Difficulty),
-            assignment.AttemptsCoefficients);
+            assignment.AttemptsCoefficients,
+            assignment.MaxAttemptNumberToGrantMedal);
     
     public static AssignmentFullInfo ToDomainFull(AssignmentEntity assignment)
         => new(
@@ -48,6 +50,7 @@ internal static class AssignmentsMapper
             assignment.CandidatesCapacity,
             ToDomain(assignment.Difficulty),
             assignment.AttemptsCoefficients,
+            assignment.MaxAttemptNumberToGrantMedal,
             EmployersMapper.ToDomain(assignment.Employer),
             assignment.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray());
 

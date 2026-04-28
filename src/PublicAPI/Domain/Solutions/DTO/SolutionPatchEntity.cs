@@ -7,6 +7,7 @@ public record SolutionPatchEntity(
     SolutionState? State = null,
     DateOnly? StartedAt = null,
     SolutionTeamPatchEntity? Team = null,
+    NullablePatch<DateTime?>? MedalGrantedAt = null,
     RelationsPatch? Candidates = null,
     RelationsPatch? CandidatesJoinRequested = null
 );

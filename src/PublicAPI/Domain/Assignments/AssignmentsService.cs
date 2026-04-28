@@ -1,5 +1,6 @@
 ﻿using Domain.Assignments.DTO;
 using Domain.Employers;
+using Domain.Solutions;
 using Infrastructure.Results;
 
 namespace Domain.Assignments;
@@ -10,10 +11,12 @@ public interface IAssignmentsService
     Task<Result<AssignmentSearchResponse>> Search(AssignmentSearchRequest request);
     Task<Result<AssignmentFullInfo>> Add(AssignmentCreateEntity createEntity);
     Task<Result<AssignmentFullInfo>> Update(Guid employerId, Guid id, AssignmentPatchEntity patchEntity);
+    Task<Result<AssignmentQuotaResponse>> GetQuota(Guid id);
 }
 
 public class AssignmentsService(
-    IAssignmentsRepository assignmentsRepository
+    IAssignmentsRepository assignmentsRepository,
+    ISolutionsRepository solutionsRepository
 ) : IAssignmentsService
 {
     public async Task<Result<AssignmentFullInfo>> Get(Guid id)
@@ -54,5 +57,23 @@ public class AssignmentsService(
         
         var updated = await assignmentsRepository.Update(id, patchEntity);
         return Results.Ok(updated);
+    }
+
+    public async Task<Result<AssignmentQuotaResponse>> GetQuota(Guid id)
+    {
+        const float medalMaxCountPercente = 0.15f;
+        var solutionsWithMedals = await solutionsRepository.Search(new()
+        {
+            AssignmentId = id,
+            HasMedal = true,
+        });
+        var totalSolutions = await solutionsRepository.Search(new()
+        {
+            AssignmentId = id,
+        });
+        var totalSolutionsWithCur = totalSolutions.TotalCount + 1;
+        var medalsToGrantLimit = (int)MathF.Ceiling(totalSolutionsWithCur * medalMaxCountPercente);
+        var medalsToGrantLeft = medalsToGrantLimit - solutionsWithMedals.TotalCount;
+        return Results.Ok(new AssignmentQuotaResponse(medalsToGrantLeft, medalsToGrantLimit));
     }
 }

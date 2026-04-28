@@ -94,6 +94,8 @@ public class AssignmentsRepository(
             existed.Difficulty = AssignmentsMapper.ToEntity(patchEntity.Difficulty.Value);
         if (patchEntity.AttemptsCoefficients != null)
             existed.AttemptsCoefficients = patchEntity.AttemptsCoefficients;
+        if (patchEntity.MaxAttemptNumberToGrantMedal != null)
+            existed.MaxAttemptNumberToGrantMedal = patchEntity.MaxAttemptNumberToGrantMedal.Value;
         if (patchEntity.Technologies is { } relationsPatch)
         {
             relationsPatch.ApplyRemove(existed.Technologies);

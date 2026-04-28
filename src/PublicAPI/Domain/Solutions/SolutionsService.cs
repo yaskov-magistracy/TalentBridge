@@ -27,7 +27,8 @@ public class SolutionsService(
     IExpertsRepository expertsRepository,
     IAssignmentsRepository assignmentsRepository,
     IExpertReviewsRepository expertReviewsRepository,
-    ICandidatesService candidatesService
+    ICandidatesService candidatesService,
+    IAssignmentsService assignmentsService
 ) : ISolutionsService
 {
     public async Task<Result<SolutionFullInfo>> Get(Guid id)
@@ -204,9 +205,24 @@ public class SolutionsService(
             SolutionSubmitReviewResultState.Failed when curAttemptNumber == maxAttemptCount => SolutionState.Failed,
             _ => throw new ArgumentOutOfRangeException()
         };
-        // TODO: Добавить возможность медалировать
+        if (request.GrantMedal)
+        {
+            if (request.ResultState != SolutionSubmitReviewResultState.Done
+                || request.Score < 9)
+                return Results.BadRequest<SolutionFullInfo>($"Can not grant medal. Request incorrect. Should be: State.Done and Score>=9");
+
+            if (solution.Assignment.MaxAttemptNumberToGrantMedal < curAttemptNumber)
+                return Results.BadRequest<SolutionFullInfo>($"Can not grant medal. Attempts exceeded. MaxNumber: {solution.Assignment.MaxAttemptNumberToGrantMedal}");
+            
+            var quotaResponse = await assignmentsService.GetQuota(solution.Assignment.Id);
+            if (quotaResponse.Value.MedalsToGrantLeft == 0)
+                return Results.BadRequest<SolutionFullInfo>($"Can not grant medal. Limit exceeded. Limit: {quotaResponse.Value.MedalsToGrantLimit}");
+        }
         await solutionsRepository.Patch(id, new(
-            State: newState));
+            State: newState,
+            MedalGrantedAt: request.GrantMedal
+                ? new(expertReviewCreatedAt) 
+                : null));
         foreach (var candidate in solution.Candidates)
             await candidatesService.UpdateRating(candidate.Id);
         var updated = await solutionsRepository.GetFull(id);

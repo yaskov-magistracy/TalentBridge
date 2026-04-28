@@ -28,7 +28,8 @@ internal static class CandidatesMapper
             entity.City,
             entity.About,
             entity.Rating,
-            entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray()
+            entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray(),
+            entity.Solutions?.Where(e => e.MedalGrantedAt != null).Count() ?? 0
         );
 
     public static CandidateEntity ToEntity(CandidateCreateEntity createEntity)

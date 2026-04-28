@@ -16,6 +16,7 @@ internal static class SolutionsMapper
             entity.StartedAt,
             ToDomain(entity.State),
             entity.Team == null ? null : ToDomain(entity.Team),
+            entity.MedalGrantedAt,
             entity.AssignmentId,
             entity.CandidateOwnerId
         );
@@ -27,6 +28,7 @@ internal static class SolutionsMapper
             entity.StartedAt,
             ToDomain(entity.State),
             entity.Team == null ? null : ToDomain(entity.Team),
+            entity.MedalGrantedAt,
             AssignmentsMapper.ToDomainFull(entity.Assignment),
             CandidatesMapper.ToDomain(entity.CandidateOwner),
             entity.Candidates.Select(CandidatesMapper.ToDomain).ToList(),

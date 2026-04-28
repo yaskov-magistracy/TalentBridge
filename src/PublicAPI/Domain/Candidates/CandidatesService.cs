@@ -125,7 +125,7 @@ public class CandidatesService(
             totalScores += lastReview.Score * diffCoeff * attemptCoeff;
             totalDiffCoefficients += diffCoeff;
         }
-        var newRating = MathF.Max(100f, totalScores / totalDiffCoefficients * 10);
+        var newRating = MathF.Min(100f, totalScores / totalDiffCoefficients * 10);
         await candidatesRepository.Patch(id, new()
         {
             Rating = newRating,

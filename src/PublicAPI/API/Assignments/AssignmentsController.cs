@@ -24,6 +24,16 @@ public class AssignmentsController(
     }
     
     /// <summary>
+    /// Получить инфу по квоте Медалей у задачи
+    /// </summary>
+    [HttpGet("{id:Guid}/quota")]
+    public async Task<ActionResult<AssignmentQuotaResponse>> GetAssignmentQuota([FromRoute] Guid id)
+    {
+        var assignment = await assignmentsService.GetQuota(id);
+        return assignment.ActionResult;
+    }
+    
+    /// <summary>
     /// Поиск по задачам
     /// </summary>
     [HttpPost("search")]
@@ -49,6 +59,7 @@ public class AssignmentsController(
             request.CandidatesCapacity,
             request.Difficulty,
             request.AttemptsCoefficients,
+            request.MaxAttemptNumberToGrantMedal,
             employerId,
             request.Technologies));
         return assignment.ActionResult;
@@ -65,4 +76,6 @@ public class AssignmentsController(
         var assignment = await assignmentsService.Update(employerId, id, request);
         return assignment.ActionResult;
     }
+    
+    
 }

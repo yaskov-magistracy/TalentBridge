@@ -13,6 +13,7 @@ internal class SolutionEntity : IEntity
     public DateOnly? StartedAt { get; set; }
     public SolutionEntityState State { get; set; }
     public SolutionTeamEntity? Team { get; set; }
+    public DateTime? MedalGrantedAt { get; set; }
     
     [ForeignKey(nameof(Assignment))] public Guid AssignmentId { get; set; }
     public AssignmentEntity Assignment { get; set; }

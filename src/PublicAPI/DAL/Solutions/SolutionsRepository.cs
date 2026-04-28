@@ -69,6 +69,8 @@ public class SolutionsRepository(
             query = query.Where(e => e.Candidates.Count == e.Assignment.CandidatesCapacity);
         if (request.State != null)
             query = query.Where(e => e.State == SolutionsMapper.ToEntity(request.State.Value));
+        if (request.HasMedal != null)
+            query = query.Where(e => e.MedalGrantedAt != null);
         
         var count = await query.CountAsync();
         return new(
@@ -100,6 +102,8 @@ public class SolutionsRepository(
             existed.Team!.Name = patchEntity.Team.Name;
         if (patchEntity.Team?.Description != null)
             existed.Team!.Description = patchEntity.Team.Description;
+        if (patchEntity.MedalGrantedAt != null)
+            existed.MedalGrantedAt = patchEntity.MedalGrantedAt.Value;
         if (patchEntity.Candidates is {} candidatesRelationsPatch)
         {
             candidatesRelationsPatch.ApplyRemove(existed.Candidates);

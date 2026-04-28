@@ -90,6 +90,7 @@ public class DatabaseAccessor(
             1,
             AssignmentDifficulty.Normal,
             [1],
+            1,
             employer.Id,
             technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()
         ))).Value;
@@ -102,15 +103,16 @@ public class DatabaseAccessor(
             2,
             AssignmentDifficulty.Hard,
             [1],
+            1,
             employer.Id,
             technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
         ))).Value;
         ClearAttachedItems();
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
-            new("В целом неплохое решение. Я бы взял его на работу", 9, SolutionSubmitReviewResultState.Done));
+            new("В целом неплохое решение. Я бы взял его на работу", 9, SolutionSubmitReviewResultState.Done, true));
         ClearAttachedItems();
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
-                new("Плохое решение. Много недочётов. Я бы не брал", 3, SolutionSubmitReviewResultState.Failed));
+                new("Плохое решение. Много недочётов. Я бы не брал", 3, SolutionSubmitReviewResultState.Failed, false));
         ClearAttachedItems();
         var teamSolution = (await solutionsService.Add(new(
             teamAssignment.Id, 

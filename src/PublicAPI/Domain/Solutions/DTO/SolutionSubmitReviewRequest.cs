@@ -3,7 +3,8 @@
 public record SolutionSubmitReviewRequest(
     string Comment,
     int Score,
-    SolutionSubmitReviewResultState ResultState
+    SolutionSubmitReviewResultState ResultState,
+    bool GrantMedal
 );
 
 public enum SolutionSubmitReviewResultState

@@ -13,7 +13,8 @@ public class CandidatesRepository(
     private IQueryable<CandidateEntity> CandidatesSearch => Candidates.AsNoTracking();
     private IQueryable<CandidateEntity> CandidatesFullSearch => CandidatesFull.AsNoTracking();
     private IQueryable<CandidateEntity> CandidatesFull => Candidates
-        .Include(e => e.Technologies);
+        .Include(e => e.Technologies)
+        .Include(e => e.Solutions);
     
     public async Task<Candidate?> Get(Guid id)
     {
