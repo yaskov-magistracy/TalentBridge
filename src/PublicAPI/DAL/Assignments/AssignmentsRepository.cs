@@ -66,17 +66,17 @@ public class AssignmentsRepository(
             count);
     }
 
-    public async Task<AssignmentFullInfo> Add(AssignmentCreateEntity createEntity)
+    public async Task<Guid> Create(AssignmentCreateEntity createEntity)
     {
         var newEntity = AssignmentsMapper.ToEntity(createEntity);
         dataContext.Employers.Attach(newEntity.Employer); 
         dataContext.Technologies.AttachRangeIfNotEmpty(newEntity.Technologies);
         await Assignments.AddAsync(newEntity);
         await dataContext.SaveChangesAsync();
-        return (await GetFull(newEntity.Id))!;
+        return newEntity.Id;
     }
 
-    public async Task<AssignmentFullInfo> Update(Guid id, AssignmentPatchEntity patchEntity)
+    public async Task Patch(Guid id, AssignmentPatchEntity patchEntity)
     {
         var existed = await Assignments.FirstAsync(e => e.Id == id);
 
@@ -104,6 +104,5 @@ public class AssignmentsRepository(
         }
 
         await dataContext.SaveChangesAsync();
-        return AssignmentsMapper.ToDomainFull(existed);
     }
 }

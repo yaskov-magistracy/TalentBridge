@@ -39,8 +39,9 @@ public class AssignmentsService(
         if (createEntity.CandidatesCapacity < 1)
             return Results.BadRequest<AssignmentFullInfo>($"{nameof(createEntity.CandidatesCapacity)} can not be less then 1");
         
-        var newTask = await assignmentsRepository.Add(createEntity);
-        return Results.Ok(newTask);
+        var newTaskId = await assignmentsRepository.Create(createEntity);
+        var newTask = await assignmentsRepository.GetFull(newTaskId);
+        return Results.Ok(newTask!);
     }
 
     public async Task<Result<AssignmentFullInfo>> Update(Guid employerId, Guid id, AssignmentPatchEntity patchEntity)
@@ -55,8 +56,9 @@ public class AssignmentsService(
         if (patchEntity.AttemptsCoefficients?.Any(e => e < 0 || e > 1) is true)
             return Results.BadRequest<AssignmentFullInfo>($"{nameof(patchEntity.AttemptsCoefficients)} should be in range (0:1]");
         
-        var updated = await assignmentsRepository.Update(id, patchEntity);
-        return Results.Ok(updated);
+        await assignmentsRepository.Patch(id, patchEntity);
+        var patched = await assignmentsRepository.GetFull(id);
+        return Results.Ok(patched!);
     }
 
     public async Task<Result<AssignmentQuotaResponse>> GetQuota(Guid id)
