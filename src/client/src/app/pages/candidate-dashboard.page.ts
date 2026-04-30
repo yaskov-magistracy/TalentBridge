@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
-import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState, AssignmentDifficulty } from '../core/models/api.models';
+import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState, AssignmentDifficulty, ExpertReviewInSolution } from '../core/models/api.models';
 import { NotificationService } from '../core/services/notification.service';
 
 @Component({
@@ -473,8 +473,8 @@ import { NotificationService } from '../core/services/notification.service';
               </h3>
             </div>
 
-            <!-- Solution URL (for NotStarted and InProgress tabs) -->
-            <div *ngIf="selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress'" class="mb-6 border-2 border-emerald-300 bg-emerald-50 p-4">
+            <!-- Solution URL (for NotStarted, InProgress and RequiresImprovements tabs) -->
+            <div *ngIf="selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements'" class="mb-6 border-2 border-emerald-300 bg-emerald-50 p-4">
               <h3 class="font-bold text-lg mb-3 uppercase text-emerald-800">
                 🔗 ССЫЛКА НА РЕШЕНИЕ
               </h3>
@@ -503,20 +503,20 @@ import { NotificationService } from '../core/services/notification.service';
                 {{ takingAssignment ? 'ЗАГРУЗКА...' : 'ВЗЯТЬ В РАБОТУ' }}
               </button>
               <button
-                *ngIf="selectedSolution.state === 'InProgress' && selectedSolution.candidateOwner.id === currentUserId"
+                *ngIf="(selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements') && selectedSolution.candidateOwner.id === currentUserId"
                 (click)="sendToReview(selectedSolution)"
                 [disabled]="sendingToReview || !canSendToReview(selectedSolution)"
                 class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 [class]="canSendToReview(selectedSolution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
                 {{ sendingToReview ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ НА ПРОВЕРКУ' }}
               </button>
-              <div *ngIf="selectedSolution.state === 'InProgress' && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
+              <div *ngIf="(selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements') && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
                 ⚠️ {{ getSendToReviewDisabledReason(selectedSolution) }}
               </div>
             </div>
 
             <!-- Review Progress (only for review tab) -->
-            <div *ngIf="activeTab === 'review'" class="mt-6 border-2 border-amber-300 p-4 bg-amber-50">
+            <div *ngIf="activeTab === 'review' && selectedSolution.state !== 'RequiresImprovements'" class="mt-6 border-2 border-amber-300 p-4 bg-amber-50">
               <h4 class="font-bold mb-4 uppercase text-amber-700">СТАДИИ ПРОВЕРКИ</h4>
               <div class="flex items-center justify-between mb-4">
                 <!-- Autotests -->
@@ -566,6 +566,13 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
+            <div *ngIf="activeTab === 'review' && selectedSolution.state === 'RequiresImprovements'" class="mt-6 border-2 border-red-300 p-4 bg-red-50">
+              <h4 class="font-bold mb-3 uppercase text-red-700">НУЖНЫ ДОПОЛНЕНИЯ</h4>
+              <div class="border-l-4 border-red-500 bg-white p-3">
+                <p class="text-sm text-red-900">{{ getStatusMessage(selectedSolution.state) }}</p>
+              </div>
+            </div>
+
             <!-- Archive Review Result (only for archive tab) -->
             <div *ngIf="activeTab === 'archive'" class="mt-6 border-2 p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'">
               <h4 class="font-bold mb-4 uppercase" [class]="selectedSolution.state === 'Done' ? 'text-emerald-700' : 'text-red-700'">
@@ -579,15 +586,38 @@ import { NotificationService } from '../core/services/notification.service';
                 <span class="font-bold text-lg" [class]="selectedSolution.state === 'Done' ? 'text-emerald-700' : 'text-red-700'">
                   {{ selectedSolution.state === 'Done' ? 'РЕШЕНИЕ ПРИНЯТО' : 'РЕШЕНИЕ ОТКЛОНЕНО' }}
                 </span>
+                <span *ngIf="selectedSolution.medalGrantedAt" class="text-3xl" aria-label="Медаль">🏅</span>
               </div>
 
-              <!-- Expert Review Comment -->
-              <div *ngIf="getLastExpertReviewComment(selectedSolution)" class="pt-4 border-t" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
-                <p class="text-xs font-bold uppercase mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">КОММЕНТАРИЙ ЭКСПЕРТА:</p>
-                <div class="bg-white p-4 border-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
-                  <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ getLastExpertReviewComment(selectedSolution) }}</p>
+            </div>
+
+            <div *ngIf="shouldShowExpertReviewHistory(selectedSolution)" class="mt-6 border-2 p-4" [class]="getReviewHistoryContainerClass(selectedSolution)">
+              <p class="text-xs font-bold uppercase tracking-wider mb-3" [class]="getReviewHistoryTitleClass(selectedSolution)">
+                История ревью эксперта:
+              </p>
+              <div *ngIf="getSortedExpertReviews(selectedSolution).length > 0; else noCandidateExpertReviews" class="space-y-3">
+                <div
+                  *ngFor="let review of getSortedExpertReviews(selectedSolution)"
+                  class="border-2 bg-white p-4"
+                  [class]="getReviewHistoryItemClass(selectedSolution)">
+                  <div class="flex flex-wrap justify-between gap-3 mb-2 text-xs text-gray-600">
+                    <span class="font-bold uppercase">
+                      {{ review.expert.surname }} {{ review.expert.name }}{{ review.expert.patronymic ? ' ' + review.expert.patronymic : '' }}
+                    </span>
+                    <span>{{ review.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-4 mb-3 text-xs font-bold uppercase">
+                    <span>Оценка: {{ review.score }}/10</span>
+                    <span>Попытка: {{ review.attemptNumber }}</span>
+                  </div>
+                  <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ review.comment }}</p>
                 </div>
               </div>
+              <ng-template #noCandidateExpertReviews>
+                <div class="border-2 bg-white p-4" [class]="getReviewHistoryItemClass(selectedSolution)">
+                  <p class="text-gray-500 text-sm">История ревью отсутствует</p>
+                </div>
+              </ng-template>
             </div>
           </div>
         </div>
@@ -842,7 +872,7 @@ import { NotificationService } from '../core/services/notification.service';
 
             <!-- Solutions Tabs -->
             <div *ngIf="activeTab !== 'available'" class="space-y-4">
-              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="solution.assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'"
+              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="getSolutionCardClass(solution)"
                    [class.ring-4]="(solution.candidatesJoinRequested?.length || 0) > 0 && solution.candidateOwner.id === currentUserId"
                    [class.ring-emerald-400]="(solution.candidatesJoinRequested?.length || 0) > 0 && solution.candidateOwner.id === currentUserId">
                 <div class="flex justify-between items-start gap-4">
@@ -871,6 +901,11 @@ import { NotificationService } from '../core/services/notification.service';
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
                       <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: solution.assignment }"></ng-container>
+                      <div *ngIf="solution.state === 'RequiresImprovements'" class="mb-2">
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
+                          <span>!</span> Требуются дополнения
+                        </span>
+                      </div>
                       <!-- Pending Requests Badge -->
                       <div *ngIf="(solution.candidatesJoinRequested?.length || 0) > 0 && solution.candidateOwner.id === currentUserId" class="mb-2">
                         <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
@@ -885,10 +920,13 @@ import { NotificationService } from '../core/services/notification.service';
                         <span *ngIf="solution.state === 'Failed'" class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
                           <span>✗</span> РЕВЬЮ НЕ ПРОЙДЕНО
                         </span>
+                        <span *ngIf="solution.medalGrantedAt" class="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold uppercase border border-amber-300">
+                          <span class="text-base leading-none">🏅</span> Медаль
+                        </span>
                       </div>
                     </div>
                     <!-- Review Stage Badges (moved to bottom for review tab) -->
-                    <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review'">
+                    <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review' && solution.state !== 'RequiresImprovements'">
                       <span class="px-2 py-1 text-xs font-bold uppercase border-2"
                         [class]="getStageBadgeClass(solution.state, 'Autotests')">
                         {{ solution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
@@ -1188,9 +1226,9 @@ export class CandidateDashboardPage implements OnInit {
         case 'in-progress':
           return state === 'InProgress';
         case 'review':
-          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
+          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview' || state === 'RequiresImprovements';
         case 'archive':
-          return state === 'Done' || state === 'Failed' || state === 'RequiresImprovements';
+          return state === 'Done' || state === 'Failed';
         default:
           return false;
       }
@@ -1208,13 +1246,22 @@ export class CandidateDashboardPage implements OnInit {
         case 'in-progress':
           return state === 'InProgress';
         case 'review':
-          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
+          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview' || state === 'RequiresImprovements';
         case 'archive':
-          return state === 'Done' || state === 'Failed' || state === 'RequiresImprovements';
+          return state === 'Done' || state === 'Failed';
         default:
           return false;
       }
     });
+  }
+
+  getSolutionCardClass(solution: SolutionFullInfo): string {
+    if (solution.state === 'RequiresImprovements') {
+      return 'border-2 border-red-500 bg-red-50 p-6 hover:shadow-lg transition-all';
+    }
+    return solution.assignment.isGrouped
+      ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all'
+      : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all';
   }
 
   getAssignmentMaxAttempts(assignment: AssignmentFullInfo): number {
@@ -1270,6 +1317,36 @@ export class CandidateDashboardPage implements OnInit {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]?.comment ?? '';
   }
 
+  getSortedExpertReviews(solution: SolutionFullInfo): ExpertReviewInSolution[] {
+    return [...(solution.expertReviews ?? [])]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  shouldShowExpertReviewHistory(solution: SolutionFullInfo): boolean {
+    return solution.state === 'RequiresImprovements' || solution.state === 'Done' || solution.state === 'Failed';
+  }
+
+  getReviewHistoryContainerClass(solution: SolutionFullInfo): string {
+    if (solution.state === 'Done') {
+      return 'border-emerald-300 bg-emerald-50';
+    }
+    return 'border-red-300 bg-red-50';
+  }
+
+  getReviewHistoryTitleClass(solution: SolutionFullInfo): string {
+    if (solution.state === 'Done') {
+      return 'text-emerald-600';
+    }
+    return 'text-red-600';
+  }
+
+  getReviewHistoryItemClass(solution: SolutionFullInfo): string {
+    if (solution.state === 'Done') {
+      return 'border-emerald-300';
+    }
+    return 'border-red-300';
+  }
+
   getStateLabel(state: SolutionState): string {
     const labels: Record<string, string> = {
       'NotStarted': 'Ожидает начала',
@@ -1277,7 +1354,8 @@ export class CandidateDashboardPage implements OnInit {
       'Reopened': 'Открыто повторно',
       'Autotests': 'Автотесты',
       'AiReview': 'AI проверка',
-      'ExpertReview': 'Проверка экспертом'
+      'ExpertReview': 'Проверка экспертом',
+      'RequiresImprovements': 'Требуются дополнения'
     };
     return labels[state] || state;
   }
@@ -1350,6 +1428,8 @@ export class CandidateDashboardPage implements OnInit {
         return 'Автотесты пройдены. Решение анализируется искусственным интеллектом.';
       case 'ExpertReview':
         return 'Решение на проверке у эксперта. Ожидайте обратную связь.';
+      case 'RequiresImprovements':
+        return 'Эксперт вернул решение на доработку. Посмотрите комментарии ниже, внесите изменения и отправьте решение на проверку повторно.';
       default:
         return 'Неизвестный статус проверки.';
     }
