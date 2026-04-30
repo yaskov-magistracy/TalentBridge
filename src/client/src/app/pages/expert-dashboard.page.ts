@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, AssignmentsService, SolutionsService } from '../core';
-import { AssignmentQuotaResponse, SolutionFullInfo, SolutionSearchRequest, SolutionState, SolutionSubmitReviewResultState } from '../core/models/api.models';
+import { AssignmentQuotaResponse, ExpertReviewInSolution, SolutionFullInfo, SolutionSearchRequest, SolutionState, SolutionSubmitReviewResultState } from '../core/models/api.models';
 import { NotificationService } from '../core/services/notification.service';
 
 @Component({
@@ -429,12 +429,32 @@ import { NotificationService } from '../core/services/notification.service';
                 </div>
               </div>
 
-              <!-- Expert Review Comment -->
-              <div *ngIf="selectedSolution.expertReview" class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
-                <p class="text-xs font-bold uppercase tracking-wider mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">КОММЕНТАРИЙ ЭКСПЕРТА:</p>
-                <div class="border-2 bg-white p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
-                  <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ selectedSolution.expertReview }}</p>
+              <!-- Expert Review History -->
+              <div class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
+                <p class="text-xs font-bold uppercase tracking-wider mb-3" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">История ревью эксперта:</p>
+                <div *ngIf="getSortedExpertReviews(selectedSolution).length > 0; else noExpertReviews" class="space-y-3">
+                  <div
+                    *ngFor="let review of getSortedExpertReviews(selectedSolution)"
+                    class="border-2 bg-white p-4"
+                    [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
+                    <div class="flex flex-wrap justify-between gap-3 mb-2 text-xs text-gray-600">
+                      <span class="font-bold uppercase">
+                        {{ review.expert.surname }} {{ review.expert.name }}{{ review.expert.patronymic ? ' ' + review.expert.patronymic : '' }}
+                      </span>
+                      <span>{{ review.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-4 mb-3 text-xs font-bold uppercase">
+                      <span>Оценка: {{ review.score }}/10</span>
+                      <span>Попытка: {{ review.attemptNumber }}</span>
+                    </div>
+                    <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ review.comment }}</p>
+                  </div>
                 </div>
+                <ng-template #noExpertReviews>
+                  <div class="border-2 bg-white p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
+                    <p class="text-gray-500 text-sm">История ревью отсутствует</p>
+                  </div>
+                </ng-template>
               </div>
             </div>
 
@@ -648,6 +668,11 @@ export class ExpertDashboardPage implements OnInit {
 
   isNegativeReviewState(state: SolutionState): boolean {
     return state === 'Failed' || state === 'RequiresImprovements' || state === 'Rejected';
+  }
+
+  getSortedExpertReviews(solution: SolutionFullInfo): ExpertReviewInSolution[] {
+    return [...(solution.expertReviews ?? [])]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
 
   private getNormalizedReviewScore(): number {

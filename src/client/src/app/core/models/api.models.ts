@@ -180,6 +180,7 @@ export interface SolutionFullInfo {
   candidates: CandidateFullInfo[];
   candidatesJoinRequested: CandidateFullInfo[];
   expertReview?: string;
+  expertReviews?: ExpertReviewInSolution[];
   expert?: {
     id: string;
     surname: string;
@@ -198,6 +199,21 @@ export interface CandidateShortInfo {
   id: string;
   surname: string;
   name: string;
+}
+
+export interface ExpertReviewInSolution {
+  id: string;
+  expert: {
+    id: string;
+    surname: string;
+    name: string;
+    patronymic: string;
+  };
+  comment: string;
+  score: number;
+  attemptNumber: number;
+  createdAt: string;
+  lastEditedAt: string;
 }
 
 export interface SolutionSubmitReviewRequest {
@@ -233,6 +249,8 @@ export interface SolutionSearchRequest {
   candidateJoinRequestedId?: string;
   excludeCandidateJoinRequestedId?: string;
   isAvailableToJoin?: boolean;
+  state?: SolutionState;
+  hasMedal?: boolean;
   text?: string;
 }
 
