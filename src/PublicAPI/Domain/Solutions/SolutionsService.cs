@@ -223,8 +223,12 @@ public class SolutionsService(
             MedalGrantedAt: request.GrantMedal
                 ? new(expertReviewCreatedAt) 
                 : null));
-        foreach (var candidate in solution.Candidates)
-            await candidatesService.UpdateRating(candidate.Id);
+        if (request.ResultState == SolutionSubmitReviewResultState.Done)
+        {
+            foreach (var candidate in solution.Candidates)
+                await candidatesService.UpdateRating(candidate.Id);
+        }
+
         var updated = await solutionsRepository.GetFull(id);
         return Results.Ok(updated!);
     }

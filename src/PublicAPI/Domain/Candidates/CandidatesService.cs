@@ -125,6 +125,7 @@ public class CandidatesService(
             totalScores += lastReview.Score * diffCoeff * attemptCoeff;
             totalDiffCoefficients += diffCoeff;
         }
+        totalDiffCoefficients = MathF.Max(1, totalDiffCoefficients); // to ignore nan
         var newRating = MathF.Min(100f, totalScores / totalDiffCoefficients * 10);
         await candidatesRepository.Patch(id, new()
         {
