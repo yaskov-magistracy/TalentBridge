@@ -1,4 +1,5 @@
-﻿using DAL.Technologies;
+﻿using DAL.Solutions;
+using DAL.Technologies;
 using Domain.Candidates;
 using Domain.Candidates.DTO;
 
@@ -17,9 +18,17 @@ internal static class CandidatesMapper
             entity.About,
             entity.Rating
         );
-    
+
     public static CandidateFullInfo ToDomainFull(CandidateEntity entity)
-        => new(
+    {
+        var solutions = entity.Solutions ?? [];
+        var doneSolutions = solutions.Count(e => e.State == SolutionEntityState.Done);
+        var failedSolutions = solutions.Count(e => e.State == SolutionEntityState.Failed);
+        var successRate = doneSolutions != 0 || failedSolutions != 0
+            ? MathF.Max(1, doneSolutions) / MathF.Max(1, failedSolutions)
+            : 0;
+        
+        return new(
             entity.Id,
             entity.Login,
             entity.Surname,
@@ -29,8 +38,11 @@ internal static class CandidatesMapper
             entity.About,
             entity.Rating,
             entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray(),
-            entity.Solutions?.Where(e => e.MedalGrantedAt != null).Count() ?? 0
+            entity.Solutions?.Where(e => e.MedalGrantedAt != null).Count() ?? 0, 
+            doneSolutions,
+            MathF.Round(successRate * 100)
         );
+    }
 
     public static CandidateEntity ToEntity(CandidateCreateEntity createEntity)
         => new()
