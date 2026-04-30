@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
-import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
+import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState, AssignmentDifficulty } from '../core/models/api.models';
 import { NotificationService } from '../core/services/notification.service';
 
 @Component({
@@ -21,6 +21,20 @@ import { NotificationService } from '../core/services/notification.service';
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
       <app-navbar [role]="'candidate'"></app-navbar>
+
+      <ng-template #assignmentMeta let-assignment>
+        <div class="flex flex-wrap gap-2 mb-4 text-xs">
+          <span class="inline-flex items-center px-2.5 py-1 border border-indigo-300 bg-indigo-50 text-indigo-700 font-bold uppercase">
+            Макс. попыток: {{ getAssignmentMaxAttempts(assignment) }}
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 border border-emerald-300 bg-emerald-50 text-emerald-700 font-bold uppercase">
+            Сложность: {{ getDifficultyLabel(assignment.difficulty) }}
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 border border-slate-300 bg-slate-50 text-slate-700 font-bold uppercase">
+            Коэффициенты: {{ formatAttemptCoefficients(assignment) }}
+          </span>
+        </div>
+      </ng-template>
 
       <div class="max-w-7xl mx-auto px-8 py-8">
         <!-- Profile Section -->
@@ -250,6 +264,7 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
+            <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: selectedAssignment }"></ng-container>
 
             <!-- Days Remaining -->
             <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
@@ -354,6 +369,8 @@ import { NotificationService } from '../core/services/notification.service';
                 <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedSolution.assignment.deadLine | date:'dd.MM.yyyy' }}
               </div>
             </div>
+
+            <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: selectedSolution.assignment }"></ng-container>
 
             <!-- Repository Link -->
             <div *ngIf="selectedSolution.assignment.templateUrl" class="mb-4">
@@ -813,6 +830,7 @@ import { NotificationService } from '../core/services/notification.service';
                       <p class="text-sm mb-3" *ngIf="!assignment.isGrouped">
                         <span class="font-bold">ПРОЕКТ:</span> ИНДИВИДУАЛЬНЫЙ
                       </p>
+                      <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: assignment }"></ng-container>
                     </div>
                   </div>
                 </div>
@@ -852,6 +870,7 @@ import { NotificationService } from '../core/services/notification.service';
                       <p class="text-sm mb-3" *ngIf="solution.assignment.isGrouped && activeTab !== 'review'">
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
+                      <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: solution.assignment }"></ng-container>
                       <!-- Pending Requests Badge -->
                       <div *ngIf="(solution.candidatesJoinRequested?.length || 0) > 0 && solution.candidateOwner.id === currentUserId" class="mb-2">
                         <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
@@ -1196,6 +1215,29 @@ export class CandidateDashboardPage implements OnInit {
           return false;
       }
     });
+  }
+
+  getAssignmentMaxAttempts(assignment: AssignmentFullInfo): number {
+    return assignment.attemptsCoefficients?.length || 0;
+  }
+
+  getDifficultyLabel(difficulty: AssignmentDifficulty): string {
+    const labels: Record<AssignmentDifficulty, string> = {
+      Normal: 'Обычная',
+      Advanced: 'Продвинутая',
+      Hard: 'Сложная'
+    };
+    return labels[difficulty] || difficulty;
+  }
+
+  formatAttemptCoefficients(assignment: AssignmentFullInfo): string {
+    const coefficients = assignment.attemptsCoefficients ?? [];
+    if (!coefficients.length) {
+      return 'Не заданы';
+    }
+    return coefficients
+      .map((coefficient, index) => `${coefficient}`)
+      .join(', ');
   }
 
   openProfileEdit() {
