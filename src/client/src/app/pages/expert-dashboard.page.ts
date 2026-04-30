@@ -214,12 +214,15 @@ import { NotificationService } from '../core/services/notification.service';
                   <p class="text-sm mb-2" *ngIf="!solution.assignment.isGrouped">
                     <span class="font-bold">ПРОЕКТ:</span> ИНДИВИДУАЛЬНЫЙ
                   </p>
-                  <div class="mt-3">
+                  <div class="mt-3 flex flex-wrap items-center gap-2">
                     <span *ngIf="solution.state === 'Done'" class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
                       ✓ ПРИНЯТО
                     </span>
                     <span *ngIf="isNegativeReviewState(solution.state)" class="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
                       ✗ ОТКЛОНЕНО
+                    </span>
+                    <span *ngIf="solution.medalGrantedAt" class="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold uppercase border border-amber-300">
+                      <span class="text-base leading-none">🏅</span> Медаль
                     </span>
                   </div>
                 </div>
@@ -353,14 +356,16 @@ import { NotificationService } from '../core/services/notification.service';
                   <div class="flex items-center gap-4">
                     <input
                       type="range"
-                      [(ngModel)]="reviewScore"
+                      [ngModel]="reviewScore"
+                      (ngModelChange)="onReviewScoreChange($event)"
                       min="1"
                       max="10"
                       step="1"
                       class="flex-1 accent-amber-600" />
                     <input
                       type="number"
-                      [(ngModel)]="reviewScore"
+                      [ngModel]="reviewScore"
+                      (ngModelChange)="onReviewScoreChange($event)"
                       min="1"
                       max="10"
                       step="1"
@@ -410,6 +415,7 @@ import { NotificationService } from '../core/services/notification.service';
               <div *ngIf="selectedSolution.state === 'Done'" class="flex items-center gap-3 text-emerald-700">
                 <span class="text-2xl">✓</span>
                 <span class="font-bold text-lg">РЕШЕНИЕ ПРИНЯТО</span>
+                <span *ngIf="selectedSolution.medalGrantedAt" class="text-3xl" aria-label="Медаль">🏅</span>
               </div>
               <div *ngIf="isNegativeReviewState(selectedSolution.state)" class="flex items-center gap-3 text-red-700">
                 <span class="text-2xl">✗</span>
@@ -646,6 +652,13 @@ export class ExpertDashboardPage implements OnInit {
 
   onGrantMedalChange(value: boolean): void {
     this.grantMedal = value && this.canGrantMedalForCurrentForm;
+  }
+
+  onReviewScoreChange(value: string | number): void {
+    this.reviewScore = Number(value);
+    if (this.getNormalizedReviewScore() < 9) {
+      this.grantMedal = false;
+    }
   }
 
   isReviewFormValid(): boolean {
