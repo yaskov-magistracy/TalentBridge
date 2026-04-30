@@ -913,7 +913,7 @@ import { NotificationService } from '../core/services/notification.service';
                         </span>
                       </div>
                       <!-- Review Status Badge (for archive tab) -->
-                      <div *ngIf="activeTab === 'archive'" class="mb-2">
+                      <div *ngIf="activeTab === 'archive'" class="inline-flex mb-2 gap-2">
                         <span *ngIf="solution.state === 'Done'" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
                           <span>✓</span> РЕВЬЮ ПРОЙДЕНО
                         </span>
