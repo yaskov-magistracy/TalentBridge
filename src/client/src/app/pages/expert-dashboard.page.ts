@@ -4,8 +4,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
-import { AuthService, SolutionsService } from '../core';
-import { SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
+import { AuthService, AssignmentsService, SolutionsService } from '../core';
+import { AssignmentQuotaResponse, SolutionFullInfo, SolutionSearchRequest, SolutionState, SolutionSubmitReviewResultState } from '../core/models/api.models';
 import { NotificationService } from '../core/services/notification.service';
 
 @Component({
@@ -218,7 +218,7 @@ import { NotificationService } from '../core/services/notification.service';
                     <span *ngIf="solution.state === 'Done'" class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
                       ✓ ПРИНЯТО
                     </span>
-                    <span *ngIf="solution.state === 'Rejected'" class="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
+                    <span *ngIf="isNegativeReviewState(solution.state)" class="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
                       ✗ ОТКЛОНЕНО
                     </span>
                   </div>
@@ -348,16 +348,55 @@ import { NotificationService } from '../core/services/notification.service';
                     placeholder="Напишите ваш комментарии к решению..."></textarea>
                 </div>
 
+                <div>
+                  <label class="block font-bold mb-2 text-sm uppercase tracking-wider">Рейтинг решения</label>
+                  <div class="flex items-center gap-4">
+                    <input
+                      type="range"
+                      [(ngModel)]="reviewScore"
+                      min="1"
+                      max="10"
+                      step="1"
+                      class="flex-1 accent-amber-600" />
+                    <input
+                      type="number"
+                      [(ngModel)]="reviewScore"
+                      min="1"
+                      max="10"
+                      step="1"
+                      class="w-24 border-2 border-black p-2 text-center font-bold" />
+                    <span class="font-bold text-amber-700">{{ reviewScore }}/10</span>
+                  </div>
+                </div>
+
+                <div class="border-2 border-amber-300 bg-white p-4">
+                  <label class="flex items-center justify-between gap-4" [class.cursor-pointer]="canGrantMedalForCurrentForm" [class.opacity-60]="!canGrantMedalForCurrentForm">
+                    <span class="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="grantMedal"
+                        (ngModelChange)="onGrantMedalChange($event)"
+                        [disabled]="!canGrantMedalForCurrentForm"
+                        class="w-5 h-5 border-2 border-black" />
+                      <span>
+                        <span class="block font-bold uppercase text-sm tracking-wider">Решение заслуживает медали</span>
+                        <span class="block text-xs text-gray-600 mt-1">{{ medalAvailabilityText }}</span>
+                      </span>
+                    </span>
+                    <span *ngIf="grantMedal && canGrantMedalForCurrentForm" class="text-3xl" aria-label="Медаль">🏅</span>
+                  </label>
+                </div>
+
                 <div class="flex gap-3">
                   <button
                     (click)="submitReview('Done')"
-                    [disabled]="submittingReview || !expertComment.trim()"
+                    [disabled]="submittingReview || !isReviewFormValid()"
                     class="flex-1 border-2 border-emerald-600 bg-emerald-600 text-white px-6 py-3 hover:bg-emerald-700 transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed">
                     {{ submittingReview ? 'ОТПРАВКА...' : '✓ ПРИНЯТЬ' }}
                   </button>
                   <button
-                    (click)="submitReview('Rejected')"
-                    [disabled]="submittingReview || !expertComment.trim()"
+                    (click)="submitReview('Failed')"
+                    [disabled]="submittingReview || !isReviewFormValid()"
                     class="flex-1 border-2 border-red-600 bg-red-600 text-white px-6 py-3 hover:bg-red-700 transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed">
                     {{ submittingReview ? 'ОТПРАВКА...' : '✗ ОТКЛОНИТЬ' }}
                   </button>
@@ -372,7 +411,7 @@ import { NotificationService } from '../core/services/notification.service';
                 <span class="text-2xl">✓</span>
                 <span class="font-bold text-lg">РЕШЕНИЕ ПРИНЯТО</span>
               </div>
-              <div *ngIf="selectedSolution.state === 'Rejected'" class="flex items-center gap-3 text-red-700">
+              <div *ngIf="isNegativeReviewState(selectedSolution.state)" class="flex items-center gap-3 text-red-700">
                 <span class="text-2xl">✗</span>
                 <span class="font-bold text-lg">РЕШЕНИЕ ОТКЛОНЕНО</span>
               </div>
@@ -438,9 +477,14 @@ export class ExpertDashboardPage implements OnInit {
   showSolutionModal = false;
   selectedSolution: SolutionFullInfo | null = null;
   expertComment = '';
+  reviewScore = 8;
+  grantMedal = false;
+  assignmentQuota: AssignmentQuotaResponse | null = null;
+  loadingAssignmentQuota = false;
 
   constructor(
     private authService: AuthService,
+    private assignmentsService: AssignmentsService,
     private solutionsService: SolutionsService,
     private router: Router,
     private cdr: ChangeDetectorRef,
@@ -465,7 +509,7 @@ export class ExpertDashboardPage implements OnInit {
       if (this.reviewStatusFilter === 'done' && solution.state !== 'Done') {
         return false;
       }
-      if (this.reviewStatusFilter === 'rejected' && solution.state !== 'Rejected') {
+      if (this.reviewStatusFilter === 'rejected' && !this.isNegativeReviewState(solution.state)) {
         return false;
       }
     }
@@ -493,7 +537,7 @@ export class ExpertDashboardPage implements OnInit {
         s => s.state === 'ExpertReview'
       );
 
-      // Load archive solutions (Done and Rejected)
+      // Load archive solutions (Done and negative review states)
       const archiveRequest: SolutionSearchRequest = {
         take: 100,
         skip: 0,
@@ -502,7 +546,7 @@ export class ExpertDashboardPage implements OnInit {
 
       const archiveResponse = await this.solutionsService.searchSolutions(archiveRequest).toPromise();
       this.archiveSolutions = (archiveResponse?.items || []).filter(
-        s => s.state === 'Done' || s.state === 'Rejected'
+        s => s.state === 'Done' || this.isNegativeReviewState(s.state)
       );
     } catch (error) {
       console.error('Error loading solutions:', error);
@@ -533,6 +577,12 @@ export class ExpertDashboardPage implements OnInit {
     this.selectedSolution = solution;
     this.showSolutionModal = true;
     this.expertComment = '';
+    this.reviewScore = 8;
+    this.grantMedal = false;
+    this.assignmentQuota = null;
+    if (this.activeTab === 'pending') {
+      this.loadAssignmentQuota(solution.assignment.id);
+    }
     this.cdr.markForCheck();
   }
 
@@ -540,7 +590,69 @@ export class ExpertDashboardPage implements OnInit {
     this.showSolutionModal = false;
     this.selectedSolution = null;
     this.expertComment = '';
+    this.reviewScore = 8;
+    this.grantMedal = false;
+    this.assignmentQuota = null;
+    this.loadingAssignmentQuota = false;
     this.cdr.markForCheck();
+  }
+
+  async loadAssignmentQuota(assignmentId: string): Promise<void> {
+    this.loadingAssignmentQuota = true;
+    this.cdr.markForCheck();
+
+    try {
+      this.assignmentQuota = await this.assignmentsService.getAssignmentQuota(assignmentId).toPromise() ?? null;
+    } catch (error) {
+      console.error('Error loading assignment quota:', error);
+      this.assignmentQuota = null;
+      this.grantMedal = false;
+      this.notificationService.warning('Не удалось проверить квоту медалей');
+    } finally {
+      this.loadingAssignmentQuota = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  get canGrantMedalForCurrentForm(): boolean {
+    return !this.loadingAssignmentQuota
+      && !!this.assignmentQuota
+      && this.assignmentQuota.medalsToGrantLeft > 0
+      && this.getNormalizedReviewScore() >= 9;
+  }
+
+  get medalAvailabilityText(): string {
+    if (this.loadingAssignmentQuota) {
+      return 'Проверяем квоту медалей...';
+    }
+    if (!this.assignmentQuota) {
+      return 'Квота медалей недоступна';
+    }
+    if (this.assignmentQuota.medalsToGrantLeft <= 0) {
+      return `Квота исчерпана: 0 из ${this.assignmentQuota.medalsToGrantLimit}`;
+    }
+    if (this.getNormalizedReviewScore() < 9) {
+      return `Для медали нужен рейтинг 9 или 10. Доступно: ${this.assignmentQuota.medalsToGrantLeft} из ${this.assignmentQuota.medalsToGrantLimit}`;
+    }
+    return `Доступно медалей: ${this.assignmentQuota.medalsToGrantLeft} из ${this.assignmentQuota.medalsToGrantLimit}`;
+  }
+
+  onGrantMedalChange(value: boolean): void {
+    this.grantMedal = value && this.canGrantMedalForCurrentForm;
+  }
+
+  isReviewFormValid(): boolean {
+    const score = this.getNormalizedReviewScore();
+    return !!this.expertComment.trim() && score >= 1 && score <= 10;
+  }
+
+  isNegativeReviewState(state: SolutionState): boolean {
+    return state === 'Failed' || state === 'RequiresImprovements' || state === 'Rejected';
+  }
+
+  private getNormalizedReviewScore(): number {
+    const score = Number(this.reviewScore);
+    return Number.isInteger(score) ? score : 0;
   }
 
   getDaysRemaining(deadline: string): number {
@@ -550,23 +662,32 @@ export class ExpertDashboardPage implements OnInit {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  async submitReview(state: 'Done' | 'Rejected'): Promise<void> {
+  async submitReview(state: SolutionSubmitReviewResultState): Promise<void> {
     if (!this.selectedSolution) {
+      return;
+    }
+
+    if (!this.isReviewFormValid()) {
+      this.notificationService.warning('Заполните комментарий и рейтинг решения');
       return;
     }
 
     this.submittingReview = true;
 
     try {
+      const shouldGrantMedal = state === 'Done' && this.grantMedal && this.canGrantMedalForCurrentForm;
+
       await this.solutionsService.submitReview(this.selectedSolution.id, {
-        review: this.expertComment,
-        resultState: state
+        comment: this.expertComment,
+        score: this.getNormalizedReviewScore(),
+        resultState: state,
+        grantMedal: shouldGrantMedal
       }).toPromise();
 
       if (state === 'Done') {
-        this.notificationService.success('Решение принято');
+        this.notificationService.success(shouldGrantMedal ? 'Решение принято, медаль выдана' : 'Решение принято');
       } else {
-        this.notificationService.success('Решение отклонено');
+        this.notificationService.success('Решение отправлено на доработку');
       }
 
       // Сначала закрываем модалку

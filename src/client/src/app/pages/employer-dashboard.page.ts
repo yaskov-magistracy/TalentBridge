@@ -8,7 +8,7 @@ import { StatusBadgeComponent } from '../shared/components/status-badge.componen
 import { ReviewProgressComponent } from '../shared/components/review-progress.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { EmployerCandidate, EmployerProfile, Submission } from '../core/models/domain.models';
-import { AssignmentFullInfo, AssignmentSearchRequest, AssignmentUpdateEntity, AssignmentCreateApiRequest, RelationsPatch, Technology, SolutionState, SolutionSearchRequest } from '../core/models/api.models';
+import { AssignmentFullInfo, AssignmentSearchRequest, AssignmentUpdateEntity, AssignmentCreateApiRequest, RelationsPatch, Technology, SolutionState, SolutionSearchRequest, AssignmentDifficulty } from '../core/models/api.models';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
 import { NotificationService } from '../core/services/notification.service';
 
@@ -433,6 +433,84 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
+            <!-- Difficulty -->
+            <div>
+              <label class="block font-bold mb-3 text-sm uppercase tracking-wider">СЛОЖНОСТЬ</label>
+              <select
+                [(ngModel)]="editForm.difficulty"
+                name="editDifficulty"
+                class="w-full border-2 border-black p-3"
+                required>
+                <option *ngFor="let option of assignmentDifficultyOptions" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Attempts Configuration -->
+            <div class="border-2 border-black p-6 space-y-5">
+              <div>
+                <label class="block font-bold mb-2 text-sm uppercase tracking-wider">МАКСИМАЛЬНОЕ КОЛИЧЕСТВО ПОПЫТОК</label>
+                <input
+                  type="number"
+                  [ngModel]="editForm.maxAttempts"
+                  (ngModelChange)="onEditMaxAttemptsChange($event)"
+                  name="editMaxAttempts"
+                  #editMaxAttemptsInput="ngModel"
+                  class="w-full border-2 border-black p-3"
+                  [class.border-red-500]="editMaxAttemptsInput.invalid && editMaxAttemptsInput.touched"
+                  min="1"
+                  max="5"
+                  step="1"
+                  required />
+                <p *ngIf="editMaxAttemptsInput.invalid && editMaxAttemptsInput.touched" class="text-red-600 text-xs mt-1">
+                  Укажите целое число от 1 до 5
+                </p>
+              </div>
+
+              <div>
+                <label class="block font-bold mb-3 text-sm uppercase tracking-wider">МНОЖИТЕЛИ БАЛЛОВ ПО ПОПЫТКАМ</label>
+                <div class="flex flex-wrap gap-3">
+                  <label
+                    *ngFor="let multiplier of editForm.attemptsCoefficients; let i = index"
+                    class="border-2 border-indigo-300 bg-indigo-50 px-3 py-2 text-indigo-700 font-semibold text-sm flex items-center gap-2">
+                    <span class="uppercase text-xs">#{{ i + 1 }}</span>
+                    <input
+                      type="number"
+                      [ngModel]="multiplier"
+                      (ngModelChange)="updateEditAttemptsCoefficient(i, $event)"
+                      [name]="'editAttemptsCoefficient' + i"
+                      class="w-20 border-2 border-indigo-300 bg-white p-1 text-center text-black"
+                      min="0.1"
+                      max="1"
+                      step="0.1"
+                      required />
+                  </label>
+                </div>
+                <p *ngIf="!areEditAttemptsCoefficientsValid()" class="text-red-600 text-xs mt-2">
+                  Каждое значение должно быть от 0.1 до 1, а количество множителей должно совпадать с лимитом попыток
+                </p>
+              </div>
+
+              <div>
+                <label class="block font-bold mb-2 text-sm uppercase tracking-wider">Максимальное кол-во попыток для получения медали</label>
+                <input
+                  type="number"
+                  [(ngModel)]="editForm.maxAttemptNumberToGrantMedal"
+                  name="editMaxAttemptNumberToGrantMedal"
+                  #editMaxAttemptNumberToGrantMedalInput="ngModel"
+                  class="w-full border-2 border-black p-3"
+                  [class.border-red-500]="editMaxAttemptNumberToGrantMedalInput.invalid && editMaxAttemptNumberToGrantMedalInput.touched"
+                  min="1"
+                  [max]="editForm.maxAttempts"
+                  step="1"
+                  required />
+                <p *ngIf="editMaxAttemptNumberToGrantMedalInput.invalid && editMaxAttemptNumberToGrantMedalInput.touched" class="text-red-600 text-xs mt-1">
+                  Укажите целое число от 1 до {{ editForm.maxAttempts }}
+                </p>
+              </div>
+            </div>
+
             <!-- Task Type -->
             <div>
               <label class="block font-bold mb-3 text-sm uppercase tracking-wider">ТИП ЗАДАНИЯ</label>
@@ -599,6 +677,84 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
+            <!-- Difficulty -->
+            <div>
+              <label class="block font-bold mb-3 text-sm uppercase tracking-wider">СЛОЖНОСТЬ</label>
+              <select
+                [(ngModel)]="createForm.difficulty"
+                name="createDifficulty"
+                class="w-full border-2 border-black p-3"
+                required>
+                <option *ngFor="let option of assignmentDifficultyOptions" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Attempts Configuration -->
+            <div class="border-2 border-black p-6 space-y-5">
+              <div>
+                <label class="block font-bold mb-2 text-sm uppercase tracking-wider">МАКСИМАЛЬНОЕ КОЛИЧЕСТВО ПОПЫТОК</label>
+                <input
+                  type="number"
+                  [ngModel]="createForm.maxAttempts"
+                  (ngModelChange)="onCreateMaxAttemptsChange($event)"
+                  name="createMaxAttempts"
+                  #createMaxAttemptsInput="ngModel"
+                  class="w-full border-2 border-black p-3"
+                  [class.border-red-500]="createMaxAttemptsInput.invalid && createMaxAttemptsInput.touched"
+                  min="1"
+                  max="5"
+                  step="1"
+                  required />
+                <p *ngIf="createMaxAttemptsInput.invalid && createMaxAttemptsInput.touched" class="text-red-600 text-xs mt-1">
+                  Укажите целое число от 1 до 5
+                </p>
+              </div>
+
+              <div>
+                <label class="block font-bold mb-3 text-sm uppercase tracking-wider">МНОЖИТЕЛИ БАЛЛОВ ПО ПОПЫТКАМ</label>
+                <div class="flex flex-wrap gap-3">
+                  <label
+                    *ngFor="let multiplier of createForm.attemptsCoefficients; let i = index"
+                    class="border-2 border-indigo-300 bg-indigo-50 px-3 py-2 text-indigo-700 font-semibold text-sm flex items-center gap-2">
+                    <span class="uppercase text-xs">#{{ i + 1 }}</span>
+                    <input
+                      type="number"
+                      [ngModel]="multiplier"
+                      (ngModelChange)="updateCreateAttemptsCoefficient(i, $event)"
+                      [name]="'createAttemptsCoefficient' + i"
+                      class="w-20 border-2 border-indigo-300 bg-white p-1 text-center text-black"
+                      min="0.1"
+                      max="1"
+                      step="0.1"
+                      required />
+                  </label>
+                </div>
+                <p *ngIf="!areCreateAttemptsCoefficientsValid()" class="text-red-600 text-xs mt-2">
+                  Каждое значение должно быть от 0.1 до 1, а количество множителей должно совпадать с лимитом попыток
+                </p>
+              </div>
+
+              <div>
+                <label class="block font-bold mb-2 text-sm uppercase tracking-wider">Максимальное кол-во попыток для получения медали</label>
+                <input
+                  type="number"
+                  [(ngModel)]="createForm.maxAttemptNumberToGrantMedal"
+                  name="createMaxAttemptNumberToGrantMedal"
+                  #createMaxAttemptNumberToGrantMedalInput="ngModel"
+                  class="w-full border-2 border-black p-3"
+                  [class.border-red-500]="createMaxAttemptNumberToGrantMedalInput.invalid && createMaxAttemptNumberToGrantMedalInput.touched"
+                  min="1"
+                  [max]="createForm.maxAttempts"
+                  step="1"
+                  required />
+                <p *ngIf="createMaxAttemptNumberToGrantMedalInput.invalid && createMaxAttemptNumberToGrantMedalInput.touched" class="text-red-600 text-xs mt-1">
+                  Укажите целое число от 1 до {{ createForm.maxAttempts }}
+                </p>
+              </div>
+            </div>
+
             <!-- Task Type -->
             <div>
               <label class="block font-bold mb-3 text-sm uppercase tracking-wider">ТИП ЗАДАНИЯ</label>
@@ -607,7 +763,7 @@ import { NotificationService } from '../core/services/notification.service';
                   <input
                     type="radio"
                     [checked]="!createForm.isGrouped"
-                    (change)="createForm.isGrouped = false"
+                    (change)="setCreateGrouped(false)"
                     name="createTaskType"
                     class="w-5 h-5 mt-0.5 border-2 border-black" />
                   <div>
@@ -619,7 +775,7 @@ import { NotificationService } from '../core/services/notification.service';
                   <input
                     type="radio"
                     [checked]="createForm.isGrouped"
-                    (change)="createForm.isGrouped = true"
+                    (change)="setCreateGrouped(true)"
                     name="createTaskType"
                     class="w-5 h-5 mt-0.5 border-2 border-black" />
                   <div>
@@ -735,6 +891,11 @@ export class EmployerDashboardPage implements OnInit {
   publishedAssignments: AssignmentFullInfo[] = [];
   candidates: EmployerCandidate[] = [];
   assignmentStats: Map<string, { total: number; inReview: number }> = new Map();
+  assignmentDifficultyOptions: { value: AssignmentDifficulty; label: string }[] = [
+    { value: 'Normal', label: 'Обычная' },
+    { value: 'Advanced', label: 'Продвинутая' },
+    { value: 'Hard', label: 'Сложная' }
+  ];
 
   // Edit assignment modal
   showEditAssignmentModal = false;
@@ -746,13 +907,21 @@ export class EmployerDashboardPage implements OnInit {
     deadLine: string;
     candidatesCapacity: number;
     isGrouped: boolean;
+    difficulty: AssignmentDifficulty;
+    maxAttempts: number;
+    attemptsCoefficients: number[];
+    maxAttemptNumberToGrantMedal: number;
   } = {
     name: '',
     description: '',
     templateUrl: '',
     deadLine: '',
     candidatesCapacity: 1,
-    isGrouped: false
+    isGrouped: false,
+    difficulty: 'Normal',
+    maxAttempts: 2,
+    attemptsCoefficients: [1],
+    maxAttemptNumberToGrantMedal: 1
   };
   allTechs: Technology[] = [];
   selectedTechs: Technology[] = [];
@@ -769,13 +938,21 @@ export class EmployerDashboardPage implements OnInit {
     deadLine: string;
     candidatesCapacity: number;
     isGrouped: boolean;
+    difficulty: AssignmentDifficulty;
+    maxAttempts: number;
+    attemptsCoefficients: number[];
+    maxAttemptNumberToGrantMedal: number;
   } = {
     name: '',
     description: '',
     templateUrl: '',
     deadLine: '',
     candidatesCapacity: 1,
-    isGrouped: false
+    isGrouped: false,
+    difficulty: 'Normal',
+    maxAttempts: 1,
+    attemptsCoefficients: [1],
+    maxAttemptNumberToGrantMedal: 1
   };
   createSelectedTechs: Technology[] = [];
   creatingAssignment = false;
@@ -903,7 +1080,11 @@ export class EmployerDashboardPage implements OnInit {
       templateUrl: assignment.templateUrl || '',
       deadLine: assignment.deadLine.split('T')[0],
       candidatesCapacity: assignment.candidatesCapacity || 2,
-      isGrouped: assignment.isGrouped
+      isGrouped: assignment.isGrouped,
+      difficulty: assignment.difficulty || 'Normal',
+      maxAttempts: assignment.attemptsCoefficients?.length || 1,
+      attemptsCoefficients: assignment.attemptsCoefficients?.length ? [...assignment.attemptsCoefficients] : [1],
+      maxAttemptNumberToGrantMedal: assignment.maxAttemptNumberToGrantMedal || 1
     };
     this.selectedTechs = assignment.technologies?.map(t => ({ ...t })) || [];
     this.showEditAssignmentModal = true;
@@ -939,6 +1120,9 @@ export class EmployerDashboardPage implements OnInit {
       templateUrl: { value: this.editForm.templateUrl },
       deadLine: this.editForm.deadLine,
       candidatesCapacity: this.editForm.isGrouped ? this.editForm.candidatesCapacity : undefined,
+      difficulty: this.editForm.difficulty,
+      attemptsCoefficients: this.editForm.attemptsCoefficients,
+      maxAttemptNumberToGrantMedal: this.editForm.maxAttemptNumberToGrantMedal,
       technologies: (addedTechs.length > 0 || removedTechs.length > 0)
         ? { toAdd: addedTechs, toRemove: removedTechs } as RelationsPatch
         : undefined
@@ -980,9 +1164,82 @@ export class EmployerDashboardPage implements OnInit {
       templateUrl: '',
       deadLine: '',
       candidatesCapacity: 1,
-      isGrouped: false
+      isGrouped: false,
+      difficulty: 'Normal',
+      maxAttempts: 1,
+      attemptsCoefficients: [1],
+      maxAttemptNumberToGrantMedal: 1
     };
     this.createSelectedTechs = [];
+  }
+
+  onCreateMaxAttemptsChange(value: string | number): void {
+    const maxAttempts = Number(value);
+    this.createForm.maxAttempts = Number.isInteger(maxAttempts) ? maxAttempts : 1;
+    this.syncCreateAttemptsCoefficients();
+  }
+
+  updateCreateAttemptsCoefficient(index: number, value: string | number): void {
+    this.createForm.attemptsCoefficients[index] = Number(value);
+  }
+
+  areCreateAttemptsCoefficientsValid(): boolean {
+    return this.createForm.attemptsCoefficients.length === this.createForm.maxAttempts
+      && this.createForm.attemptsCoefficients.every(multiplier => multiplier >= 0.1 && multiplier <= 1);
+  }
+
+  private syncCreateAttemptsCoefficients(): void {
+    const maxAttempts = Math.min(Math.max(this.createForm.maxAttempts, 1), 5);
+    this.createForm.maxAttempts = maxAttempts;
+    this.createForm.maxAttemptNumberToGrantMedal = Math.min(this.createForm.maxAttemptNumberToGrantMedal, maxAttempts);
+
+    if (this.createForm.attemptsCoefficients.length > maxAttempts) {
+      this.createForm.attemptsCoefficients = this.createForm.attemptsCoefficients.slice(0, maxAttempts);
+      return;
+    }
+
+    while (this.createForm.attemptsCoefficients.length < maxAttempts) {
+      this.createForm.attemptsCoefficients.push(1);
+    }
+  }
+
+  onEditMaxAttemptsChange(value: string | number): void {
+    const maxAttempts = Number(value);
+    this.editForm.maxAttempts = Number.isInteger(maxAttempts) ? maxAttempts : 1;
+    this.syncEditAttemptsCoefficients();
+  }
+
+  updateEditAttemptsCoefficient(index: number, value: string | number): void {
+    this.editForm.attemptsCoefficients[index] = Number(value);
+  }
+
+  areEditAttemptsCoefficientsValid(): boolean {
+    return this.editForm.attemptsCoefficients.length === this.editForm.maxAttempts
+      && this.editForm.attemptsCoefficients.every(multiplier => multiplier >= 0.1 && multiplier <= 1);
+  }
+
+  private syncEditAttemptsCoefficients(): void {
+    const maxAttempts = Math.min(Math.max(this.editForm.maxAttempts, 1), 5);
+    this.editForm.maxAttempts = maxAttempts;
+    this.editForm.maxAttemptNumberToGrantMedal = Math.min(this.editForm.maxAttemptNumberToGrantMedal, maxAttempts);
+
+    if (this.editForm.attemptsCoefficients.length > maxAttempts) {
+      this.editForm.attemptsCoefficients = this.editForm.attemptsCoefficients.slice(0, maxAttempts);
+      return;
+    }
+
+    while (this.editForm.attemptsCoefficients.length < maxAttempts) {
+      this.editForm.attemptsCoefficients.push(1);
+    }
+  }
+
+  setCreateGrouped(isGrouped: boolean): void {
+    this.createForm.isGrouped = isGrouped;
+    this.createForm.candidatesCapacity = isGrouped ? Math.max(this.createForm.candidatesCapacity, 2) : 1;
+  }
+
+  private isAssignmentDifficulty(value: string): value is AssignmentDifficulty {
+    return this.assignmentDifficultyOptions.some(option => option.value === value);
   }
 
   isCreateFormValid(): boolean {
@@ -991,6 +1248,12 @@ export class EmployerDashboardPage implements OnInit {
     if (!this.createForm.templateUrl || !this.createForm.templateUrl.match(/^https?:\/\//)) return false;
     if (!this.createForm.deadLine) return false;
     if (this.createForm.isGrouped && (this.createForm.candidatesCapacity < 2 || this.createForm.candidatesCapacity > 20)) return false;
+    if (!this.isAssignmentDifficulty(this.createForm.difficulty)) return false;
+    if (!Number.isInteger(this.createForm.maxAttempts) || this.createForm.maxAttempts < 1 || this.createForm.maxAttempts > 5) return false;
+    if (!this.areCreateAttemptsCoefficientsValid()) return false;
+    if (!Number.isInteger(this.createForm.maxAttemptNumberToGrantMedal)
+      || this.createForm.maxAttemptNumberToGrantMedal < 1
+      || this.createForm.maxAttemptNumberToGrantMedal > this.createForm.maxAttempts) return false;
     return true;
   }
 
@@ -1011,6 +1274,9 @@ export class EmployerDashboardPage implements OnInit {
       templateUrl: this.createForm.templateUrl,
       deadLine: this.createForm.deadLine,
       candidatesCapacity: this.createForm.candidatesCapacity,
+      difficulty: this.createForm.difficulty,
+      attemptsCoefficients: this.createForm.attemptsCoefficients,
+      maxAttemptNumberToGrantMedal: this.createForm.maxAttemptNumberToGrantMedal,
       technologies: techIds
     };
 
@@ -1122,6 +1388,12 @@ export class EmployerDashboardPage implements OnInit {
     if (!this.editForm.templateUrl || !this.editForm.templateUrl.match(/^https?:\/\//)) return false;
     if (!this.editForm.deadLine) return false;
     if (this.editForm.isGrouped && (this.editForm.candidatesCapacity < 2 || this.editForm.candidatesCapacity > 20)) return false;
+    if (!this.isAssignmentDifficulty(this.editForm.difficulty)) return false;
+    if (!Number.isInteger(this.editForm.maxAttempts) || this.editForm.maxAttempts < 1 || this.editForm.maxAttempts > 5) return false;
+    if (!this.areEditAttemptsCoefficientsValid()) return false;
+    if (!Number.isInteger(this.editForm.maxAttemptNumberToGrantMedal)
+      || this.editForm.maxAttemptNumberToGrantMedal < 1
+      || this.editForm.maxAttemptNumberToGrantMedal > this.editForm.maxAttempts) return false;
     return true;
   }
 }

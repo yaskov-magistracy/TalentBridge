@@ -6,7 +6,8 @@ import {
   SolutionCreateApiRequest,
   SolutionPatchApiRequest,
   SolutionSearchRequest,
-  SolutionSearchResponse
+  SolutionSearchResponse,
+  SolutionSubmitReviewRequest
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -82,12 +83,7 @@ export class SolutionsService {
   /**
    * Экспертное ревью решения
    */
-  submitReview(id: string, request: ExpertReviewRequest): Observable<SolutionFullInfo> {
+  submitReview(id: string, request: SolutionSubmitReviewRequest): Observable<SolutionFullInfo> {
     return this.apiClient.post<SolutionFullInfo>(`/solutions/${id}/submit-review`, request);
   }
-}
-
-export interface ExpertReviewRequest {
-  review: string;
-  resultState: 'Done' | 'Rejected';
 }

@@ -723,7 +723,7 @@ export class AssignmentSolutionsPage implements OnInit {
         case 'expertReview':
           return state === 'ExpertReview';
         case 'completed':
-          return state === 'Rejected' || state === 'Done';
+          return state === 'Rejected' || state === 'Failed' || state === 'RequiresImprovements' || state === 'Done';
         default:
           return true;
       }
@@ -742,7 +742,9 @@ export class AssignmentSolutionsPage implements OnInit {
       Autotests: 'Автотесты',
       AiReview: 'AI проверка',
       ExpertReview: 'Проверка экспертом',
+      RequiresImprovements: 'Требуется доработка',
       Done: 'Ревью пройдено',
+      Failed: 'Ревью не пройдено',
       Rejected: 'Ревью не пройдено'
     };
     return labels[state] || state;

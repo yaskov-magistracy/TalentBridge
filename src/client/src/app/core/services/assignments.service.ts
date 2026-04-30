@@ -6,7 +6,8 @@ import {
   AssignmentCreateApiRequest,
   AssignmentUpdateEntity,
   AssignmentSearchRequest,
-  AssignmentSearchResponse
+  AssignmentSearchResponse,
+  AssignmentQuotaResponse
 } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -18,6 +19,10 @@ export class AssignmentsService {
    */
   getAssignment(id: string): Observable<AssignmentFullInfo> {
     return this.apiClient.get<AssignmentFullInfo>(`/assignments/${id}`);
+  }
+
+  getAssignmentQuota(id: string): Observable<AssignmentQuotaResponse> {
+    return this.apiClient.get<AssignmentQuotaResponse>(`/assignments/${id}/quota`);
   }
 
   /**

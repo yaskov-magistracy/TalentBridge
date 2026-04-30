@@ -86,8 +86,13 @@ export interface AssignmentCreateApiRequest {
   templateUrl?: string;
   deadLine: string; // DateOnly as ISO string
   candidatesCapacity: number;
+  difficulty: AssignmentDifficulty;
+  attemptsCoefficients: number[];
+  maxAttemptNumberToGrantMedal?: number;
   technologies?: string[]; // Guid[]
 }
+
+export type AssignmentDifficulty = 'Normal' | 'Advanced' | 'Hard';
 
 export interface AssignmentUpdateEntity {
   name?: string;
@@ -95,6 +100,9 @@ export interface AssignmentUpdateEntity {
   templateUrl?: { value: string | null };
   deadLine?: string;
   candidatesCapacity?: number;
+  difficulty?: AssignmentDifficulty;
+  attemptsCoefficients?: number[];
+  maxAttemptNumberToGrantMedal?: number;
   technologies?: RelationsPatch;
 }
 
@@ -105,6 +113,9 @@ export interface AssignmentFullInfo {
   templateUrl?: string;
   deadLine: string;
   candidatesCapacity: number;
+  difficulty: AssignmentDifficulty;
+  attemptsCoefficients: number[];
+  maxAttemptNumberToGrantMedal: number;
   isGrouped: boolean;
   employer: {
     id: string;
@@ -162,6 +173,7 @@ export interface SolutionFullInfo {
   solutionUrl?: string;
   startedAt: string;
   state: SolutionState;
+  medalGrantedAt?: string;
   team?: SolutionTeamInfo;
   assignment: AssignmentFullInfo;
   candidateOwner: CandidateFullInfo;
@@ -188,7 +200,21 @@ export interface CandidateShortInfo {
   name: string;
 }
 
-export type SolutionState = 'NotStarted' | 'InProgress' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'Done' | 'Rejected';
+export interface SolutionSubmitReviewRequest {
+  comment: string;
+  score: number;
+  resultState: SolutionSubmitReviewResultState;
+  grantMedal: boolean;
+}
+
+export type SolutionSubmitReviewResultState = 'Done' | 'Failed';
+
+export type SolutionState = 'NotStarted' | 'InProgress' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'RequiresImprovements' | 'Done' | 'Failed' | 'Rejected';
+
+export interface AssignmentQuotaResponse {
+  medalsToGrantLeft: number;
+  medalsToGrantLimit: number;
+}
 
 // Для совместимости со старыми компонентами
 export type AutoTestStatus = 'pending' | 'passed' | 'failed';
