@@ -1,6 +1,6 @@
-﻿using DAL.Technologies;
-using Domain.Candidates;
+﻿using Domain.Candidates;
 using Domain.Candidates.DTO;
+using Infrastructure.DTO.Search.Ordering;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Candidates;
@@ -46,6 +46,30 @@ public class CandidatesRepository(
         return entity != null
             ? CandidatesMapper.ToDomainFull(entity)
             : null;
+    }
+
+    public async Task<CandidateSearchResponse> Search(CandidateSearchRequest request)
+    {
+        var query = CandidatesFullSearch;
+
+        if (request.Ordering is {} ordering)
+        {
+            if (ordering.Field == CandidateSearchOrderingField.Rating)
+            {
+                query = ordering.Direction == SearchOrderingDirection.Ascending
+                    ? query.OrderBy(e => e.Rating)
+                    : query.OrderByDescending(e => e.Rating);
+            }
+            else
+            {
+                throw new ArgumentException($"Ordering field {ordering.Field} is not supported");
+            }
+        }
+        
+        var count = await query.CountAsync();
+        return new(
+            query.Skip(request.Skip).Take(request.Take).AsEnumerable().Select(CandidatesMapper.ToDomainFull).ToArray(),
+            count);
     }
 
     public async Task<CandidateFullInfo> Create(CandidateCreateEntity createEntity)

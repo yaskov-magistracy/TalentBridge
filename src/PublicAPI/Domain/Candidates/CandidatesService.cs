@@ -12,6 +12,7 @@ public interface ICandidatesService
     Task<Result<CandidateFullInfo>> GetFull(Guid id);
     Task<Result<Candidate>> Get(string login);
     Task<Result<CandidateFullInfo>> GetFull(string login);
+    Task<Result<CandidateSearchResponse>> Search(CandidateSearchRequest request);
     Task<Result<CandidateFullInfo>> Add(CandidateCreateRequest request);
     Task<Result<CandidateFullInfo>> Patch(Guid id, CandidatePatchEntity patchEntity);
     Task<EmptyResult> ChangePassword(Guid id, ChangePasswordRequest request);
@@ -59,6 +60,12 @@ public class CandidatesService(
             return Results.NotFound<CandidateFullInfo>("");
 
         return Results.Ok(res);
+    }
+
+    public async Task<Result<CandidateSearchResponse>> Search(CandidateSearchRequest request)
+    {
+        var result = await candidatesRepository.Search(request);
+        return Results.Ok(result);
     }
 
     public async Task<Result<CandidateFullInfo>> Add(CandidateCreateRequest request)

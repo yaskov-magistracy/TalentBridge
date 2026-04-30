@@ -18,6 +18,6 @@ public record SolutionSearchRequest(
     string? Text = null,
     int Take = 100,
     int Skip = 0
-) : BaseSearchRequest<Solution>(Take, Skip)
+) : BaseSearchRequest(Take, Skip)
 {
 }

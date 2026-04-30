@@ -25,6 +25,16 @@ public class CandidatesController(
     }
     
     /// <summary>
+    /// Поиск по Соискателям. 
+    /// </summary>
+    [HttpPost("search")]
+    public async Task<ActionResult<Guid>> Search([FromBody] CandidateSearchRequest request)
+    {
+        var res = await candidatesService.Search(request);
+        return res.ActionResult;
+    }
+    
+    /// <summary>
     /// Регистрация Соискателя
     /// </summary>
     [HttpPost("")]

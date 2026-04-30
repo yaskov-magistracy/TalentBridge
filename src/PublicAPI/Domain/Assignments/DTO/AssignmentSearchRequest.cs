@@ -12,7 +12,7 @@ public record AssignmentSearchRequest(
     DateOnlySearchQuery? DeadLineRangeIncluded = null,
     int Take = 100,
     int Skip = 0
-) : BaseSearchRequest<Assignment>(Take, Skip)
+) : BaseSearchRequest(Take, Skip)
 {
     
 }

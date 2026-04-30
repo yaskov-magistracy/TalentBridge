@@ -6,4 +6,4 @@ public record TechnologySearchRequest(
     string? Name = null,
     int Take = 100,
     int Skip = 0
-) : BaseSearchRequest<Technology>(Take, Skip);
+) : BaseSearchRequest(Take, Skip);
