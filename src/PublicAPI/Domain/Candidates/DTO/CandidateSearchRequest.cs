@@ -4,6 +4,7 @@ using Infrastructure.DTO.Search.Ordering;
 namespace Domain.Candidates.DTO;
 
 public record CandidateSearchRequest(
+    List<Guid>? TechnologiesIds = null,
     CandidateSearchOrdering? Ordering = null,
     int Take = 100,
     int Skip = 0

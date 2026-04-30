@@ -52,6 +52,8 @@ public class CandidatesRepository(
     {
         var query = CandidatesFullSearch;
 
+        if (request.TechnologiesIds != null)
+            query = query.Where(e => request.TechnologiesIds.All(t => e.Technologies!.Any(t2 => t2.Id == t)));
         if (request.Ordering is {} ordering)
         {
             if (ordering.Field == CandidateSearchOrderingField.Rating)
