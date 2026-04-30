@@ -22,10 +22,11 @@ internal static class CandidatesMapper
     public static CandidateFullInfo ToDomainFull(CandidateEntity entity)
     {
         var solutions = entity.Solutions ?? [];
-        var doneSolutions = solutions.Count(e => e.State == SolutionEntityState.Done);
+        var doneSolutions = solutions.Where(e => e.State == SolutionEntityState.Done).ToArray();
+        var doneSolutionsCount = doneSolutions.Count();
         var failedSolutions = solutions.Count(e => e.State == SolutionEntityState.Failed);
-        var successRate = doneSolutions != 0 || failedSolutions != 0
-            ? MathF.Max(1, doneSolutions) / MathF.Max(1, failedSolutions)
+        var successRate = doneSolutionsCount != 0 || failedSolutions != 0
+            ? MathF.Max(1, doneSolutionsCount) / MathF.Max(1, failedSolutions)
             : 0;
         
         return new(
@@ -39,7 +40,7 @@ internal static class CandidatesMapper
             entity.Rating,
             entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray(),
             entity.Solutions?.Where(e => e.MedalGrantedAt != null).Count() ?? 0, 
-            doneSolutions,
+            doneSolutions.Select(e => e.Assignment.Name).ToArray(),
             MathF.Round(successRate * 100)
         );
     }
