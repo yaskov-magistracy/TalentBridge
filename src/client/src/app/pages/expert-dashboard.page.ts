@@ -311,7 +311,7 @@ import { NotificationService } from '../core/services/notification.service';
                 <div class="space-y-3">
                   <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                      {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
                     <div>
                       <p class="font-semibold">{{ member.surname }} {{ member.name }}{{ member.patronymic ? ' ' + member.patronymic : '' }}</p>
@@ -329,7 +329,7 @@ import { NotificationService } from '../core/services/notification.service';
               </h3>
               <div class="flex items-center gap-3 mt-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {{ selectedSolution.candidateOwner.surname.charAt(0) }}{{ selectedSolution.candidateOwner.name.charAt(0) }}
+                  {{ (selectedSolution.candidateOwner.surname || '').charAt(0) }}{{ (selectedSolution.candidateOwner.name || '').charAt(0) }}
                 </div>
                 <div>
                   <p class="font-semibold">{{ selectedSolution.candidateOwner.surname }} {{ selectedSolution.candidateOwner.name }}</p>

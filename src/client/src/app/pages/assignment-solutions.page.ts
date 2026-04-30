@@ -163,7 +163,7 @@ import { NotificationService } from '../core/services/notification.service';
                         <div
                           class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs"
                         >
-                          {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                          {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                         </div>
                         <div class="flex items-center gap-1">
                           <span class="text-sm font-semibold"
@@ -189,8 +189,8 @@ import { NotificationService } from '../core/services/notification.service';
                       <div
                         class="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs"
                       >
-                        {{ solution.candidateOwner.surname.charAt(0)
-                        }}{{ solution.candidateOwner.name.charAt(0) }}
+                        {{ (solution.candidateOwner.surname || '').charAt(0)
+                        }}{{ (solution.candidateOwner.name || '').charAt(0) }}
                       </div>
                       <span class="text-sm font-semibold"
                         >{{ solution.candidateOwner.surname }}
@@ -391,7 +391,7 @@ import { NotificationService } from '../core/services/notification.service';
                   <div
                     class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm"
                   >
-                    {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                    {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                   </div>
                   <div class="flex items-center gap-1">
                     <span class="font-semibold">{{ member.surname }} {{ member.name }}</span>
@@ -416,8 +416,8 @@ import { NotificationService } from '../core/services/notification.service';
                 <div
                   class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm"
                 >
-                  {{ selectedSolution.candidateOwner.surname.charAt(0)
-                  }}{{ selectedSolution.candidateOwner.name.charAt(0) }}
+                    {{ (selectedSolution.candidateOwner.surname || '').charAt(0)
+                  }}{{ (selectedSolution.candidateOwner.name || '').charAt(0) }}
                 </div>
                 <span class="font-semibold"
                   >{{ selectedSolution.candidateOwner.surname }}
@@ -539,7 +539,7 @@ import { NotificationService } from '../core/services/notification.service';
               <div class="flex flex-wrap gap-3">
                 <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-2">
                   <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                    {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                   </div>
                   <div class="flex items-center gap-1">
                     <span class="font-semibold">{{ member.surname }} {{ member.name }}</span>
@@ -554,7 +554,7 @@ import { NotificationService } from '../core/services/notification.service';
               <h4 class="font-bold mb-3 uppercase text-indigo-700">АВТОР РЕШЕНИЯ</h4>
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {{ selectedSolution.candidateOwner.surname.charAt(0) }}{{ selectedSolution.candidateOwner.name.charAt(0) }}
+                  {{ (selectedSolution.candidateOwner.surname || '').charAt(0) }}{{ (selectedSolution.candidateOwner.name || '').charAt(0) }}
                 </div>
                 <span class="font-semibold">{{ selectedSolution.candidateOwner.surname }} {{ selectedSolution.candidateOwner.name }}</span>
               </div>

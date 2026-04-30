@@ -41,15 +41,15 @@ export interface CandidatePatchApiRequest {
 
 export interface CandidateFullInfo {
   id: string;
-  login: string;
-  surname: string;
-  name: string;
-  patronymic?: string;
-  city: string;
-  about: string;
+  login?: string | null;
+  surname?: string | null;
+  name?: string | null;
+  patronymic?: string | null;
+  city?: string | null;
+  about?: string | null;
   rating: number;
   technologies?: Technology[] | null;
-  medalsCount?: number;
+  medalsCount: number;
 }
 
 // ==================== Employers ====================

@@ -950,7 +950,7 @@ export class EmployerDashboardPage implements OnInit {
     candidatesCapacity: 1,
     isGrouped: false,
     difficulty: 'Normal',
-    maxAttempts: 1,
+    maxAttempts: 2,
     attemptsCoefficients: [1],
     maxAttemptNumberToGrantMedal: 1
   };

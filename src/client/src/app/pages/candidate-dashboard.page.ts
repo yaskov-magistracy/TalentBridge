@@ -60,7 +60,7 @@ import { NotificationService } from '../core/services/notification.service';
             Загрузка профиля...
           </div>
 
-          <div *ngIf="candidate && !showProfileEdit" class="grid grid-cols-2 gap-6">
+          <div *ngIf="candidate && !showProfileEdit" class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">ФИО</p>
               <p class="font-semibold text-lg">{{ candidate.surname }} {{ candidate.name }}{{ candidate.patronymic ? ' ' + candidate.patronymic : '' }}</p>
@@ -68,6 +68,14 @@ import { NotificationService } from '../core/services/notification.service';
             <div>
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Город</p>
               <p class="font-semibold text-lg">{{ candidate.city || 'Не указан' }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Рейтинг</p>
+              <p class="font-semibold text-lg text-indigo-600">{{ formatCandidateRating(candidate.rating) }} / 100</p>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Медали</p>
+              <p class="font-semibold text-lg text-amber-600">🏅 {{ candidate.medalsCount || 0 }}</p>
             </div>
           </div>
 
@@ -416,7 +424,7 @@ import { NotificationService } from '../core/services/notification.service';
                   <div *ngFor="let candidate of (selectedSolution.candidatesJoinRequested?.slice(0, 3) || [])" class="flex justify-between items-center bg-white border border-emerald-300 p-2">
                     <div class="flex items-center gap-2">
                       <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                        {{ candidate.surname.charAt(0) }}{{ candidate.name.charAt(0) }}
+                        {{ (candidate.surname || '').charAt(0) }}{{ (candidate.name || '').charAt(0) }}
                       </div>
                       <div>
                         <p class="text-sm font-semibold">{{ candidate.surname }} {{ candidate.name }}</p>
@@ -455,7 +463,7 @@ import { NotificationService } from '../core/services/notification.service';
                 <div class="space-y-3">
                   <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                      {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
                     <div>
                       <p class="font-semibold">{{ member.surname }} {{ member.name }}{{ member.patronymic ? ' ' + member.patronymic : '' }}</p>
@@ -683,7 +691,7 @@ import { NotificationService } from '../core/services/notification.service';
               <div *ngFor="let candidate of pendingCandidates" class="flex justify-between items-center bg-gray-50 border border-emerald-300 p-3">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {{ candidate.surname.charAt(0) }}{{ candidate.name.charAt(0) }}
+                    {{ (candidate.surname || '').charAt(0) }}{{ (candidate.name || '').charAt(0) }}
                   </div>
                   <div>
                     <p class="font-semibold">{{ candidate.surname }} {{ candidate.name }}{{ candidate.patronymic ? ' ' + candidate.patronymic : '' }}</p>
@@ -1285,6 +1293,10 @@ export class CandidateDashboardPage implements OnInit {
     return coefficients
       .map((coefficient, index) => `${coefficient}`)
       .join(', ');
+  }
+
+  formatCandidateRating(rating: number): string {
+    return Number.isInteger(rating) ? `${rating}` : rating.toFixed(1);
   }
 
   openProfileEdit() {
