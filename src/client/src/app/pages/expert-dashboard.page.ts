@@ -4,8 +4,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
-import { AuthService, SolutionsService } from '../core';
-import { SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
+import { AuthService, AssignmentsService, SolutionsService } from '../core';
+import { AssignmentQuotaResponse, ExpertReviewInSolution, SolutionFullInfo, SolutionSearchRequest, SolutionState, SolutionSubmitReviewResultState } from '../core/models/api.models';
 import { NotificationService } from '../core/services/notification.service';
 
 @Component({
@@ -214,12 +214,15 @@ import { NotificationService } from '../core/services/notification.service';
                   <p class="text-sm mb-2" *ngIf="!solution.assignment.isGrouped">
                     <span class="font-bold">ПРОЕКТ:</span> ИНДИВИДУАЛЬНЫЙ
                   </p>
-                  <div class="mt-3">
+                  <div class="mt-3 flex flex-wrap items-center gap-2">
                     <span *ngIf="solution.state === 'Done'" class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
                       ✓ ПРИНЯТО
                     </span>
-                    <span *ngIf="solution.state === 'Rejected'" class="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
+                    <span *ngIf="isNegativeReviewState(solution.state)" class="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
                       ✗ ОТКЛОНЕНО
+                    </span>
+                    <span *ngIf="solution.medalGrantedAt" class="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold uppercase border border-amber-300">
+                      <span class="text-base leading-none">🏅</span> Медаль
                     </span>
                   </div>
                 </div>
@@ -308,7 +311,7 @@ import { NotificationService } from '../core/services/notification.service';
                 <div class="space-y-3">
                   <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                      {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
                     <div>
                       <p class="font-semibold">{{ member.surname }} {{ member.name }}{{ member.patronymic ? ' ' + member.patronymic : '' }}</p>
@@ -326,7 +329,7 @@ import { NotificationService } from '../core/services/notification.service';
               </h3>
               <div class="flex items-center gap-3 mt-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {{ selectedSolution.candidateOwner.surname.charAt(0) }}{{ selectedSolution.candidateOwner.name.charAt(0) }}
+                  {{ (selectedSolution.candidateOwner.surname || '').charAt(0) }}{{ (selectedSolution.candidateOwner.name || '').charAt(0) }}
                 </div>
                 <div>
                   <p class="font-semibold">{{ selectedSolution.candidateOwner.surname }} {{ selectedSolution.candidateOwner.name }}</p>
@@ -348,16 +351,57 @@ import { NotificationService } from '../core/services/notification.service';
                     placeholder="Напишите ваш комментарии к решению..."></textarea>
                 </div>
 
+                <div>
+                  <label class="block font-bold mb-2 text-sm uppercase tracking-wider">Рейтинг решения</label>
+                  <div class="flex items-center gap-4">
+                    <input
+                      type="range"
+                      [ngModel]="reviewScore"
+                      (ngModelChange)="onReviewScoreChange($event)"
+                      min="1"
+                      max="10"
+                      step="1"
+                      class="flex-1 accent-amber-600" />
+                    <input
+                      type="number"
+                      [ngModel]="reviewScore"
+                      (ngModelChange)="onReviewScoreChange($event)"
+                      min="1"
+                      max="10"
+                      step="1"
+                      class="w-24 border-2 border-black p-2 text-center font-bold" />
+                    <span class="font-bold text-amber-700">{{ reviewScore }}/10</span>
+                  </div>
+                </div>
+
+                <div class="border-2 border-amber-300 bg-white p-4">
+                  <label class="flex items-center justify-between gap-4" [class.cursor-pointer]="canGrantMedalForCurrentForm" [class.opacity-60]="!canGrantMedalForCurrentForm">
+                    <span class="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="grantMedal"
+                        (ngModelChange)="onGrantMedalChange($event)"
+                        [disabled]="!canGrantMedalForCurrentForm"
+                        class="w-5 h-5 border-2 border-black" />
+                      <span>
+                        <span class="block font-bold uppercase text-sm tracking-wider">Решение заслуживает медали</span>
+                        <span class="block text-xs text-gray-600 mt-1">{{ medalAvailabilityText }}</span>
+                      </span>
+                    </span>
+                    <span *ngIf="grantMedal && canGrantMedalForCurrentForm" class="text-3xl" aria-label="Медаль">🏅</span>
+                  </label>
+                </div>
+
                 <div class="flex gap-3">
                   <button
                     (click)="submitReview('Done')"
-                    [disabled]="submittingReview || !expertComment.trim()"
+                    [disabled]="submittingReview || !isReviewFormValid()"
                     class="flex-1 border-2 border-emerald-600 bg-emerald-600 text-white px-6 py-3 hover:bg-emerald-700 transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed">
                     {{ submittingReview ? 'ОТПРАВКА...' : '✓ ПРИНЯТЬ' }}
                   </button>
                   <button
-                    (click)="submitReview('Rejected')"
-                    [disabled]="submittingReview || !expertComment.trim()"
+                    (click)="submitReview('Failed')"
+                    [disabled]="submittingReview || !isReviewFormValid()"
                     class="flex-1 border-2 border-red-600 bg-red-600 text-white px-6 py-3 hover:bg-red-700 transition-colors font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed">
                     {{ submittingReview ? 'ОТПРАВКА...' : '✗ ОТКЛОНИТЬ' }}
                   </button>
@@ -371,31 +415,39 @@ import { NotificationService } from '../core/services/notification.service';
               <div *ngIf="selectedSolution.state === 'Done'" class="flex items-center gap-3 text-emerald-700">
                 <span class="text-2xl">✓</span>
                 <span class="font-bold text-lg">РЕШЕНИЕ ПРИНЯТО</span>
+                <span *ngIf="selectedSolution.medalGrantedAt" class="text-3xl" aria-label="Медаль">🏅</span>
               </div>
-              <div *ngIf="selectedSolution.state === 'Rejected'" class="flex items-center gap-3 text-red-700">
+              <div *ngIf="isNegativeReviewState(selectedSolution.state)" class="flex items-center gap-3 text-red-700">
                 <span class="text-2xl">✗</span>
                 <span class="font-bold text-lg">РЕШЕНИЕ ОТКЛОНЕНО</span>
               </div>
 
-              <!-- Expert Info -->
-              <div *ngIf="selectedSolution.expert" class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
-                <p class="text-xs font-bold uppercase tracking-wider mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">ЭКСПЕРТ:</p>
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {{ selectedSolution.expert.surname.charAt(0) }}{{ selectedSolution.expert.name.charAt(0) }}
-                  </div>
-                  <div>
-                    <p class="font-semibold">{{ selectedSolution.expert.surname }} {{ selectedSolution.expert.name }}{{ selectedSolution.expert.patronymic ? ' ' + selectedSolution.expert.patronymic : '' }}</p>
+              <!-- Expert Review History -->
+              <div class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
+                <p class="text-xs font-bold uppercase tracking-wider mb-3" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">История ревью эксперта:</p>
+                <div *ngIf="getSortedExpertReviews(selectedSolution).length > 0; else noExpertReviews" class="space-y-3">
+                  <div
+                    *ngFor="let review of getSortedExpertReviews(selectedSolution)"
+                    class="border-2 bg-white p-4"
+                    [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
+                    <div class="flex flex-wrap justify-between gap-3 mb-2 text-xs text-gray-600">
+                      <span class="font-bold uppercase">
+                        {{ review.expert.surname }} {{ review.expert.name }}{{ review.expert.patronymic ? ' ' + review.expert.patronymic : '' }}
+                      </span>
+                      <span>{{ review.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-4 mb-3 text-xs font-bold uppercase">
+                      <span>Оценка: {{ review.score }}/10</span>
+                      <span>Попытка: {{ review.attemptNumber }}</span>
+                    </div>
+                    <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ review.comment }}</p>
                   </div>
                 </div>
-              </div>
-
-              <!-- Expert Review Comment -->
-              <div *ngIf="selectedSolution.expertReview" class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
-                <p class="text-xs font-bold uppercase tracking-wider mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">КОММЕНТАРИЙ ЭКСПЕРТА:</p>
-                <div class="border-2 bg-white p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
-                  <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ selectedSolution.expertReview }}</p>
-                </div>
+                <ng-template #noExpertReviews>
+                  <div class="border-2 bg-white p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
+                    <p class="text-gray-500 text-sm">История ревью отсутствует</p>
+                  </div>
+                </ng-template>
               </div>
             </div>
 
@@ -438,9 +490,14 @@ export class ExpertDashboardPage implements OnInit {
   showSolutionModal = false;
   selectedSolution: SolutionFullInfo | null = null;
   expertComment = '';
+  reviewScore = 8;
+  grantMedal = false;
+  assignmentQuota: AssignmentQuotaResponse | null = null;
+  loadingAssignmentQuota = false;
 
   constructor(
     private authService: AuthService,
+    private assignmentsService: AssignmentsService,
     private solutionsService: SolutionsService,
     private router: Router,
     private cdr: ChangeDetectorRef,
@@ -465,7 +522,7 @@ export class ExpertDashboardPage implements OnInit {
       if (this.reviewStatusFilter === 'done' && solution.state !== 'Done') {
         return false;
       }
-      if (this.reviewStatusFilter === 'rejected' && solution.state !== 'Rejected') {
+      if (this.reviewStatusFilter === 'rejected' && !this.isNegativeReviewState(solution.state)) {
         return false;
       }
     }
@@ -493,7 +550,7 @@ export class ExpertDashboardPage implements OnInit {
         s => s.state === 'ExpertReview'
       );
 
-      // Load archive solutions (Done and Rejected)
+      // Load archive solutions (Done and negative review states)
       const archiveRequest: SolutionSearchRequest = {
         take: 100,
         skip: 0,
@@ -502,7 +559,7 @@ export class ExpertDashboardPage implements OnInit {
 
       const archiveResponse = await this.solutionsService.searchSolutions(archiveRequest).toPromise();
       this.archiveSolutions = (archiveResponse?.items || []).filter(
-        s => s.state === 'Done' || s.state === 'Rejected'
+        s => s.state === 'Done' || this.isNegativeReviewState(s.state)
       );
     } catch (error) {
       console.error('Error loading solutions:', error);
@@ -533,6 +590,12 @@ export class ExpertDashboardPage implements OnInit {
     this.selectedSolution = solution;
     this.showSolutionModal = true;
     this.expertComment = '';
+    this.reviewScore = 8;
+    this.grantMedal = false;
+    this.assignmentQuota = null;
+    if (this.activeTab === 'pending') {
+      this.loadAssignmentQuota(solution.assignment.id);
+    }
     this.cdr.markForCheck();
   }
 
@@ -540,7 +603,81 @@ export class ExpertDashboardPage implements OnInit {
     this.showSolutionModal = false;
     this.selectedSolution = null;
     this.expertComment = '';
+    this.reviewScore = 8;
+    this.grantMedal = false;
+    this.assignmentQuota = null;
+    this.loadingAssignmentQuota = false;
     this.cdr.markForCheck();
+  }
+
+  async loadAssignmentQuota(assignmentId: string): Promise<void> {
+    this.loadingAssignmentQuota = true;
+    this.cdr.markForCheck();
+
+    try {
+      this.assignmentQuota = await this.assignmentsService.getAssignmentQuota(assignmentId).toPromise() ?? null;
+    } catch (error) {
+      console.error('Error loading assignment quota:', error);
+      this.assignmentQuota = null;
+      this.grantMedal = false;
+      this.notificationService.warning('Не удалось проверить квоту медалей');
+    } finally {
+      this.loadingAssignmentQuota = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  get canGrantMedalForCurrentForm(): boolean {
+    return !this.loadingAssignmentQuota
+      && !!this.assignmentQuota
+      && this.assignmentQuota.medalsToGrantLeft > 0
+      && this.getNormalizedReviewScore() >= 9;
+  }
+
+  get medalAvailabilityText(): string {
+    if (this.loadingAssignmentQuota) {
+      return 'Проверяем квоту медалей...';
+    }
+    if (!this.assignmentQuota) {
+      return 'Квота медалей недоступна';
+    }
+    if (this.assignmentQuota.medalsToGrantLeft <= 0) {
+      return `Квота исчерпана: 0 из ${this.assignmentQuota.medalsToGrantLimit}`;
+    }
+    if (this.getNormalizedReviewScore() < 9) {
+      return `Для медали нужен рейтинг 9 или 10. Доступно: ${this.assignmentQuota.medalsToGrantLeft} из ${this.assignmentQuota.medalsToGrantLimit}`;
+    }
+    return `Доступно медалей: ${this.assignmentQuota.medalsToGrantLeft} из ${this.assignmentQuota.medalsToGrantLimit}`;
+  }
+
+  onGrantMedalChange(value: boolean): void {
+    this.grantMedal = value && this.canGrantMedalForCurrentForm;
+  }
+
+  onReviewScoreChange(value: string | number): void {
+    this.reviewScore = Number(value);
+    if (this.getNormalizedReviewScore() < 9) {
+      this.grantMedal = false;
+    }
+  }
+
+  isReviewFormValid(): boolean {
+    const score = this.getNormalizedReviewScore();
+    return !!this.expertComment.trim() && score >= 1 && score <= 10;
+  }
+
+  isNegativeReviewState(state: SolutionState): boolean {
+    return state === 'Failed' || state === 'RequiresImprovements';
+  }
+
+  getSortedExpertReviews(solution: SolutionFullInfo): ExpertReviewInSolution[] {
+    return [...(solution.expertReviews ?? [])]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  private getNormalizedReviewScore(): number {
+    const score = Number(this.reviewScore);
+    return Number.isInteger(score) ? score : 0;
   }
 
   getDaysRemaining(deadline: string): number {
@@ -550,23 +687,32 @@ export class ExpertDashboardPage implements OnInit {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  async submitReview(state: 'Done' | 'Rejected'): Promise<void> {
+  async submitReview(state: SolutionSubmitReviewResultState): Promise<void> {
     if (!this.selectedSolution) {
+      return;
+    }
+
+    if (!this.isReviewFormValid()) {
+      this.notificationService.warning('Заполните комментарий и рейтинг решения');
       return;
     }
 
     this.submittingReview = true;
 
     try {
+      const shouldGrantMedal = state === 'Done' && this.grantMedal && this.canGrantMedalForCurrentForm;
+
       await this.solutionsService.submitReview(this.selectedSolution.id, {
-        review: this.expertComment,
-        resultState: state
+        comment: this.expertComment,
+        score: this.getNormalizedReviewScore(),
+        resultState: state,
+        grantMedal: shouldGrantMedal
       }).toPromise();
 
       if (state === 'Done') {
-        this.notificationService.success('Решение принято');
+        this.notificationService.success(shouldGrantMedal ? 'Решение принято, медаль выдана' : 'Решение принято');
       } else {
-        this.notificationService.success('Решение отклонено');
+        this.notificationService.success('Решение отправлено на доработку');
       }
 
       // Сначала закрываем модалку

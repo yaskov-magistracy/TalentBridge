@@ -94,7 +94,7 @@ import { NotificationService } from '../core/services/notification.service';
                       <p class="text-xs font-bold uppercase text-gray-500 mb-2">Участники:</p>
                       <div class="flex gap-2">
                         <div *ngFor="let member of solution.candidates" class="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                          {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                          {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                         </div>
                       </div>
                     </div>
@@ -151,7 +151,7 @@ import { NotificationService } from '../core/services/notification.service';
                       <p class="text-xs font-bold uppercase text-gray-500 mb-2">Участники:</p>
                       <div class="flex gap-2">
                         <div *ngFor="let member of solution.candidates" class="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                          {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                          {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                         </div>
                       </div>
                     </div>
@@ -237,7 +237,7 @@ import { NotificationService } from '../core/services/notification.service';
                 <div class="space-y-3">
                   <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                      {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
                     <div>
                       <p class="font-semibold">{{ member.surname }} {{ member.name }}{{ member.patronymic ? ' ' + member.patronymic : '' }}</p>

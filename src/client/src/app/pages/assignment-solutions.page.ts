@@ -163,7 +163,7 @@ import { NotificationService } from '../core/services/notification.service';
                         <div
                           class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs"
                         >
-                          {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                          {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                         </div>
                         <div class="flex items-center gap-1">
                           <span class="text-sm font-semibold"
@@ -189,8 +189,8 @@ import { NotificationService } from '../core/services/notification.service';
                       <div
                         class="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs"
                       >
-                        {{ solution.candidateOwner.surname.charAt(0)
-                        }}{{ solution.candidateOwner.name.charAt(0) }}
+                        {{ (solution.candidateOwner.surname || '').charAt(0)
+                        }}{{ (solution.candidateOwner.name || '').charAt(0) }}
                       </div>
                       <span class="text-sm font-semibold"
                         >{{ solution.candidateOwner.surname }}
@@ -216,7 +216,7 @@ import { NotificationService } from '../core/services/notification.service';
                       <span>✓</span> РЕВЬЮ ПРОЙДЕНО
                     </span>
                     <span
-                      *ngIf="solution.state === 'Rejected'"
+                      *ngIf="solution.state === 'Failed'"
                       class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300"
                     >
                       <span>✗</span> РЕВЬЮ НЕ ПРОЙДЕНО
@@ -225,7 +225,7 @@ import { NotificationService } from '../core/services/notification.service';
 
                   <!-- Expert Review Comment (for completed tab) -->
                   <div
-                    *ngIf="activeTab === 'completed' && solution.expertReview"
+                    *ngIf="activeTab === 'completed' && getLastExpertReviewComment(solution)"
                     class="mt-3 p-3 border-2 bg-white"
                     [class]="solution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'"
                   >
@@ -236,7 +236,7 @@ import { NotificationService } from '../core/services/notification.service';
                       КОММЕНТАРИЙ ЭКСПЕРТА:
                     </p>
                     <p class="text-gray-700 whitespace-pre-line text-sm leading-relaxed">
-                      {{ solution.expertReview }}
+                      {{ getLastExpertReviewComment(solution) }}
                     </p>
                   </div>
                 </div>
@@ -391,7 +391,7 @@ import { NotificationService } from '../core/services/notification.service';
                   <div
                     class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm"
                   >
-                    {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                    {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                   </div>
                   <div class="flex items-center gap-1">
                     <span class="font-semibold">{{ member.surname }} {{ member.name }}</span>
@@ -416,8 +416,8 @@ import { NotificationService } from '../core/services/notification.service';
                 <div
                   class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm"
                 >
-                  {{ selectedSolution.candidateOwner.surname.charAt(0)
-                  }}{{ selectedSolution.candidateOwner.name.charAt(0) }}
+                    {{ (selectedSolution.candidateOwner.surname || '').charAt(0)
+                  }}{{ (selectedSolution.candidateOwner.name || '').charAt(0) }}
                 </div>
                 <span class="font-semibold"
                   >{{ selectedSolution.candidateOwner.surname }}
@@ -539,7 +539,7 @@ import { NotificationService } from '../core/services/notification.service';
               <div class="flex flex-wrap gap-3">
                 <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-2">
                   <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                    {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                   </div>
                   <div class="flex items-center gap-1">
                     <span class="font-semibold">{{ member.surname }} {{ member.name }}</span>
@@ -554,7 +554,7 @@ import { NotificationService } from '../core/services/notification.service';
               <h4 class="font-bold mb-3 uppercase text-indigo-700">АВТОР РЕШЕНИЯ</h4>
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {{ selectedSolution.candidateOwner.surname.charAt(0) }}{{ selectedSolution.candidateOwner.name.charAt(0) }}
+                  {{ (selectedSolution.candidateOwner.surname || '').charAt(0) }}{{ (selectedSolution.candidateOwner.name || '').charAt(0) }}
                 </div>
                 <span class="font-semibold">{{ selectedSolution.candidateOwner.surname }} {{ selectedSolution.candidateOwner.name }}</span>
               </div>
@@ -723,7 +723,7 @@ export class AssignmentSolutionsPage implements OnInit {
         case 'expertReview':
           return state === 'ExpertReview';
         case 'completed':
-          return state === 'Rejected' || state === 'Done';
+          return state === 'Failed' || state === 'RequiresImprovements' || state === 'Done';
         default:
           return true;
       }
@@ -735,6 +735,13 @@ export class AssignmentSolutionsPage implements OnInit {
     return false;
   }
 
+  getLastExpertReviewComment(solution: SolutionFullInfo): string {
+    const reviews = solution.expertReviews ?? [];
+    return reviews
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]?.comment ?? '';
+  }
+
   getStateLabel(state: SolutionState): string {
     const labels: Record<SolutionState, string> = {
       NotStarted: 'Не начато',
@@ -742,8 +749,9 @@ export class AssignmentSolutionsPage implements OnInit {
       Autotests: 'Автотесты',
       AiReview: 'AI проверка',
       ExpertReview: 'Проверка экспертом',
+      RequiresImprovements: 'Требуется доработка',
       Done: 'Ревью пройдено',
-      Rejected: 'Ревью не пройдено'
+      Failed: 'Ревью не пройдено',
     };
     return labels[state] || state;
   }
