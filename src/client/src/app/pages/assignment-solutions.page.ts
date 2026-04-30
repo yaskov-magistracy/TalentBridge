@@ -216,7 +216,7 @@ import { NotificationService } from '../core/services/notification.service';
                       <span>✓</span> РЕВЬЮ ПРОЙДЕНО
                     </span>
                     <span
-                      *ngIf="solution.state === 'Rejected'"
+                      *ngIf="solution.state === 'Failed'"
                       class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300"
                     >
                       <span>✗</span> РЕВЬЮ НЕ ПРОЙДЕНО
@@ -225,7 +225,7 @@ import { NotificationService } from '../core/services/notification.service';
 
                   <!-- Expert Review Comment (for completed tab) -->
                   <div
-                    *ngIf="activeTab === 'completed' && solution.expertReview"
+                    *ngIf="activeTab === 'completed' && getLastExpertReviewComment(solution)"
                     class="mt-3 p-3 border-2 bg-white"
                     [class]="solution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'"
                   >
@@ -236,7 +236,7 @@ import { NotificationService } from '../core/services/notification.service';
                       КОММЕНТАРИЙ ЭКСПЕРТА:
                     </p>
                     <p class="text-gray-700 whitespace-pre-line text-sm leading-relaxed">
-                      {{ solution.expertReview }}
+                      {{ getLastExpertReviewComment(solution) }}
                     </p>
                   </div>
                 </div>
@@ -723,7 +723,7 @@ export class AssignmentSolutionsPage implements OnInit {
         case 'expertReview':
           return state === 'ExpertReview';
         case 'completed':
-          return state === 'Rejected' || state === 'Failed' || state === 'RequiresImprovements' || state === 'Done';
+          return state === 'Failed' || state === 'RequiresImprovements' || state === 'Done';
         default:
           return true;
       }
@@ -733,6 +733,13 @@ export class AssignmentSolutionsPage implements OnInit {
   private isCompleted(state: SolutionState): boolean {
     // Можно добавить дополнительную логику для завершённых состояний
     return false;
+  }
+
+  getLastExpertReviewComment(solution: SolutionFullInfo): string {
+    const reviews = solution.expertReviews ?? [];
+    return reviews
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]?.comment ?? '';
   }
 
   getStateLabel(state: SolutionState): string {
@@ -745,7 +752,6 @@ export class AssignmentSolutionsPage implements OnInit {
       RequiresImprovements: 'Требуется доработка',
       Done: 'Ревью пройдено',
       Failed: 'Ревью не пройдено',
-      Rejected: 'Ревью не пройдено'
     };
     return labels[state] || state;
   }

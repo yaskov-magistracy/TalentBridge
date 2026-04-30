@@ -47,7 +47,9 @@ export interface CandidateFullInfo {
   patronymic?: string;
   city: string;
   about: string;
-  technologies: Technology[];
+  rating: number;
+  technologies?: Technology[] | null;
+  medalsCount?: number;
 }
 
 // ==================== Employers ====================
@@ -170,35 +172,21 @@ export interface SolutionTeamPatchApiRequest {
 
 export interface SolutionFullInfo {
   id: string;
-  solutionUrl?: string;
-  startedAt: string;
+  solutionUrl?: string | null;
+  startedAt?: string | null;
   state: SolutionState;
-  medalGrantedAt?: string;
-  team?: SolutionTeamInfo;
+  team?: SolutionTeamInfo | null;
+  medalGrantedAt?: string | null;
   assignment: AssignmentFullInfo;
   candidateOwner: CandidateFullInfo;
   candidates: CandidateFullInfo[];
-  candidatesJoinRequested: CandidateFullInfo[];
-  expertReview?: string;
-  expertReviews?: ExpertReviewInSolution[];
-  expert?: {
-    id: string;
-    surname: string;
-    name: string;
-    patronymic: string;
-  };
+  candidatesJoinRequested?: CandidateFullInfo[] | null;
+  expertReviews?: ExpertReviewInSolution[] | null;
 }
 
 export interface SolutionTeamInfo {
   name: string;
   description: string;
-  members: CandidateShortInfo[];
-}
-
-export interface CandidateShortInfo {
-  id: string;
-  surname: string;
-  name: string;
 }
 
 export interface ExpertReviewInSolution {
@@ -225,7 +213,7 @@ export interface SolutionSubmitReviewRequest {
 
 export type SolutionSubmitReviewResultState = 'Done' | 'Failed';
 
-export type SolutionState = 'NotStarted' | 'InProgress' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'RequiresImprovements' | 'Done' | 'Failed' | 'Rejected';
+export type SolutionState = 'NotStarted' | 'InProgress' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'RequiresImprovements' | 'Done' | 'Failed';
 
 export interface AssignmentQuotaResponse {
   medalsToGrantLeft: number;

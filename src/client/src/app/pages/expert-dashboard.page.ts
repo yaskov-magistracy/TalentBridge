@@ -416,19 +416,6 @@ import { NotificationService } from '../core/services/notification.service';
                 <span class="font-bold text-lg">РЕШЕНИЕ ОТКЛОНЕНО</span>
               </div>
 
-              <!-- Expert Info -->
-              <div *ngIf="selectedSolution.expert" class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
-                <p class="text-xs font-bold uppercase tracking-wider mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">ЭКСПЕРТ:</p>
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {{ selectedSolution.expert.surname.charAt(0) }}{{ selectedSolution.expert.name.charAt(0) }}
-                  </div>
-                  <div>
-                    <p class="font-semibold">{{ selectedSolution.expert.surname }} {{ selectedSolution.expert.name }}{{ selectedSolution.expert.patronymic ? ' ' + selectedSolution.expert.patronymic : '' }}</p>
-                  </div>
-                </div>
-              </div>
-
               <!-- Expert Review History -->
               <div class="mt-4 pt-4 border-t-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
                 <p class="text-xs font-bold uppercase tracking-wider mb-3" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">История ревью эксперта:</p>
@@ -667,7 +654,7 @@ export class ExpertDashboardPage implements OnInit {
   }
 
   isNegativeReviewState(state: SolutionState): boolean {
-    return state === 'Failed' || state === 'RequiresImprovements' || state === 'Rejected';
+    return state === 'Failed' || state === 'RequiresImprovements';
   }
 
   getSortedExpertReviews(solution: SolutionFullInfo): ExpertReviewInSolution[] {
