@@ -25,9 +25,18 @@ import { NotificationService } from '../core/services/notification.service';
         <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
           <h1 class="text-3xl font-bold uppercase text-emerald-600">ПАНЕЛЬ РАБОТОДАТЕЛЯ</h1>
           <div class="flex gap-4 flex-wrap">
-<!--            <a [routerLink]="'/candidates-ranking'" class="border-2 border-emerald-600 px-6 py-3 hover:bg-emerald-600 hover:text-white transition-colors font-bold uppercase tracking-wider bg-white">-->
-<!--              РЕЙТИНГ КАНДИДАТОВ-->
-<!--            </a>-->
+            <a
+              [routerLink]="'/candidates-ranking'"
+              class="border-2 border-emerald-600 px-6 py-3 hover:bg-emerald-600 hover:text-white transition-colors font-bold uppercase tracking-wider bg-white flex items-center gap-2">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 21h8" />
+                <path d="M12 17v4" />
+                <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+                <path d="M5 4H3v3a4 4 0 0 0 4 4" />
+                <path d="M19 4h2v3a4 4 0 0 1-4 4" />
+              </svg>
+              Рейтинг кандидатов
+            </a>
             <button
               (click)="openCreateModal()"
               class="border-2 border-indigo-600 bg-indigo-600 text-white px-8 py-3 hover:bg-indigo-700 transition-colors font-bold uppercase tracking-wider">

@@ -52,6 +52,27 @@ export interface CandidateFullInfo {
   medalsCount: number;
 }
 
+export type SearchOrderingDirection = 'Ascending' | 'Descending';
+export type CandidateSearchOrderingField = 'Rating';
+
+export interface CandidateSearchOrdering {
+  direction?: SearchOrderingDirection;
+  field?: CandidateSearchOrderingField;
+}
+
+export interface CandidateSearchRequest {
+  take?: number;
+  skip?: number;
+  technologiesIds?: string[] | null;
+  ordering?: CandidateSearchOrdering;
+}
+
+export interface CandidateSearchResponse {
+  items?: CandidateFullInfo[];
+  totalCount?: number;
+  total?: number;
+}
+
 // ==================== Employers ====================
 
 export interface EmployerCreateRequest {
