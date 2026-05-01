@@ -75,7 +75,7 @@ import { NotificationService } from '../core/services/notification.service';
             Загрузка профиля...
           </div>
 
-          <div *ngIf="candidate && !showProfileEdit" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div *ngIf="candidate && !showProfileEdit" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">ФИО</p>
               <p class="font-semibold text-lg">{{ candidate.surname }} {{ candidate.name }}{{ candidate.patronymic ? ' ' + candidate.patronymic : '' }}</p>
@@ -84,13 +84,43 @@ import { NotificationService } from '../core/services/notification.service';
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Город</p>
               <p class="font-semibold text-lg">{{ candidate.city || 'Не указан' }}</p>
             </div>
-            <div>
+          </div>
+
+          <div *ngIf="candidate && !showProfileEdit" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="border border-indigo-200 bg-indigo-50 p-4">
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Рейтинг</p>
-              <p class="font-semibold text-lg text-indigo-600">{{ formatCandidateRating(candidate.rating) }} / 100</p>
+              <p class="font-semibold text-lg text-indigo-600 flex items-center gap-2">
+                <span aria-hidden="true">★</span>
+                {{ formatCandidateRating(candidate.rating) }} / 100
+              </p>
             </div>
-            <div>
+            <div class="border border-cyan-200 bg-cyan-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Успешность</p>
+              <p class="font-semibold text-lg text-cyan-600 flex items-center gap-2">
+                <span aria-hidden="true">%</span>
+                {{ formatCandidatePercent(candidate.successRate) }}%
+              </p>
+            </div>
+            <div class="border border-emerald-200 bg-emerald-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Средняя оценка</p>
+              <p class="font-semibold text-lg text-emerald-600 flex items-center gap-2">
+                <span aria-hidden="true">✓</span>
+                {{ formatCandidateRating(candidate.averageScore) }} / 10
+              </p>
+            </div>
+            <div class="border border-emerald-200 bg-emerald-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Решено</p>
+              <p class="font-semibold text-lg text-emerald-600 flex items-center gap-2">
+                <span aria-hidden="true">#</span>
+                {{ getSolutionsCompletedCount(candidate) }}
+              </p>
+            </div>
+            <div class="border border-amber-200 bg-amber-50 p-4">
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Медали</p>
-              <p class="font-semibold text-lg text-amber-600">🏅 {{ candidate.medalsCount || 0 }}</p>
+              <p class="font-semibold text-lg text-amber-600 flex items-center gap-2">
+                <span aria-hidden="true">🏅</span>
+                {{ candidate.medalsCount || 0 }}
+              </p>
             </div>
           </div>
 
@@ -1310,8 +1340,17 @@ export class CandidateDashboardPage implements OnInit {
       .join(', ');
   }
 
-  formatCandidateRating(rating: number): string {
-    return Number.isInteger(rating) ? `${rating}` : rating.toFixed(1);
+  formatCandidateRating(rating: number | null | undefined): string {
+    const value = Number(rating ?? 0);
+    return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+  }
+
+  formatCandidatePercent(value: number | null | undefined): string {
+    return Number(value ?? 0).toFixed(1);
+  }
+
+  getSolutionsCompletedCount(candidate: CandidateFullInfo): number {
+    return candidate.solutionsCompleted?.length ?? 0;
   }
 
   openProfileEdit() {
