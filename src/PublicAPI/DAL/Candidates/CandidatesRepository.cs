@@ -1,4 +1,6 @@
-﻿using Domain.Candidates;
+﻿using System.Linq.Expressions;
+using DAL.Solutions;
+using Domain.Candidates;
 using Domain.Candidates.DTO;
 using Infrastructure.DTO.Search.Ordering;
 using Microsoft.EntityFrameworkCore;
@@ -57,11 +59,29 @@ public class CandidatesRepository(
             query = query.Where(e => request.TechnologiesIds.All(t => e.Technologies!.Any(t2 => t2.Id == t)));
         if (request.Ordering is {} ordering)
         {
+            
             if (ordering.Field == CandidateSearchOrderingField.Rating)
             {
-                query = ordering.Direction == SearchOrderingDirection.Ascending
-                    ? query.OrderBy(e => e.Rating)
-                    : query.OrderByDescending(e => e.Rating);
+                query = query.OrderByDirection(
+                    e => e.Rating,
+                    ordering.Direction);
+            }
+            else if (ordering.Field == CandidateSearchOrderingField.SolutionsCompleted)
+            {
+                query = query.OrderByDirection(
+                    e => e.Solutions!.Count(s => s.State == SolutionEntityState.Done),
+                    ordering.Direction);
+            }
+            else if (ordering.Field == CandidateSearchOrderingField.SuccessRate)
+            {
+                Expression<Func<CandidateEntity, float>> selector = e => 
+                    e.Solutions!.Count(s => s.State == SolutionEntityState.Failed) == 0 
+                        ? e.Solutions!.Count(s => s.State == SolutionEntityState.Done) == 0 ? 0f : 100f
+                        : (float)e.Solutions!.Count(s => s.State == SolutionEntityState.Done) 
+                          / e.Solutions!.Count(s => s.State == SolutionEntityState.Failed);
+                query = query.OrderByDirection(
+                    selector,
+                    ordering.Direction);
             }
             else
             {

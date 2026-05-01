@@ -18,4 +18,6 @@ public record CandidateSearchOrdering(
 public enum CandidateSearchOrderingField
 {
     Rating,
+    SolutionsCompleted,
+    SuccessRate
 }
