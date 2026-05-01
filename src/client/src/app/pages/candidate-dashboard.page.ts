@@ -96,8 +96,7 @@ import { NotificationService } from '../core/services/notification.service';
             </div>
             <div class="border border-cyan-200 bg-cyan-50 p-4">
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Успешность</p>
-              <p class="font-semibold text-lg text-cyan-600 flex items-center gap-2">
-                <span aria-hidden="true">%</span>
+              <p class="font-semibold text-lg text-cyan-600">
                 {{ formatCandidatePercent(candidate.successRate) }}%
               </p>
             </div>
@@ -111,14 +110,20 @@ import { NotificationService } from '../core/services/notification.service';
             <div class="border border-emerald-200 bg-emerald-50 p-4">
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Решено</p>
               <p class="font-semibold text-lg text-emerald-600 flex items-center gap-2">
-                <span aria-hidden="true">#</span>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 11l3 3L22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
                 {{ getSolutionsCompletedCount(candidate) }}
               </p>
             </div>
-            <div class="border border-amber-200 bg-amber-50 p-4">
+            <div class="border border-indigo-200 bg-indigo-50 p-4">
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Медали</p>
-              <p class="font-semibold text-lg text-amber-600 flex items-center gap-2">
-                <span aria-hidden="true">🏅</span>
+              <p class="font-semibold text-lg text-indigo-600 flex items-center gap-2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="6" />
+                  <path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12" />
+                </svg>
                 {{ candidate.medalsCount || 0 }}
               </p>
             </div>
