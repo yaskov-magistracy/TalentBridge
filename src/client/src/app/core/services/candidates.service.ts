@@ -5,6 +5,8 @@ import {
   CandidateCreateRequest,
   CandidatePatchApiRequest,
   CandidateFullInfo,
+  CandidateSearchRequest,
+  CandidateSearchResponse,
   ChangePasswordRequest
 } from '../models/api.models';
 
@@ -24,6 +26,10 @@ export class CandidatesService {
    */
   createCandidate(request: CandidateCreateRequest): Observable<string> {
     return this.apiClient.post<string>('/candidates', request);
+  }
+
+  searchCandidates(request: CandidateSearchRequest): Observable<CandidateSearchResponse | CandidateFullInfo[]> {
+    return this.apiClient.post<CandidateSearchResponse | CandidateFullInfo[]>('/Candidates/search', request);
   }
 
   /**

@@ -47,7 +47,18 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public"
+                },
+                {
+                  "glob": "**/*",
+                  "input": "instructions",
+                  "output": "/instructions"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

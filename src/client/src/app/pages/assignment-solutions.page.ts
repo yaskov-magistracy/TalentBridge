@@ -66,17 +66,6 @@ import { NotificationService } from '../core/services/notification.service';
                 В работе {{ getTabCount('inProgress') }}
               </button>
               <button
-                (click)="onTabChange('autotestsAi')"
-                [class]="
-                  activeTab === 'autotestsAi'
-                    ? 'border-2 border-emerald-600 bg-emerald-600 text-white'
-                    : 'border-2 border-gray-300 bg-white text-gray-600 hover:border-emerald-400'
-                "
-                class="px-4 py-2 font-bold uppercase text-sm whitespace-nowrap transition-colors"
-              >
-                Автотесты/ИИ-проверка {{ getTabCount('autotestsAi') }}
-              </button>
-              <button
                 (click)="onTabChange('expertReview')"
                 [class]="
                   activeTab === 'expertReview'
@@ -717,13 +706,11 @@ export class AssignmentSolutionsPage implements OnInit {
         case 'notStarted':
           return state === 'NotStarted';
         case 'inProgress':
-          return state === 'InProgress';
-        case 'autotestsAi':
-          return state === 'Autotests' || state === 'AiReview';
+          return state === 'InProgress' || state === 'RequiresImprovements';
         case 'expertReview':
           return state === 'ExpertReview';
         case 'completed':
-          return state === 'Failed' || state === 'RequiresImprovements' || state === 'Done';
+          return state === 'Failed' || state === 'Done';
         default:
           return true;
       }
