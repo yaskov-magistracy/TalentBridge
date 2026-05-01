@@ -96,8 +96,7 @@ public class DatabaseAccessor(
             new("В целом неплохое решение. Я бы взял его на работу", 9, SolutionSubmitReviewResultState.Done, true));
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
                 new("Плохое решение. Много недочётов. Я бы не брал", 3, SolutionSubmitReviewResultState.Failed, false));
-        await CreateTeamSolutionAndGoToReview(teamAssignment.Id, candidate.Id, candidate2.Id, expert.Id, 
-            new ("В целом неплохо. Нужно доделать транзакции и закрыть безопасность", 7, SolutionSubmitReviewResultState.Failed, false));
+        await CreateTeamSolutionAndGoToManeReviews(teamAssignment.Id, candidate.Id, candidate2.Id, expert.Id);
         var notFullTeamSolution = (await SolutionsService.Add(new(
             teamAssignment.Id, 
             candidate.Id,
@@ -118,8 +117,8 @@ public class DatabaseAccessor(
         await SolutionsService.SubmitReview(expertId, soloSolution.Id, submitReviewRequestRequest);
     }
     
-    private async Task CreateTeamSolutionAndGoToReview(
-        Guid teamAssignmentId, Guid candidateId, Guid candidate2Id, Guid expertId, SolutionSubmitReviewRequest submitReviewRequestRequest)
+    private async Task CreateTeamSolutionAndGoToManeReviews(
+        Guid teamAssignmentId, Guid candidateId, Guid candidate2Id, Guid expertId)
     {
         var teamSolution = (await SolutionsService.Add(new(
             teamAssignmentId, 
@@ -129,7 +128,11 @@ public class DatabaseAccessor(
         await SolutionsService.Join(candidate2Id, teamSolution.Id);
         await SolutionsService.Start(candidateId, teamSolution.Id);
         await SolutionsService.SendToReview(candidateId, teamSolution.Id);
-        await SolutionsService.SubmitReview(expertId, teamSolution.Id, submitReviewRequestRequest);
+        await SolutionsService.SubmitReview(expertId, teamSolution.Id, 
+            new ("В целом неплохо. Нужно доделать транзакции и закрыть безопасность", 7, SolutionSubmitReviewResultState.Failed, false));
+        await SolutionsService.SendToReview(candidateId, teamSolution.Id);
+        await SolutionsService.SubmitReview(expertId, teamSolution.Id,
+            new("Уже гораздо лучше. Видно проделанную работу. Молодцы", 8, SolutionSubmitReviewResultState.Done, false));
     }
 
     private static readonly TechnologyCreateEntity[] TechnologyCreateEntities =
