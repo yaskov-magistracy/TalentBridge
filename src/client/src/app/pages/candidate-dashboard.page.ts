@@ -561,14 +561,14 @@ import { NotificationService } from '../core/services/notification.service';
                 {{ takingAssignment ? 'ЗАГРУЗКА...' : 'ВЗЯТЬ В РАБОТУ' }}
               </button>
               <button
-                *ngIf="(selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements') && selectedSolution.candidateOwner.id === currentUserId"
+                *ngIf="isSendToReviewState(selectedSolution) && selectedSolution.candidateOwner.id === currentUserId"
                 (click)="sendToReview(selectedSolution)"
-                [disabled]="sendingToReview || !canSendToReview(selectedSolution)"
+                [disabled]="isSendingToReview(selectedSolution) || !canSendToReview(selectedSolution)"
                 class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 [class]="canSendToReview(selectedSolution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
-                {{ sendingToReview ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ НА ПРОВЕРКУ' }}
+                {{ isSendingToReview(selectedSolution) ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ НА ПРОВЕРКУ' }}
               </button>
-              <div *ngIf="(selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements') && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
+              <div *ngIf="isSendToReviewState(selectedSolution) && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
                 ⚠️ {{ getSendToReviewDisabledReason(selectedSolution) }}
               </div>
             </div>
@@ -1008,14 +1008,14 @@ import { NotificationService } from '../core/services/notification.service';
                       {{ takingAssignment ? 'Загрузка...' : 'Взять в работу' }}
                     </button>
                   </div>
-                  <!-- Send to Review Button for In Progress Tab -->
-                  <div *ngIf="activeTab === 'in-progress' && solution.candidateOwner.id === currentUserId" class="flex-shrink-0">
+                  <!-- Send to Review Button for In Progress and Requires Improvements -->
+                  <div *ngIf="(activeTab === 'in-progress' || (activeTab === 'review' && solution.state === 'RequiresImprovements')) && solution.candidateOwner.id === currentUserId" class="flex-shrink-0">
                     <button
                       (click)="sendToReview(solution)"
-                      [disabled]="sendingToReview || !canSendToReview(solution)"
+                      [disabled]="isSendingToReview(solution) || !canSendToReview(solution)"
                       class="border-2 border-emerald-600 px-4 py-2 font-bold uppercase text-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       [class]="canSendToReview(solution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
-                      {{ sendingToReview ? '...' : 'На проверку' }}
+                      {{ isSendingToReview(solution) ? '...' : 'На проверку' }}
                     </button>
                   </div>
                 </div>
@@ -1093,7 +1093,7 @@ export class CandidateDashboardPage implements OnInit {
   // Solution modal
   selectedSolution: SolutionFullInfo | null = null;
   showSolutionModal = false;
-  sendingToReview = false;
+  sendingToReviewSolutionId: string | null = null;
   solutionUrl = '';
   savingSolutionUrl = false;
 
@@ -1535,6 +1535,7 @@ export class CandidateDashboardPage implements OnInit {
   closeSolutionModal(): void {
     this.showSolutionModal = false;
     this.selectedSolution = null;
+    this.sendingToReviewSolutionId = null;
   }
 
   navigateToJoinSolution(): void {
@@ -1692,12 +1693,13 @@ export class CandidateDashboardPage implements OnInit {
   sendToReview(solution: SolutionFullInfo): void {
     if (!solution.id) return;
 
-    this.sendingToReview = true;
+    this.sendingToReviewSolutionId = solution.id;
     this.cdr.markForCheck();
 
     this.solutionsService.sendToReview(solution.id).subscribe({
       next: () => {
         this.notificationService.success('Решение отправлено на проверку!');
+        this.sendingToReviewSolutionId = null;
         this.closeSolutionModal();
         this.loadSolutions();
         this.cdr.markForCheck();
@@ -1705,22 +1707,30 @@ export class CandidateDashboardPage implements OnInit {
       error: (error) => {
         console.error('Failed to send to review:', error);
         this.notificationService.error('Не удалось отправить решение на проверку. Попробуйте позже.');
-        this.sendingToReview = false;
+        this.sendingToReviewSolutionId = null;
         this.cdr.markForCheck();
       }
     });
   }
 
+  isSendingToReview(solution: SolutionFullInfo): boolean {
+    return this.sendingToReviewSolutionId === solution.id;
+  }
+
   canSendToReview(solution: SolutionFullInfo): boolean {
     if (!solution) return false;
-    if (!solution.solutionUrl || solution.solutionUrl.trim() === '') return false;
+    if (!this.isSendToReviewState(solution)) return false;
+    if (!this.getSolutionUrlForValidation(solution)) return false;
     const currentUserId = this.authService.currentUser()?.userId;
     if (!currentUserId) return false;
     return solution.candidateOwner.id === currentUserId;
   }
 
   getSendToReviewDisabledReason(solution: SolutionFullInfo): string | null {
-    if (!solution.solutionUrl || solution.solutionUrl.trim() === '') {
+    if (!this.isSendToReviewState(solution)) {
+      return 'Решение нельзя отправить на проверку в текущем статусе';
+    }
+    if (!this.getSolutionUrlForValidation(solution)) {
       return 'Сначала добавьте ссылку на решение';
     }
     const currentUserId = this.authService.currentUser()?.userId;
@@ -1729,6 +1739,17 @@ export class CandidateDashboardPage implements OnInit {
       return 'Только владелец решения может отправить его на проверку';
     }
     return null;
+  }
+
+  isSendToReviewState(solution: SolutionFullInfo): boolean {
+    return solution.state === 'InProgress' || solution.state === 'RequiresImprovements';
+  }
+
+  private getSolutionUrlForValidation(solution: SolutionFullInfo): string {
+    const url = this.selectedSolution?.id === solution.id
+      ? this.solutionUrl
+      : solution.solutionUrl;
+    return url?.trim() ?? '';
   }
 
   saveSolutionUrl(solution: SolutionFullInfo): void {
