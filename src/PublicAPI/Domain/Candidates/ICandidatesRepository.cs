@@ -9,6 +9,6 @@ public interface ICandidatesRepository
     public Task<Candidate?> Get(string login);
     public Task<CandidateFullInfo?> GetFull(string login);
     public Task<CandidateSearchResponse> Search(CandidateSearchRequest request);
-    public Task<CandidateFullInfo> Create(CandidateCreateEntity createEntity);
-    public Task<CandidateFullInfo> Patch(Guid id, CandidatePatchEntity patchEntity);
+    public Task<Guid> Create(CandidateCreateEntity createEntity);
+    public Task Patch(Guid id, CandidatePatchEntity patchEntity);
 }

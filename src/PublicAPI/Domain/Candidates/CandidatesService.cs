@@ -74,7 +74,7 @@ public class CandidatesService(
         if (existed != null)
             return Results.BadRequest<CandidateFullInfo>("Login is already in use");
         
-        var res = await candidatesRepository.Create(new(
+        var resId = await candidatesRepository.Create(new(
             request.Login, 
             passwordHasher.HashPassword(request.Password),
             request.Surname,
@@ -84,7 +84,8 @@ public class CandidatesService(
             request.About,
             request.Technologies
         ));
-        return Results.Ok(res);
+        var res = await candidatesRepository.GetFull(resId);
+        return Results.Ok(res!);
     }
 
     public async Task<Result<CandidateFullInfo>> Patch(Guid id, CandidatePatchEntity request)
@@ -93,8 +94,9 @@ public class CandidatesService(
         if (existed == null)
             return Results.NotFound<CandidateFullInfo>("");
         
-        var updated = await candidatesRepository.Patch(id, request);
-        return Results.Ok(updated);
+        await candidatesRepository.Patch(id, request);
+        var updated = await candidatesRepository.GetFull(id);
+        return Results.Ok(updated!);
     }
 
     public async Task<EmptyResult> ChangePassword(Guid id, ChangePasswordRequest request)
@@ -108,7 +110,7 @@ public class CandidatesService(
         if (!passwordHasher.VerifyPassword(request.OldPassword, existed.PasswordHash))
             return EmptyResults.BadRequest("Old password is not correct");
 
-        var updated = await candidatesRepository.Patch(
+        await candidatesRepository.Patch(
             id,
             new(PasswordHash: passwordHasher.HashPassword(request.NewPassword)));
         return EmptyResults.NoContent();

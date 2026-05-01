@@ -95,16 +95,16 @@ public class CandidatesRepository(
             count);
     }
 
-    public async Task<CandidateFullInfo> Create(CandidateCreateEntity createEntity)
+    public async Task<Guid> Create(CandidateCreateEntity createEntity)
     {
         var newEntity = CandidatesMapper.ToEntity(createEntity);
         dataContext.Technologies.AttachRangeIfNotEmpty(newEntity.Technologies);
         await dataContext.AddAsync(newEntity);
         await dataContext.SaveChangesAsync();
-        return CandidatesMapper.ToDomainFull(newEntity);
+        return newEntity.Id;
     }
 
-    public async Task<CandidateFullInfo> Patch(Guid id, CandidatePatchEntity patchEntity)
+    public async Task Patch(Guid id, CandidatePatchEntity patchEntity)
     {
         var existed = await CandidatesFull.FirstAsync(e => e.Id == id);
 
@@ -130,6 +130,5 @@ public class CandidatesRepository(
         }
 
         await dataContext.SaveChangesAsync();
-        return CandidatesMapper.ToDomainFull(existed);
     }
 }
