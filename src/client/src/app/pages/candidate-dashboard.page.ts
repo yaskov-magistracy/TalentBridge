@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
@@ -16,7 +16,8 @@ import { NotificationService } from '../core/services/notification.service';
     FormsModule,
     ReactiveFormsModule,
     NavbarComponent,
-    TechChipComponent
+    TechChipComponent,
+    RouterLink
   ],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
@@ -49,11 +50,25 @@ import { NotificationService } from '../core/services/notification.service';
                 <p class="text-sm text-gray-600">Информация о кандидате</p>
               </div>
             </div>
+            <div class="flex gap-3 flex-wrap justify-end">
+              <a
+                [routerLink]="'/candidates-ranking'"
+                class="text-sm border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors uppercase font-semibold flex items-center gap-2 bg-white">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 21h8" />
+                  <path d="M12 17v4" />
+                  <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+                  <path d="M5 4H3v3a4 4 0 0 0 4 4" />
+                  <path d="M19 4h2v3a4 4 0 0 1-4 4" />
+                </svg>
+                Рейтинг кандидатов
+              </a>
             <button
               (click)="openProfileEdit()"
               class="text-sm border-2 border-indigo-600 px-4 py-2 hover:bg-indigo-600 hover:text-white transition-colors uppercase font-semibold flex items-center gap-2">
               ✏️ РЕДАКТИРОВАТЬ
             </button>
+            </div>
           </div>
 
           <div *ngIf="!candidate" class="text-center py-8 text-gray-500">
