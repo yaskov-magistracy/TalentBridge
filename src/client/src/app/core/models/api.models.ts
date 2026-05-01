@@ -48,12 +48,15 @@ export interface CandidateFullInfo {
   city?: string | null;
   about?: string | null;
   rating: number;
+  successRate?: number | null;
+  averageScore?: number | null;
+  solutionsCompleted?: string[] | null;
   technologies?: Technology[] | null;
   medalsCount: number;
 }
 
 export type SearchOrderingDirection = 'Ascending' | 'Descending';
-export type CandidateSearchOrderingField = 'Rating';
+export type CandidateSearchOrderingField = 'Rating' | 'SolutionsCompleted' | 'SuccessRate';
 
 export interface CandidateSearchOrdering {
   direction?: SearchOrderingDirection;

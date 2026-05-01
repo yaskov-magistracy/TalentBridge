@@ -2,16 +2,9 @@ import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { CandidatesService, SolutionsService, TechnologiesService } from '../core';
-import { CandidateFullInfo, CandidateSearchResponse, Technology } from '../core/models/api.models';
+import { CandidatesService, TechnologiesService } from '../core';
+import { CandidateFullInfo, CandidateSearchOrderingField, CandidateSearchResponse, Technology } from '../core/models/api.models';
 import { NavbarComponent } from '../shared/components/navbar.component';
-
-interface CandidateRankingItem extends CandidateFullInfo {
-  completedTasksCount: number;
-  medalsCount: number;
-}
 
 @Component({
   selector: 'app-candidates-ranking',
@@ -48,8 +41,11 @@ interface CandidateRankingItem extends CandidateFullInfo {
 
             <div>
               <label class="block font-bold mb-2 text-sm uppercase tracking-wider text-gray-700">Сортировка</label>
-              <select class="w-full border-2 border-black p-3 bg-white" [ngModel]="'rating'" disabled>
-                <option value="rating">По рейтингу</option>
+              <select
+                [(ngModel)]="selectedOrderingField"
+                (ngModelChange)="loadCandidates()"
+                class="w-full border-2 border-black p-3 bg-white">
+                <option *ngFor="let option of orderingOptions" [value]="option.value">{{ option.label }}</option>
               </select>
             </div>
           </div>
@@ -92,12 +88,18 @@ interface CandidateRankingItem extends CandidateFullInfo {
                       <p class="text-xs text-gray-500 uppercase font-bold">Рейтинг</p>
                     </div>
                     <div>
+                      <div class="text-2xl font-bold text-cyan-600 flex items-center justify-center gap-1">
+                        {{ formatSuccessRate(candidate.successRate) }}%
+                      </div>
+                      <p class="text-xs text-gray-500 uppercase font-bold">Успешность</p>
+                    </div>
+                    <div>
                       <div class="text-2xl font-bold text-emerald-600 flex items-center justify-center gap-1">
                         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                           <path d="M9 11l3 3L22 4" />
                           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                         </svg>
-                        {{ candidate.completedTasksCount }}
+                        {{ getSolutionsCompletedCount(candidate) }}
                       </div>
                       <p class="text-xs text-gray-500 uppercase font-bold">Решено</p>
                     </div>
@@ -140,13 +142,18 @@ interface CandidateRankingItem extends CandidateFullInfo {
 })
 export class CandidatesRankingPage implements OnInit {
   private readonly candidatesService = inject(CandidatesService);
-  private readonly solutionsService = inject(SolutionsService);
   private readonly technologiesService = inject(TechnologiesService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  candidates: CandidateRankingItem[] = [];
+  candidates: CandidateFullInfo[] = [];
   technologies: Technology[] = [];
   selectedTechnologyId = '';
+  selectedOrderingField: CandidateSearchOrderingField = 'Rating';
+  readonly orderingOptions: Array<{ value: CandidateSearchOrderingField; label: string }> = [
+    { value: 'Rating', label: 'По рейтингу' },
+    { value: 'SolutionsCompleted', label: 'По завершенным решениям' },
+    { value: 'SuccessRate', label: 'По проценту успешности' }
+  ];
   isLoading = false;
   errorMessage = '';
 
@@ -165,7 +172,7 @@ export class CandidatesRankingPage implements OnInit {
       skip: 0,
       technologiesIds: this.selectedTechnologyId ? [this.selectedTechnologyId] : null,
       ordering: {
-        field: 'Rating',
+        field: this.selectedOrderingField,
         direction: 'Descending'
       }
     }).subscribe({
@@ -179,22 +186,9 @@ export class CandidatesRankingPage implements OnInit {
           return;
         }
 
-        forkJoin(candidates.map(candidate => this.enrichCandidate(candidate))).subscribe({
-          next: (items) => {
-            this.candidates = items.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-            this.isLoading = false;
-            this.cdr.markForCheck();
-          },
-          error: () => {
-            this.candidates = candidates.map(candidate => ({
-              ...candidate,
-              completedTasksCount: 0,
-              medalsCount: candidate.medalsCount ?? 0
-            }));
-            this.isLoading = false;
-            this.cdr.markForCheck();
-          }
-        });
+        this.candidates = candidates;
+        this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.errorMessage = 'Не удалось загрузить рейтинг кандидатов.';
@@ -216,6 +210,14 @@ export class CandidatesRankingPage implements OnInit {
     return Number(rating ?? 0).toFixed(1);
   }
 
+  formatSuccessRate(successRate: number | null | undefined): string {
+    return Number(successRate ?? 0).toFixed(1);
+  }
+
+  getSolutionsCompletedCount(candidate: CandidateFullInfo): number {
+    return candidate.solutionsCompleted?.length ?? 0;
+  }
+
   private loadTechnologies(): void {
     this.technologiesService.searchTechnologies({ take: 1000, skip: 0 }).subscribe({
       next: (response) => {
@@ -227,37 +229,6 @@ export class CandidatesRankingPage implements OnInit {
         this.cdr.markForCheck();
       }
     });
-  }
-
-  private enrichCandidate(candidate: CandidateFullInfo) {
-    return forkJoin({
-      completedTasksCount: this.solutionsService.searchSolutions({
-        candidateId: candidate.id,
-        state: 'Done',
-        take: 1,
-        skip: 0
-      }).pipe(
-        map(response => response.totalCount ?? response.items?.length ?? 0),
-        catchError(() => of(0))
-      ),
-      medalsCount: typeof candidate.medalsCount === 'number'
-        ? of(candidate.medalsCount)
-        : this.solutionsService.searchSolutions({
-            candidateId: candidate.id,
-            hasMedal: true,
-            take: 1,
-            skip: 0
-          }).pipe(
-            map(response => response.totalCount ?? response.items?.length ?? 0),
-            catchError(() => of(0))
-          )
-    }).pipe(
-      map(stats => ({
-        ...candidate,
-        completedTasksCount: stats.completedTasksCount,
-        medalsCount: stats.medalsCount
-      }))
-    );
   }
 
   private normalizeCandidatesResponse(response: CandidateSearchResponse | CandidateFullInfo[]): CandidateFullInfo[] {
