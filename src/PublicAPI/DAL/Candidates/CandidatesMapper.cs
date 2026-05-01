@@ -23,12 +23,19 @@ internal static class CandidatesMapper
     {
         var solutions = entity.Solutions ?? [];
         var doneSolutions = solutions.Where(e => e.State == SolutionEntityState.Done).ToArray();
-        var doneSolutionsCount = doneSolutions.Count();
-        var failedSolutions = solutions.Count(e => e.State == SolutionEntityState.Failed);
-        var successRate = doneSolutionsCount != 0 || failedSolutions != 0
-            ? MathF.Max(1, doneSolutionsCount) / MathF.Max(1, failedSolutions)
-            : 0;
-        
+        var doneSolutionsCount = doneSolutions.Length;
+        var failedSolutions = solutions.Where(e => e.State == SolutionEntityState.Done).ToArray();
+        var failedSolutionsCount = failedSolutions.Length;
+        float successRate = 0f;
+        float averageScore = 0f;
+        if (doneSolutionsCount != 0 || failedSolutionsCount != 0)
+        {
+            successRate = MathF.Max(1, doneSolutionsCount) / MathF.Max(1, failedSolutionsCount);
+            var totalScore = (float)doneSolutions.Concat(failedSolutions)
+                .Sum(e => e.ExpertReviews!.OrderByDescending(review => review.CreatedAt).First().Score);
+            averageScore = totalScore / (doneSolutionsCount + failedSolutionsCount);
+        }
+
         return new(
             entity.Id,
             entity.Login,
@@ -41,6 +48,7 @@ internal static class CandidatesMapper
             entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray(),
             entity.Solutions?.Where(e => e.MedalGrantedAt != null).Count() ?? 0, 
             doneSolutions.Select(e => e.Assignment.Name).ToArray(),
+            averageScore,
             MathF.Round(successRate * 100)
         );
     }

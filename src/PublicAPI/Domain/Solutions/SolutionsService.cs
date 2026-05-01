@@ -164,7 +164,7 @@ public class SolutionsService(
             return Results.NotFound<SolutionFullInfo>();
         if (solution.CandidateOwnerId != candidateOwnerId)
             return Results.Forbidden<SolutionFullInfo>();
-        if (solution.State != SolutionState.InProgress)
+        if (!solution.CanSendToReview)
             return Results.BadRequest<SolutionFullInfo>($"State of Solution is incorrect: {solution.State}");
 
         await solutionsRepository

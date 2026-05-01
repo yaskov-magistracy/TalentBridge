@@ -16,6 +16,8 @@ public record Solution(
 {
     internal bool IsGroup => Team != null;
     internal bool HasMedal => MedalGrantedAt != null;
+    internal bool CanSendToReview => State == SolutionState.InProgress 
+                                     || State == SolutionState.RequiresImprovements;
 }
 
 public record SolutionShortInfo(

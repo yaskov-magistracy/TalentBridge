@@ -25,5 +25,6 @@ public record CandidateFullInfo(
     Technology[]? Technologies,
     int MedalsCount,
     string[] SolutionsCompleted,
+    float AverageScore,
     float SuccessRate
 ) : Candidate(Id, Login, Surname, Name, Patronymic, City, About, Rating);
