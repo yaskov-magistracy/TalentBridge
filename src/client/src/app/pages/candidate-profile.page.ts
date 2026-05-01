@@ -64,13 +64,20 @@ import { TechChipComponent } from '../shared/components/tech-chip.component';
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div class="border-2 border-amber-300 bg-amber-50 p-6 text-center">
                 <div class="text-3xl font-bold text-amber-600 flex items-center justify-center gap-2">
                   <span aria-hidden="true">★</span>
                   {{ formatRating(candidate.rating) }}
                 </div>
                 <p class="text-sm text-gray-600 mt-2">Рейтинг платформы</p>
+              </div>
+
+              <div class="border-2 border-cyan-400 bg-cyan-50 p-6 text-center">
+                <div class="text-3xl font-bold text-cyan-600 flex items-center justify-center gap-2">
+                  {{ formatSuccessRate(candidate.successRate) }}%
+                </div>
+                <p class="text-sm text-cyan-700 mt-2 font-bold uppercase">Успешность</p>
               </div>
 
               <div class="border-2 border-emerald-400 bg-emerald-50 p-6 text-center">
@@ -216,6 +223,10 @@ export class CandidateProfilePage implements OnInit {
 
   formatRating(rating: number | null | undefined): string {
     return Number(rating ?? 0).toFixed(1);
+  }
+
+  formatSuccessRate(successRate: number | null | undefined): string {
+    return Number(successRate ?? 0).toFixed(1);
   }
 
   getSolutionCardClass(solution: SolutionFullInfo): string {

@@ -75,7 +75,7 @@ import { NotificationService } from '../core/services/notification.service';
             Загрузка профиля...
           </div>
 
-          <div *ngIf="candidate && !showProfileEdit" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div *ngIf="candidate && !showProfileEdit" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">ФИО</p>
               <p class="font-semibold text-lg">{{ candidate.surname }} {{ candidate.name }}{{ candidate.patronymic ? ' ' + candidate.patronymic : '' }}</p>
@@ -84,13 +84,48 @@ import { NotificationService } from '../core/services/notification.service';
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Город</p>
               <p class="font-semibold text-lg">{{ candidate.city || 'Не указан' }}</p>
             </div>
-            <div>
+          </div>
+
+          <div *ngIf="candidate && !showProfileEdit" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="border border-indigo-200 bg-indigo-50 p-4">
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Рейтинг</p>
-              <p class="font-semibold text-lg text-indigo-600">{{ formatCandidateRating(candidate.rating) }} / 100</p>
+              <p class="font-semibold text-lg text-indigo-600 flex items-center gap-2">
+                <span aria-hidden="true">★</span>
+                {{ formatCandidateRating(candidate.rating) }} / 100
+              </p>
             </div>
-            <div>
+            <div class="border border-cyan-200 bg-cyan-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Успешность</p>
+              <p class="font-semibold text-lg text-cyan-600">
+                {{ formatCandidatePercent(candidate.successRate) }}%
+              </p>
+            </div>
+            <div class="border border-emerald-200 bg-emerald-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Средняя оценка</p>
+              <p class="font-semibold text-lg text-emerald-600 flex items-center gap-2">
+                <span aria-hidden="true">✓</span>
+                {{ formatCandidateRating(candidate.averageScore) }} / 10
+              </p>
+            </div>
+            <div class="border border-emerald-200 bg-emerald-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Решено</p>
+              <p class="font-semibold text-lg text-emerald-600 flex items-center gap-2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 11l3 3L22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                {{ getSolutionsCompletedCount(candidate) }}
+              </p>
+            </div>
+            <div class="border border-indigo-200 bg-indigo-50 p-4">
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Медали</p>
-              <p class="font-semibold text-lg text-amber-600">🏅 {{ candidate.medalsCount || 0 }}</p>
+              <p class="font-semibold text-lg text-indigo-600 flex items-center gap-2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="6" />
+                  <path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12" />
+                </svg>
+                {{ candidate.medalsCount || 0 }}
+              </p>
             </div>
           </div>
 
@@ -526,14 +561,14 @@ import { NotificationService } from '../core/services/notification.service';
                 {{ takingAssignment ? 'ЗАГРУЗКА...' : 'ВЗЯТЬ В РАБОТУ' }}
               </button>
               <button
-                *ngIf="(selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements') && selectedSolution.candidateOwner.id === currentUserId"
+                *ngIf="isSendToReviewState(selectedSolution) && selectedSolution.candidateOwner.id === currentUserId"
                 (click)="sendToReview(selectedSolution)"
-                [disabled]="sendingToReview || !canSendToReview(selectedSolution)"
+                [disabled]="isSendingToReview(selectedSolution) || !canSendToReview(selectedSolution)"
                 class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 [class]="canSendToReview(selectedSolution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
-                {{ sendingToReview ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ НА ПРОВЕРКУ' }}
+                {{ isSendingToReview(selectedSolution) ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ НА ПРОВЕРКУ' }}
               </button>
-              <div *ngIf="(selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements') && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
+              <div *ngIf="isSendToReviewState(selectedSolution) && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
                 ⚠️ {{ getSendToReviewDisabledReason(selectedSolution) }}
               </div>
             </div>
@@ -973,14 +1008,14 @@ import { NotificationService } from '../core/services/notification.service';
                       {{ takingAssignment ? 'Загрузка...' : 'Взять в работу' }}
                     </button>
                   </div>
-                  <!-- Send to Review Button for In Progress Tab -->
-                  <div *ngIf="activeTab === 'in-progress' && solution.candidateOwner.id === currentUserId" class="flex-shrink-0">
+                  <!-- Send to Review Button for In Progress and Requires Improvements -->
+                  <div *ngIf="(activeTab === 'in-progress' || (activeTab === 'review' && solution.state === 'RequiresImprovements')) && solution.candidateOwner.id === currentUserId" class="flex-shrink-0">
                     <button
                       (click)="sendToReview(solution)"
-                      [disabled]="sendingToReview || !canSendToReview(solution)"
+                      [disabled]="isSendingToReview(solution) || !canSendToReview(solution)"
                       class="border-2 border-emerald-600 px-4 py-2 font-bold uppercase text-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       [class]="canSendToReview(solution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
-                      {{ sendingToReview ? '...' : 'На проверку' }}
+                      {{ isSendingToReview(solution) ? '...' : 'На проверку' }}
                     </button>
                   </div>
                 </div>
@@ -1058,7 +1093,7 @@ export class CandidateDashboardPage implements OnInit {
   // Solution modal
   selectedSolution: SolutionFullInfo | null = null;
   showSolutionModal = false;
-  sendingToReview = false;
+  sendingToReviewSolutionId: string | null = null;
   solutionUrl = '';
   savingSolutionUrl = false;
 
@@ -1310,8 +1345,17 @@ export class CandidateDashboardPage implements OnInit {
       .join(', ');
   }
 
-  formatCandidateRating(rating: number): string {
-    return Number.isInteger(rating) ? `${rating}` : rating.toFixed(1);
+  formatCandidateRating(rating: number | null | undefined): string {
+    const value = Number(rating ?? 0);
+    return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+  }
+
+  formatCandidatePercent(value: number | null | undefined): string {
+    return Number(value ?? 0).toFixed(1);
+  }
+
+  getSolutionsCompletedCount(candidate: CandidateFullInfo): number {
+    return candidate.solutionsCompleted?.length ?? 0;
   }
 
   openProfileEdit() {
@@ -1491,6 +1535,7 @@ export class CandidateDashboardPage implements OnInit {
   closeSolutionModal(): void {
     this.showSolutionModal = false;
     this.selectedSolution = null;
+    this.sendingToReviewSolutionId = null;
   }
 
   navigateToJoinSolution(): void {
@@ -1648,12 +1693,13 @@ export class CandidateDashboardPage implements OnInit {
   sendToReview(solution: SolutionFullInfo): void {
     if (!solution.id) return;
 
-    this.sendingToReview = true;
+    this.sendingToReviewSolutionId = solution.id;
     this.cdr.markForCheck();
 
     this.solutionsService.sendToReview(solution.id).subscribe({
       next: () => {
         this.notificationService.success('Решение отправлено на проверку!');
+        this.sendingToReviewSolutionId = null;
         this.closeSolutionModal();
         this.loadSolutions();
         this.cdr.markForCheck();
@@ -1661,22 +1707,30 @@ export class CandidateDashboardPage implements OnInit {
       error: (error) => {
         console.error('Failed to send to review:', error);
         this.notificationService.error('Не удалось отправить решение на проверку. Попробуйте позже.');
-        this.sendingToReview = false;
+        this.sendingToReviewSolutionId = null;
         this.cdr.markForCheck();
       }
     });
   }
 
+  isSendingToReview(solution: SolutionFullInfo): boolean {
+    return this.sendingToReviewSolutionId === solution.id;
+  }
+
   canSendToReview(solution: SolutionFullInfo): boolean {
     if (!solution) return false;
-    if (!solution.solutionUrl || solution.solutionUrl.trim() === '') return false;
+    if (!this.isSendToReviewState(solution)) return false;
+    if (!this.getSolutionUrlForValidation(solution)) return false;
     const currentUserId = this.authService.currentUser()?.userId;
     if (!currentUserId) return false;
     return solution.candidateOwner.id === currentUserId;
   }
 
   getSendToReviewDisabledReason(solution: SolutionFullInfo): string | null {
-    if (!solution.solutionUrl || solution.solutionUrl.trim() === '') {
+    if (!this.isSendToReviewState(solution)) {
+      return 'Решение нельзя отправить на проверку в текущем статусе';
+    }
+    if (!this.getSolutionUrlForValidation(solution)) {
       return 'Сначала добавьте ссылку на решение';
     }
     const currentUserId = this.authService.currentUser()?.userId;
@@ -1685,6 +1739,17 @@ export class CandidateDashboardPage implements OnInit {
       return 'Только владелец решения может отправить его на проверку';
     }
     return null;
+  }
+
+  isSendToReviewState(solution: SolutionFullInfo): boolean {
+    return solution.state === 'InProgress' || solution.state === 'RequiresImprovements';
+  }
+
+  private getSolutionUrlForValidation(solution: SolutionFullInfo): string {
+    const url = this.selectedSolution?.id === solution.id
+      ? this.solutionUrl
+      : solution.solutionUrl;
+    return url?.trim() ?? '';
   }
 
   saveSolutionUrl(solution: SolutionFullInfo): void {
