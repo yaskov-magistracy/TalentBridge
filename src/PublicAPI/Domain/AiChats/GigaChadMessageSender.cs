@@ -1,39 +1,39 @@
-﻿using GigaChad;
-using GigaChad.Completions.Request;
+﻿using GigaChat;
+using GigaChat.Completions.Request;
 
 namespace Domain.AiChats;
 
-public interface IGigaChadMessageSender
+public interface IGigaChatMessageSender
 {
     Task<string> GetChatResponse(AiChat curChat, string newMessageText);
 }
 
-public class GigaChadMessageSender(
-    IGigaChadClient gigaChadClient
-) : IGigaChadMessageSender
+public class GigaChatMessageSender(
+    IGigaChatClient gigaChadClient
+) : IGigaChatMessageSender
 {
     public async Task<string> GetChatResponse(AiChat curChat, string newMessageText)
     {
-        var systemMessage = new GigaChadCompletionsRequestMessage()
+        var systemMessage = new GigaChatCompletionsRequestMessage()
         {
             Content = SystemPrompt,
-            Role = GigaChadCompletionsRequestMessageRole.System,
+            Role = GigaChatCompletionsRequestMessageRole.System,
         };
         var prevMessages = curChat.Messages
             .OrderBy(e => e.CreatedAt)
-            .Select(e => new GigaChadCompletionsRequestMessage()
+            .Select(e => new GigaChatCompletionsRequestMessage()
             {
                 Content = e.Text,
                 Role = e.Author == AiChatMessageAuthor.Ai
-                    ? GigaChadCompletionsRequestMessageRole.Assistant 
-                    : GigaChadCompletionsRequestMessageRole.User
+                    ? GigaChatCompletionsRequestMessageRole.Assistant 
+                    : GigaChatCompletionsRequestMessageRole.User
             });
-        var newMessage = new GigaChadCompletionsRequestMessage()
+        var newMessage = new GigaChatCompletionsRequestMessage()
         {
             Content = newMessageText,
-            Role = GigaChadCompletionsRequestMessageRole.User,
+            Role = GigaChatCompletionsRequestMessageRole.User,
         };
-        var gigaRequest = new GigaChadCompletionsRequest()
+        var gigaRequest = new GigaChatCompletionsRequest()
         {
             Messages = new[] { systemMessage }
                 .Concat(prevMessages)

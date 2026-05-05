@@ -17,7 +17,7 @@ using Domain.ExpertReviews;
 using Domain.Experts;
 using Domain.Solutions;
 using Domain.Technologies;
-using GigaChad;
+using GigaChat;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application;
@@ -30,8 +30,8 @@ public static class DI
         services.AddDbContext<DataContext>();
         services.AddScoped<DatabaseAccessor>();
 
-        services.AddSingleton<GigaChadConfig>(_ => new GigaChadConfig());
-        services.AddSingleton<IGigaChadClient, GigaChadClient>();
+        services.AddSingleton<GigaChatConfig>(_ => new GigaChatConfig());
+        services.AddSingleton<IGigaChatClient, GigaChatClient>();
 
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAccountsRepository, AccountsRepository>();
@@ -59,7 +59,7 @@ public static class DI
         services.AddScoped<IExpertReviewsService, ExpertReviewsService>();
         
         services.AddScoped<IAiChatsRepository, AiChatsRepository>();
-        services.AddSingleton<IGigaChadMessageSender, GigaChadMessageSender>();
+        services.AddSingleton<IGigaChatMessageSender, GigaChatMessageSender>();
         services.AddScoped<IAiChatsService, AiChatsService>();
     }
 }

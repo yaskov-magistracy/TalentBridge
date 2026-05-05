@@ -1,9 +1,9 @@
-﻿using GigaChad.Infrastructure;
+﻿using GigaChat.Infrastructure;
 
-namespace GigaChad.Completions.Request;
+namespace GigaChat.Completions.Request;
 
 [Newtonsoft.Json.JsonConverter(typeof(LowerCaseStringEnumConverter))]
-public enum GigaChadCompletionsRequestMessageRole
+public enum GigaChatCompletionsRequestMessageRole
 {
     System, // Системный промпт
     Assistant, // Ответ ИИ

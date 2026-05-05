@@ -1,10 +1,10 @@
 ﻿using System.Net.Http.Json;
 
-namespace GigaChad.Oauth;
+namespace GigaChat.Oauth;
 
-internal class GigaChadOauthProvider(
+internal class GigaChatOauthProvider(
     string authorizationKey, 
-    GigaChadScope scope)
+    GigaChatScope scope)
 {
     private readonly HttpClient httpClient = new();
     private readonly SemaphoreSlim refreshLock = new(1, 1);
@@ -57,7 +57,7 @@ internal class GigaChadOauthProvider(
             throw new HttpRequestException($"Code: {response.StatusCode}. Reason: {response.ReasonPhrase}");
         response.EnsureSuccessStatusCode();
         
-        var result = await response.Content.ReadFromJsonAsync<GigaChadOauthResponse>();
+        var result = await response.Content.ReadFromJsonAsync<GigaChatOauthResponse>();
         
         accessToken = result.AccessToken;
         expiresAt = result.ExpiresAt - ExpriesDecreaseInMilliseconds;
@@ -66,9 +66,9 @@ internal class GigaChadOauthProvider(
     private string MapScopeToStr()
         => scope switch
         {
-            GigaChadScope.PERS => "GIGACHAT_API_PERS",
-            GigaChadScope.B2B => "GIGACHAT_API_B2B",
-            GigaChadScope.CORP => "GIGACHAT_API_CORP",
+            GigaChatScope.PERS => "GIGACHAT_API_PERS",
+            GigaChatScope.B2B => "GIGACHAT_API_B2B",
+            GigaChatScope.CORP => "GIGACHAT_API_CORP",
             _ => throw new ArgumentOutOfRangeException(nameof(scope), scope, null)
         };
 }

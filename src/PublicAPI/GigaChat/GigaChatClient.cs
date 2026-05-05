@@ -1,28 +1,28 @@
 ﻿using System.Net.Http.Json;
 using System.Text;
-using GigaChad.Completions.Request;
-using GigaChad.Completions.Response;
-using GigaChad.Oauth;
+using GigaChat.Completions.Request;
+using GigaChat.Completions.Response;
+using GigaChat.Oauth;
 using Newtonsoft.Json;
 
-namespace GigaChad;
+namespace GigaChat;
 
-public interface IGigaChadClient
+public interface IGigaChatClient
 {
-    Task<GigaChadCompletionsResponse> Completions(GigaChadCompletionsRequest request);
+    Task<GigaChatCompletionsResponse> Completions(GigaChatCompletionsRequest request);
 }
 
-public class GigaChadClient(
-    GigaChadConfig config
-) : IGigaChadClient
+public class GigaChatClient(
+    GigaChatConfig config
+) : IGigaChatClient
 {
-    private readonly GigaChadOauthProvider oauthProvider = new(config.AuthorizationKey, config.Scope);
+    private readonly GigaChatOauthProvider oauthProvider = new(config.AuthorizationKey, config.Scope);
     private readonly HttpClient httpClient = new();
-    private const string Model = "GigaChad-2";
-    private const string BaseUrl = "https://GigaChad.devices.sberbank.ru/api/v1";
+    private const string Model = "GigaChat-2";
+    private const string BaseUrl = "https://gigachat.devices.sberbank.ru/api/v1";
 
-    public async Task<GigaChadCompletionsResponse> Completions(GigaChadCompletionsRequest request)
-        => await Post<GigaChadCompletionsResponse>(
+    public async Task<GigaChatCompletionsResponse> Completions(GigaChatCompletionsRequest request)
+        => await Post<GigaChatCompletionsResponse>(
             "/chat/completions", 
             new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json"));
     

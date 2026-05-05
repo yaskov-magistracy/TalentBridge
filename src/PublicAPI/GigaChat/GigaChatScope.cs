@@ -1,9 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace GigaChad;
+namespace GigaChat;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum GigaChadScope
+public enum GigaChatScope
 {
     PERS,
     B2B,

@@ -1,6 +1,6 @@
 ﻿using Domain.AiChats.DTO;
-using GigaChad;
-using GigaChad.Completions.Request;
+using GigaChat;
+using GigaChat.Completions.Request;
 using Infrastructure.Results;
 
 namespace Domain.AiChats;
@@ -15,7 +15,7 @@ public interface IAiChatsService
 
 public class AiChatsService(
     IAiChatsRepository aiChatsRepository,
-    IGigaChadMessageSender gigaChadMessageSender
+    IGigaChatMessageSender gigaChadMessageSender
 ) : IAiChatsService
 {
     public async Task<Result<AiChat>> GetByUserId(Guid userId)

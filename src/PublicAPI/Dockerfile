@@ -17,14 +17,14 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 # Сохраняем структуру папок в соответствии с ссылками на проекты в оригинале (чтобы не делать лишних `dotnet remove/add reference`)
 WORKDIR /src
 COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
-COPY ["GigaChad/GigaChad.csproj", "GigaChad/"]
+COPY ["GigaChat/GigaChat.csproj", "GigaChat/"]
 COPY ["Domain/Domain.csproj", "Domain/"]
 COPY ["DAL/DAL.csproj", "DAL/"]
 COPY ["API/API.csproj", "API/"]
 COPY ["Application/Application.csproj", "Application/"]
 RUN dotnet restore "API/API.csproj"
 COPY ./Infrastructure ./Infrastructure
-COPY ./GigaChad ./GigaChad
+COPY ./GigaChat ./GigaChat
 COPY ./Domain ./Domain
 COPY ./DAL ./DAL
 COPY ./API ./API

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace GigaChad.Infrastructure;
+namespace GigaChat.Infrastructure;
 
 internal class LowerCaseStringEnumConverter : StringEnumConverter
 {

@@ -10,7 +10,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{FC3CD365-2902-4816-98BA-0B45F853E0FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GigaChad", "GigaChad\GigaChad.csproj", "{92243481-8D88-41F1-B36D-C0B64B0260A3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GigaChat", "GigaChat\GigaChat.csproj", "{92243481-8D88-41F1-B36D-C0B64B0260A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,10 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace GigaChad.Completions.Response;
+namespace GigaChat.Completions.Response;
 
-public class GigaChadCompletionsResponseChoice
+public class GigaChatCompletionsResponseChoice
 {
-    public GigaChadCompletionsResponseChoiceMessage Message { get; set; }
+    public GigaChatCompletionsResponseChoiceMessage Message { get; set; }
     public int Index { get; set; }
     [JsonPropertyName("finish_reason")]
     public string FinishReason { get; set; }

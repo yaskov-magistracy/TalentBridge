@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace GigaChad.Oauth;
+namespace GigaChat.Oauth;
 
-internal class GigaChadOauthResponse
+internal class GigaChatOauthResponse
 {
     [JsonPropertyName("access_token")]
     public string AccessToken { get; set; }
