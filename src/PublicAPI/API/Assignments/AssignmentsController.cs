@@ -59,7 +59,6 @@ public class AssignmentsController(
             request.CandidatesCapacity,
             request.Difficulty,
             request.AttemptsCoefficients,
-            request.MaxAttemptNumberToGrantMedal,
             employerId,
             request.Technologies));
         return assignment.ActionResult;

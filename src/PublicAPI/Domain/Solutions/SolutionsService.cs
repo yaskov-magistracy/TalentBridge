@@ -210,9 +210,6 @@ public class SolutionsService(
             if (request.ResultState != SolutionSubmitReviewResultState.Done
                 || request.Score < 9)
                 return Results.BadRequest<SolutionFullInfo>($"Can not grant medal. Request incorrect. Should be: State.Done and Score>=9");
-
-            if (solution.Assignment.MaxAttemptNumberToGrantMedal < curAttemptNumber)
-                return Results.BadRequest<SolutionFullInfo>($"Can not grant medal. Attempts exceeded. MaxNumber: {solution.Assignment.MaxAttemptNumberToGrantMedal}");
             
             var quotaResponse = await assignmentsService.GetQuota(solution.Assignment.Id);
             if (quotaResponse.Value.MedalsToGrantLeft == 0)

@@ -8,7 +8,6 @@ public record AssignmentCreateEntity(
     int CandidatesCapacity,
     AssignmentDifficulty Difficulty,
     float[] AttemptsCoefficients,
-    int MaxAttemptNumberToGrantMedal,
     Guid EmployerId,
     Guid[]? Technologies)
 {

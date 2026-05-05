@@ -76,7 +76,6 @@ public class DatabaseAccessor(
             1,
             AssignmentDifficulty.Normal,
             [1],
-            1,
             employer.Id,
             technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()
         ))).Value;
@@ -88,7 +87,6 @@ public class DatabaseAccessor(
             2,
             AssignmentDifficulty.Hard,
             [1, 0.8f],
-            1,
             employer.Id,
             technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
         ))).Value;

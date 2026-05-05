@@ -10,7 +10,6 @@ public record AssignmentPatchEntity(
     int? CandidatesCapacity,
     AssignmentDifficulty? Difficulty,
     float[]? AttemptsCoefficients,
-    int? MaxAttemptNumberToGrantMedal,
     RelationsPatch? Technologies)
 {
     

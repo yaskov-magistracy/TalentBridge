@@ -17,7 +17,6 @@ internal class AssignmentEntity
     public int CandidatesCapacity { get; set; }
     public AssignmentEntityDifficulty Difficulty { get; set; }
     public float[] AttemptsCoefficients { get; set; }
-    public int MaxAttemptNumberToGrantMedal { get; set; }
     
     [ForeignKey(nameof(Employer))] public Guid EmployerId { get; set; }
     public EmployerEntity Employer { get; set; }

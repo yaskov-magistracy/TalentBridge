@@ -11,8 +11,7 @@ public record Assignment(
     DateOnly DeadLine,
     int CandidatesCapacity,
     AssignmentDifficulty Difficulty,
-    float[] AttemptsCoefficients,
-    int MaxAttemptNumberToGrantMedal)
+    float[] AttemptsCoefficients)
 {
     public bool IsGrouped => CandidatesCapacity > 1;
 
@@ -34,10 +33,9 @@ public record AssignmentFullInfo(
     int CandidatesCapacity,
     AssignmentDifficulty Difficulty,
     float[] AttemptsCoefficients,
-    int MaxAttemptNumberToGrantMedal,
     Employer Employer,
     Technology[]? Technologies
-) : Assignment(Id, Name, Description, TemplateUrl, DeadLine, CandidatesCapacity, Difficulty, AttemptsCoefficients, MaxAttemptNumberToGrantMedal);
+) : Assignment(Id, Name, Description, TemplateUrl, DeadLine, CandidatesCapacity, Difficulty, AttemptsCoefficients);
 
 public enum AssignmentDifficulty
 {
