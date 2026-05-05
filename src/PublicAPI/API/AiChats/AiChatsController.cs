@@ -1,6 +1,8 @@
 ﻿using API.Configuration.Auth;
 using Domain.AiChats;
 using Domain.AiChats.DTO;
+using GigaChat;
+using GigaChat.Files.Response;
 using Infrastructure.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +13,8 @@ namespace API.AiChats;
 [Route("api/[controller]")]
 [ApiController]
 public class AiChatsController(
-    IAiChatsService aiChatsService
+    IAiChatsService aiChatsService,
+    IGigaChatClient gigaChatClient
 ) : ControllerBase
 {
     /// <summary>
@@ -49,5 +52,15 @@ public class AiChatsController(
     {
         var res = await aiChatsService.SendMessage(chatId, request);
         return res.ActionResult;
+    }
+    
+    /// <summary>
+    /// Список доступных файлов в хранилище GigaChat
+    /// </summary>
+    [HttpGet("files")]
+    public async Task<ActionResult<GigaChatGetFilesResponse>> GetFiles()
+    {
+        var result = await gigaChatClient.GetFiles();
+        return Ok(result);
     }
 }
