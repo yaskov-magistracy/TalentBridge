@@ -12,7 +12,6 @@ import { NavbarComponent } from '../shared/components/navbar.component';
   imports: [CommonModule, FormsModule, RouterLink, NavbarComponent],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
-      <app-navbar [role]="'employer'"></app-navbar>
 
       <div class="max-w-7xl mx-auto px-8 py-8">
         <div class="flex justify-between items-center mb-8 flex-wrap gap-4">
