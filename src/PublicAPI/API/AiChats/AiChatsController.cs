@@ -1,3 +1,4 @@
+using API.AiChats.DTO;
 using API.Configuration.Auth;
 using Domain.AiChats;
 using Domain.AiChats.DTO;
@@ -71,10 +72,10 @@ public class AiChatsController(
     /// В чате, в качестве контекста, выбирается последний загруженный файл с названием `Instructions`
     /// </remarks>
     [HttpPost("files/upload")]
-    public async Task<ActionResult<GigaChatFileItem>> UploadFile([FromForm] IFormFile file)
+    public async Task<ActionResult<GigaChatFileItem>> UploadFile([FromForm] UploadFileRequest request)
     {
-        await using var stream = file.OpenReadStream();
-        var result = await gigaChatClient.UploadFile(stream, file.FileName);
+        await using var stream = request.file.OpenReadStream();
+        var result = await gigaChatClient.UploadFile(stream, request.file.FileName);
         return Ok(result);
     }
 
