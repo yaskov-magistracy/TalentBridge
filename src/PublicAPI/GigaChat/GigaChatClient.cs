@@ -64,10 +64,12 @@ public class GigaChatClient(
         var accessToken = await oauthProvider.GetAccessToken();
         var request = new HttpRequestMessage(method, $"{BaseUrl}{urlPostfix}");
         request.Headers.Add("Authorization", $"Bearer {accessToken}");
-        request.Headers.Add("Accept", "application/json");
+        // request.Headers.Add("Accept", "application/json");
         request.Content = body;
         
         var response = await httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"Code: {response.StatusCode}. Reason: {response.ReasonPhrase}");
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<TResponse>();
         if (result is null)
