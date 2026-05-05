@@ -58,9 +58,6 @@ import { TechChipComponent } from '../shared/components/tech-chip.component';
                   </svg>
                   Закрыть
                 </a>
-                <button class="border-2 border-emerald-600 bg-emerald-600 text-white px-8 py-3 hover:bg-emerald-700 transition-colors font-bold uppercase tracking-wider">
-                  Связаться
-                </button>
               </div>
             </div>
 
