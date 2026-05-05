@@ -14,7 +14,7 @@ public class AiChatsRepository(
     private IQueryable<AiChatEntity> AiChatsFullSearch => AiChatsFull.AsNoTracking();
     private IQueryable<AiChatEntity> AiActiveChatsFullSearch => AiChatsFullSearch.Where(e => e.IsArchived == false);
     private IQueryable<AiChatEntity> AiChatsFull => AiChats
-        .Include(e => e.Messages);
+        .Include(e => e.Messages!.OrderBy(m => m.CreatedAt));
     
     private DbSet<AiChatMessageEntity> AiChatMessages => dataContext.AiChatMessages;
     private IQueryable<AiChatMessageEntity> AiChatMessagesSearch => AiChatMessages.AsNoTracking();
