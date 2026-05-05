@@ -2,13 +2,29 @@ import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AuthService, AssignmentsService, TalentBridgeRepository, TechnologiesService, SolutionsService } from '../core';
+import {
+  AuthService,
+  AssignmentsService,
+  TalentBridgeRepository,
+  TechnologiesService,
+  SolutionsService,
+} from '../core';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { StatusBadgeComponent } from '../shared/components/status-badge.component';
 import { ReviewProgressComponent } from '../shared/components/review-progress.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { EmployerCandidate, EmployerProfile, Submission } from '../core/models/domain.models';
-import { AssignmentFullInfo, AssignmentSearchRequest, AssignmentUpdateEntity, AssignmentCreateApiRequest, RelationsPatch, Technology, SolutionState, SolutionSearchRequest, AssignmentDifficulty } from '../core/models/api.models';
+import {
+  AssignmentFullInfo,
+  AssignmentSearchRequest,
+  AssignmentUpdateEntity,
+  AssignmentCreateApiRequest,
+  RelationsPatch,
+  Technology,
+  SolutionState,
+  SolutionSearchRequest,
+  AssignmentDifficulty,
+} from '../core/models/api.models';
 import { AVAILABLE_TECHS } from '../shared/utils/constants';
 import { NotificationService } from '../core/services/notification.service';
 
@@ -652,36 +668,6 @@ import { NotificationService } from '../core/services/notification.service';
                   с лимитом попыток
                 </p>
               </div>
-
-              <div>
-                <label class="block font-bold mb-2 text-sm uppercase tracking-wider"
-                  >Максимальное кол-во попыток для получения медали</label
-                >
-                <input
-                  type="number"
-                  [(ngModel)]="editForm.maxAttemptNumberToGrantMedal"
-                  name="editMaxAttemptNumberToGrantMedal"
-                  #editMaxAttemptNumberToGrantMedalInput="ngModel"
-                  class="w-full border-2 border-black p-3"
-                  [class.border-red-500]="
-                    editMaxAttemptNumberToGrantMedalInput.invalid &&
-                    editMaxAttemptNumberToGrantMedalInput.touched
-                  "
-                  min="1"
-                  [max]="editForm.maxAttempts"
-                  step="1"
-                  required
-                />
-                <p
-                  *ngIf="
-                    editMaxAttemptNumberToGrantMedalInput.invalid &&
-                    editMaxAttemptNumberToGrantMedalInput.touched
-                  "
-                  class="text-red-600 text-xs mt-1"
-                >
-                  Укажите целое число от 1 до {{ editForm.maxAttempts }}
-                </p>
-              </div>
             </div>
 
             <!-- Task Type -->
@@ -992,36 +978,6 @@ import { NotificationService } from '../core/services/notification.service';
                 <p *ngIf="!areCreateAttemptsCoefficientsValid()" class="text-red-600 text-xs mt-2">
                   Каждое значение должно быть от 0.1 до 1, а количество множителей должно совпадать
                   с лимитом попыток
-                </p>
-              </div>
-
-              <div>
-                <label class="block font-bold mb-2 text-sm uppercase tracking-wider"
-                  >Максимальное кол-во попыток для получения медали</label
-                >
-                <input
-                  type="number"
-                  [(ngModel)]="createForm.maxAttemptNumberToGrantMedal"
-                  name="createMaxAttemptNumberToGrantMedal"
-                  #createMaxAttemptNumberToGrantMedalInput="ngModel"
-                  class="w-full border-2 border-black p-3"
-                  [class.border-red-500]="
-                    createMaxAttemptNumberToGrantMedalInput.invalid &&
-                    createMaxAttemptNumberToGrantMedalInput.touched
-                  "
-                  min="1"
-                  [max]="createForm.maxAttempts"
-                  step="1"
-                  required
-                />
-                <p
-                  *ngIf="
-                    createMaxAttemptNumberToGrantMedalInput.invalid &&
-                    createMaxAttemptNumberToGrantMedalInput.touched
-                  "
-                  class="text-red-600 text-xs mt-1"
-                >
-                  Укажите целое число от 1 до {{ createForm.maxAttempts }}
                 </p>
               </div>
             </div>
