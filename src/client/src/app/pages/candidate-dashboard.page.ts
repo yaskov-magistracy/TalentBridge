@@ -532,7 +532,7 @@ import { NotificationService } from '../core/services/notification.service';
             </div>
 
             <!-- Solution URL (for NotStarted, InProgress and RequiresImprovements tabs) -->
-            <div *ngIf="selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements'" class="mb-6 border-2 border-emerald-300 bg-emerald-50 p-4">
+            <div *ngIf="selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements'" class="mb-6 border-2 border-emerald-300 bg-emerald-50 p-4">
               <h3 class="font-bold text-lg mb-3 uppercase text-emerald-800">
                 🔗 ССЫЛКА НА РЕШЕНИЕ
               </h3>
