@@ -59,6 +59,8 @@ public class AssignmentsRepository(
             query = query.Where(e => e.CandidatesCapacity > 1);
         if (request.IsGrouped is false)
             query = query.Where(e => e.CandidatesCapacity == 1);
+        if (!request.IncludePrivate)
+            query = query.Where(e => e.IsPrivate == false);
         
         var count = await query.CountAsync();
         return new(
@@ -66,31 +68,35 @@ public class AssignmentsRepository(
             count);
     }
 
-    public async Task<AssignmentFullInfo> Add(AssignmentCreateEntity createEntity)
+    public async Task<Guid> Create(AssignmentCreateEntity createEntity)
     {
         var newEntity = AssignmentsMapper.ToEntity(createEntity);
         dataContext.Employers.Attach(newEntity.Employer); 
         dataContext.Technologies.AttachRangeIfNotEmpty(newEntity.Technologies);
         await Assignments.AddAsync(newEntity);
         await dataContext.SaveChangesAsync();
-        return (await GetFull(newEntity.Id))!;
+        return newEntity.Id;
     }
 
-    public async Task<AssignmentFullInfo> Update(Guid id, AssignmentUpdateEntity updateEntity)
+    public async Task Patch(Guid id, AssignmentPatchEntity patchEntity)
     {
         var existed = await Assignments.FirstAsync(e => e.Id == id);
 
-        if (updateEntity.Name != null)
-            existed.Name = updateEntity.Name;
-        if (updateEntity.Description != null)
-            existed.Description = updateEntity.Description;
-        if (updateEntity.TemplateUrl != null)
-            existed.TemplateUrl = updateEntity.TemplateUrl.Value;
-        if (updateEntity.DeadLine != null)
-            existed.DeadLine = updateEntity.DeadLine.Value;
-        if (updateEntity.CandidatesCapacity != null)
-            existed.CandidatesCapacity = updateEntity.CandidatesCapacity.Value;
-        if (updateEntity.Technologies is { } relationsPatch)
+        if (patchEntity.Name != null)
+            existed.Name = patchEntity.Name;
+        if (patchEntity.Description != null)
+            existed.Description = patchEntity.Description;
+        if (patchEntity.TemplateUrl != null)
+            existed.TemplateUrl = patchEntity.TemplateUrl.Value;
+        if (patchEntity.DeadLine != null)
+            existed.DeadLine = patchEntity.DeadLine.Value;
+        if (patchEntity.CandidatesCapacity != null)
+            existed.CandidatesCapacity = patchEntity.CandidatesCapacity.Value;
+        if (patchEntity.Difficulty != null)
+            existed.Difficulty = AssignmentsMapper.ToEntity(patchEntity.Difficulty.Value);
+        if (patchEntity.AttemptsCoefficients != null)
+            existed.AttemptsCoefficients = patchEntity.AttemptsCoefficients;
+        if (patchEntity.Technologies is { } relationsPatch)
         {
             relationsPatch.ApplyRemove(existed.Technologies);
             (existed.Technologies, var toAdd) = relationsPatch.ApplyAdd(existed.Technologies);
@@ -98,6 +104,5 @@ public class AssignmentsRepository(
         }
 
         await dataContext.SaveChangesAsync();
-        return AssignmentsMapper.ToDomainFull(existed);
     }
 }

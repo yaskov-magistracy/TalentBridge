@@ -24,6 +24,16 @@ public class AssignmentsController(
     }
     
     /// <summary>
+    /// Получить инфу по квоте Медалей у задачи
+    /// </summary>
+    [HttpGet("{id:Guid}/quota")]
+    public async Task<ActionResult<AssignmentQuotaResponse>> GetAssignmentQuota([FromRoute] Guid id)
+    {
+        var assignment = await assignmentsService.GetQuota(id);
+        return assignment.ActionResult;
+    }
+    
+    /// <summary>
     /// Поиск по задачам
     /// </summary>
     [HttpPost("search")]
@@ -47,6 +57,9 @@ public class AssignmentsController(
             request.TemplateUrl,
             request.DeadLine,
             request.CandidatesCapacity,
+            request.Difficulty,
+            request.AttemptsCoefficients,
+            request.IsPrivate,
             employerId,
             request.Technologies));
         return assignment.ActionResult;
@@ -57,10 +70,12 @@ public class AssignmentsController(
     /// </summary>
     [AuthorizeRoles(AccountRole.Employer)]
     [HttpPatch("{id:Guid}")]
-    public async Task<ActionResult<AssignmentFullInfo>> Update([FromRoute] Guid id, [FromBody] AssignmentUpdateEntity request)
+    public async Task<ActionResult<AssignmentFullInfo>> Update([FromRoute] Guid id, [FromBody] AssignmentPatchEntity request)
     {
         var employerId = User.GetId();
         var assignment = await assignmentsService.Update(employerId, id, request);
         return assignment.ActionResult;
     }
+    
+    
 }

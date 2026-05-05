@@ -10,11 +10,26 @@ public static class ConfigReader
         var str = Environment.GetEnvironmentVariable(envName)
                   ?? ParseFromLocalFile(localSecretEnvVars.Value, envName)
                   ?? ParseFromLocalFile(localPublicEnvVars.Value, envName);
-        var value = Convert.ChangeType(str, typeof(T));
+        if (str == null)
+            throw new ArgumentException($"Can't find {envName} environment variable");
+        
+        var value = ConvertToT<T>(str);
         if (value == null)
             throw new NotImplementedException($"Can not parse Config var: {nameof(envName)} of type: {nameof(T)}");
 
         return (T)value;
+    }
+
+    private static T ConvertToT<T>(string str)
+    {
+        var targetType = typeof(T);
+
+        if (targetType.IsEnum)
+        {
+            return (T)Enum.Parse(targetType, str);
+        }
+
+        return (T)Convert.ChangeType(str, targetType);
     }
 
     private static string? ParseFromLocalFile(Dictionary<string, string> localEnvVars, string envName)

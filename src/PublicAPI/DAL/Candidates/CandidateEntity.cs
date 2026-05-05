@@ -14,6 +14,7 @@ internal class CandidateEntity : IEntity
     public string? Patronymic { get; set; }
     public string City { get; set; }
     public string About { get; set; }
+    public float Rating { get; set; }
     public List<TechnologyEntity>? Technologies { get; set; }
     public List<SolutionEntity>? Solutions { get; set; }
     public List<SolutionEntity>? SolutionsOwned { get; set; }

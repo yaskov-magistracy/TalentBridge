@@ -8,6 +8,6 @@ public interface IAssignmentsRepository
     Task<(Assignment task, Guid employerId)?> GetWithOwner(Guid id);
     Task<AssignmentFullInfo?> GetFull(Guid id);
     Task<AssignmentSearchResponse> Search(AssignmentSearchRequest request);
-    Task<AssignmentFullInfo> Add(AssignmentCreateEntity createEntity);
-    Task<AssignmentFullInfo> Update(Guid id, AssignmentUpdateEntity updateEntity);
+    Task<Guid> Create(AssignmentCreateEntity createEntity);
+    Task Patch(Guid id, AssignmentPatchEntity patchEntity);
 }

@@ -1,7 +1,9 @@
 using System.Reflection;
+using DAL.AiChats;
 using DAL.Assignments;
 using DAL.Candidates;
 using DAL.Employers;
+using DAL.ExpertReviews;
 using DAL.Experts;
 using DAL.Solutions;
 using DAL.Technologies;
@@ -33,4 +35,7 @@ public class DataContext(
     internal DbSet<AssignmentEntity> Assignments => Set<AssignmentEntity>();
     internal DbSet<TechnologyEntity> Technologies => Set<TechnologyEntity>();
     internal DbSet<SolutionEntity> Solutions => Set<SolutionEntity>();
+    internal DbSet<ExpertReviewEntity> ExpertReviews => Set<ExpertReviewEntity>();
+    internal DbSet<AiChatEntity> AiChats => Set<AiChatEntity>();
+    internal DbSet<AiChatMessageEntity> AiChatMessages => Set<AiChatMessageEntity>();
 }

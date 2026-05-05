@@ -15,6 +15,9 @@ internal static class AssignmentsMapper
             TemplateUrl = createEntity.TemplateUrl,
             DeadLine = createEntity.DeadLine,
             CandidatesCapacity = createEntity.CandidatesCapacity,
+            Difficulty = ToEntity(createEntity.Difficulty),
+            AttemptsCoefficients = createEntity.AttemptsCoefficients,
+            IsPrivate = createEntity.IsPrivate,
             Employer = new()
             {
                 Id = createEntity.EmployerId
@@ -32,7 +35,10 @@ internal static class AssignmentsMapper
             assignment.Description, 
             assignment.TemplateUrl, 
             assignment.DeadLine,
-            assignment.CandidatesCapacity);
+            assignment.CandidatesCapacity,
+            ToDomain(assignment.Difficulty),
+            assignment.AttemptsCoefficients,
+            assignment.IsPrivate);
     
     public static AssignmentFullInfo ToDomainFull(AssignmentEntity assignment)
         => new(
@@ -42,6 +48,27 @@ internal static class AssignmentsMapper
             assignment.TemplateUrl, 
             assignment.DeadLine,
             assignment.CandidatesCapacity,
+            ToDomain(assignment.Difficulty),
+            assignment.AttemptsCoefficients,
+            assignment.IsPrivate,
             EmployersMapper.ToDomain(assignment.Employer),
             assignment.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray());
+
+    public static AssignmentEntityDifficulty ToEntity(AssignmentDifficulty model)
+        => model switch
+        {
+            AssignmentDifficulty.Normal => AssignmentEntityDifficulty.Normal,
+            AssignmentDifficulty.Advanced => AssignmentEntityDifficulty.Advanced,
+            AssignmentDifficulty.Hard => AssignmentEntityDifficulty.Hard,
+            _ => throw new ArgumentOutOfRangeException(nameof(model), model, null)
+        };
+    
+    public static AssignmentDifficulty ToDomain(AssignmentEntityDifficulty entity)
+        => entity switch
+        {
+            AssignmentEntityDifficulty.Normal => AssignmentDifficulty.Normal,
+            AssignmentEntityDifficulty.Advanced => AssignmentDifficulty.Advanced,
+            AssignmentEntityDifficulty.Hard => AssignmentDifficulty.Hard,
+            _ => throw new ArgumentOutOfRangeException(nameof(entity), entity, null)
+        };
 }

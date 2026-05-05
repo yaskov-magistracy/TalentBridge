@@ -1,12 +1,14 @@
 ﻿namespace Domain.Solutions.DTO;
 
 public record SolutionSubmitReviewRequest(
-    string Review,
-    SolutionSubmitReviewResultState ResultState
+    string Comment,
+    int Score,
+    SolutionSubmitReviewResultState ResultState,
+    bool GrantMedal
 );
 
 public enum SolutionSubmitReviewResultState
 {
     Done,
-    Rejected
+    Failed
 }

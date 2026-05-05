@@ -7,6 +7,6 @@ public interface ISolutionsRepository
     Task<SolutionShortInfo?> Get(Guid id);
     Task<SolutionFullInfo?> GetFull(Guid id);
     Task<SolutionSearchResponse> Search(SolutionSearchRequest request);
-    Task<SolutionFullInfo> Add(SolutionCreateEntity createEntity);
-    Task<SolutionFullInfo> Update(Guid id, SolutionPatchEntity patchEntity);
+    Task<Guid> Create(SolutionCreateEntity createEntity);
+    Task Patch(Guid id, SolutionPatchEntity patchEntity);
 }

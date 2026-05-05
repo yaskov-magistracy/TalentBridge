@@ -31,6 +31,6 @@ export const routes: Routes = [
 	{ path: 'assignment/:id/solutions', component: AssignmentSolutionsPage, canActivate: [requireAuthGuard('Employer')] },
 	{ path: 'join-solution', component: JoinSolutionPage, canActivate: [requireAuthGuard('Candidate')] },
 	{ path: 'candidate/:id', component: CandidateProfilePage },
-	{ path: 'candidates-ranking', component: CandidatesRankingPage, canActivate: [requireAuthGuard('Employer')] },
+	{ path: 'candidates-ranking', component: CandidatesRankingPage, canActivate: [requireAuthGuard()] },
 	{ path: '**', redirectTo: '' }
 ];

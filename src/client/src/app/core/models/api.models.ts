@@ -41,13 +41,39 @@ export interface CandidatePatchApiRequest {
 
 export interface CandidateFullInfo {
   id: string;
-  login: string;
-  surname: string;
-  name: string;
-  patronymic?: string;
-  city: string;
-  about: string;
-  technologies: Technology[];
+  login?: string | null;
+  surname?: string | null;
+  name?: string | null;
+  patronymic?: string | null;
+  city?: string | null;
+  about?: string | null;
+  rating: number;
+  successRate?: number | null;
+  averageScore?: number | null;
+  solutionsCompleted?: string[] | null;
+  technologies?: Technology[] | null;
+  medalsCount: number;
+}
+
+export type SearchOrderingDirection = 'Ascending' | 'Descending';
+export type CandidateSearchOrderingField = 'Rating' | 'SolutionsCompleted' | 'SuccessRate';
+
+export interface CandidateSearchOrdering {
+  direction?: SearchOrderingDirection;
+  field?: CandidateSearchOrderingField;
+}
+
+export interface CandidateSearchRequest {
+  take?: number;
+  skip?: number;
+  technologiesIds?: string[] | null;
+  ordering?: CandidateSearchOrdering;
+}
+
+export interface CandidateSearchResponse {
+  items?: CandidateFullInfo[];
+  totalCount?: number;
+  total?: number;
 }
 
 // ==================== Employers ====================
@@ -86,8 +112,13 @@ export interface AssignmentCreateApiRequest {
   templateUrl?: string;
   deadLine: string; // DateOnly as ISO string
   candidatesCapacity: number;
+  difficulty: AssignmentDifficulty;
+  attemptsCoefficients: number[];
+  maxAttemptNumberToGrantMedal?: number;
   technologies?: string[]; // Guid[]
 }
+
+export type AssignmentDifficulty = 'Normal' | 'Advanced' | 'Hard';
 
 export interface AssignmentUpdateEntity {
   name?: string;
@@ -95,6 +126,9 @@ export interface AssignmentUpdateEntity {
   templateUrl?: { value: string | null };
   deadLine?: string;
   candidatesCapacity?: number;
+  difficulty?: AssignmentDifficulty;
+  attemptsCoefficients?: number[];
+  maxAttemptNumberToGrantMedal?: number;
   technologies?: RelationsPatch;
 }
 
@@ -105,6 +139,9 @@ export interface AssignmentFullInfo {
   templateUrl?: string;
   deadLine: string;
   candidatesCapacity: number;
+  difficulty: AssignmentDifficulty;
+  attemptsCoefficients: number[];
+  maxAttemptNumberToGrantMedal: number;
   isGrouped: boolean;
   employer: {
     id: string;
@@ -159,36 +196,53 @@ export interface SolutionTeamPatchApiRequest {
 
 export interface SolutionFullInfo {
   id: string;
-  solutionUrl?: string;
-  startedAt: string;
+  solutionUrl?: string | null;
+  startedAt?: string | null;
   state: SolutionState;
-  team?: SolutionTeamInfo;
+  team?: SolutionTeamInfo | null;
+  medalGrantedAt?: string | null;
   assignment: AssignmentFullInfo;
   candidateOwner: CandidateFullInfo;
   candidates: CandidateFullInfo[];
-  candidatesJoinRequested: CandidateFullInfo[];
-  expertReview?: string;
-  expert?: {
-    id: string;
-    surname: string;
-    name: string;
-    patronymic: string;
-  };
+  candidatesJoinRequested?: CandidateFullInfo[] | null;
+  expertReviews?: ExpertReviewInSolution[] | null;
 }
 
 export interface SolutionTeamInfo {
   name: string;
   description: string;
-  members: CandidateShortInfo[];
 }
 
-export interface CandidateShortInfo {
+export interface ExpertReviewInSolution {
   id: string;
-  surname: string;
-  name: string;
+  expert: {
+    id: string;
+    surname: string;
+    name: string;
+    patronymic: string;
+  };
+  comment: string;
+  score: number;
+  attemptNumber: number;
+  createdAt: string;
+  lastEditedAt: string;
 }
 
-export type SolutionState = 'NotStarted' | 'InProgress' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'Done' | 'Rejected';
+export interface SolutionSubmitReviewRequest {
+  comment: string;
+  score: number;
+  resultState: SolutionSubmitReviewResultState;
+  grantMedal: boolean;
+}
+
+export type SolutionSubmitReviewResultState = 'Done' | 'Failed';
+
+export type SolutionState = 'NotStarted' | 'InProgress' | 'Autotests' | 'AiReview' | 'ExpertReview' | 'RequiresImprovements' | 'Done' | 'Failed';
+
+export interface AssignmentQuotaResponse {
+  medalsToGrantLeft: number;
+  medalsToGrantLimit: number;
+}
 
 // Для совместимости со старыми компонентами
 export type AutoTestStatus = 'pending' | 'passed' | 'failed';
@@ -207,6 +261,8 @@ export interface SolutionSearchRequest {
   candidateJoinRequestedId?: string;
   excludeCandidateJoinRequestedId?: string;
   isAvailableToJoin?: boolean;
+  state?: SolutionState;
+  hasMedal?: boolean;
   text?: string;
 }
 

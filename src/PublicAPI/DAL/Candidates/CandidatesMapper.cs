@@ -1,4 +1,5 @@
-﻿using DAL.Technologies;
+﻿using DAL.Solutions;
+using DAL.Technologies;
 using Domain.Candidates;
 using Domain.Candidates.DTO;
 
@@ -14,11 +15,28 @@ internal static class CandidatesMapper
             entity.Name,
             entity.Patronymic,
             entity.City,
-            entity.About
+            entity.About,
+            entity.Rating
         );
-    
+
     public static CandidateFullInfo ToDomainFull(CandidateEntity entity)
-        => new(
+    {
+        var solutions = entity.Solutions ?? [];
+        var doneSolutions = solutions.Where(e => e.State == SolutionEntityState.Done).ToArray();
+        var doneSolutionsCount = doneSolutions.Length;
+        var failedSolutions = solutions.Where(e => e.State == SolutionEntityState.Done).ToArray();
+        var failedSolutionsCount = failedSolutions.Length;
+        float successRate = 0f;
+        float averageScore = 0f;
+        if (doneSolutionsCount != 0 || failedSolutionsCount != 0)
+        {
+            successRate = MathF.Max(1, doneSolutionsCount) / MathF.Max(1, failedSolutionsCount);
+            var totalScore = (float)doneSolutions.Concat(failedSolutions)
+                .Sum(e => e.ExpertReviews!.OrderByDescending(review => review.CreatedAt).First().Score);
+            averageScore = totalScore / (doneSolutionsCount + failedSolutionsCount);
+        }
+
+        return new(
             entity.Id,
             entity.Login,
             entity.Surname,
@@ -26,8 +44,14 @@ internal static class CandidatesMapper
             entity.Patronymic,
             entity.City,
             entity.About,
-            entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray()
+            entity.Rating,
+            entity.Technologies?.Select(TechnologiesMapper.ToDomain).ToArray(),
+            entity.Solutions?.Where(e => e.MedalGrantedAt != null).Count() ?? 0, 
+            doneSolutions.Select(e => e.Assignment.Name).ToArray(),
+            averageScore,
+            MathF.Round(successRate * 100)
         );
+    }
 
     public static CandidateEntity ToEntity(CandidateCreateEntity createEntity)
         => new()
@@ -40,6 +64,7 @@ internal static class CandidatesMapper
             Patronymic = createEntity.Patronymic,
             City = createEntity.City,
             About = createEntity.About,
+            Rating = 0,
             Technologies = createEntity.Technologies?.Select(e => new TechnologyEntity()
             {
                 Id = e

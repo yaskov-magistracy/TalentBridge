@@ -19,7 +19,7 @@ public class SolutionsRepository(
         .Include(e => e.CandidateOwner)
         .Include(e => e.Candidates)
         .Include(e => e.CandidatesJoinRequested)
-        .Include(e => e.Expert);
+        .Include(e => e.ExpertReviews)!.ThenInclude(er => er.Expert);
 
     public async Task<SolutionShortInfo?> Get(Guid id)
     {
@@ -69,6 +69,8 @@ public class SolutionsRepository(
             query = query.Where(e => e.Candidates.Count == e.Assignment.CandidatesCapacity);
         if (request.State != null)
             query = query.Where(e => e.State == SolutionsMapper.ToEntity(request.State.Value));
+        if (request.HasMedal != null)
+            query = query.Where(e => e.MedalGrantedAt != null);
         
         var count = await query.CountAsync();
         return new(
@@ -76,17 +78,17 @@ public class SolutionsRepository(
             count);
     }
 
-    public async Task<SolutionFullInfo> Add(SolutionCreateEntity createEntity)
+    public async Task<Guid> Create(SolutionCreateEntity createEntity)
     {
         var newEntity = SolutionsMapper.ToEntity(createEntity);
         dataContext.Assignments.Attach(newEntity.Assignment);
         dataContext.Candidates.AttachRange(newEntity.Candidates);
         await Solutions.AddAsync(newEntity);
         await dataContext.SaveChangesAsync();
-        return (await GetFull(newEntity.Id))!;
+        return newEntity.Id;
     }
 
-    public async Task<SolutionFullInfo> Update(Guid id, SolutionPatchEntity patchEntity)
+    public async Task Patch(Guid id, SolutionPatchEntity patchEntity)
     {
         var existed = await SolutionsFull.FirstAsync(e => e.Id == id);
 
@@ -100,6 +102,8 @@ public class SolutionsRepository(
             existed.Team!.Name = patchEntity.Team.Name;
         if (patchEntity.Team?.Description != null)
             existed.Team!.Description = patchEntity.Team.Description;
+        if (patchEntity.MedalGrantedAt != null)
+            existed.MedalGrantedAt = patchEntity.MedalGrantedAt.Value;
         if (patchEntity.Candidates is {} candidatesRelationsPatch)
         {
             candidatesRelationsPatch.ApplyRemove(existed.Candidates);
@@ -122,15 +126,7 @@ public class SolutionsRepository(
             (existed.CandidatesJoinRequested, var toAdd) = candidateJoinRequestedRelationsPatch.ApplyAdd(existed.CandidatesJoinRequested);
             dataContext.Candidates.AttachRangeIfNotEmpty(toAdd);
         }
-        if (patchEntity.ExpertReview != null)
-            existed.ExpertReview = patchEntity.ExpertReview;
-        if (patchEntity.ExpertId != null)
-        {
-            existed.Expert = new ExpertEntity(){Id = patchEntity.ExpertId.Value};
-            dataContext.Experts.Attach(existed.Expert);
-        }
 
         await dataContext.SaveChangesAsync();
-        return SolutionsMapper.ToDomainFull(existed);
     }
 }

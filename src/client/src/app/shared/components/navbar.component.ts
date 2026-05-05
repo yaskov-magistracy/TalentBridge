@@ -10,28 +10,45 @@ import { AuthService } from '../../core';
   template: `
     <div [ngClass]="'border-b-2 ' + getBorderColor() + ' bg-white shadow-sm'">
       <div class="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
-        <a [routerLink]="dashboardPath" class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-emerald-500 bg-clip-text text-transparent">
+        <a
+          [routerLink]="dashboardPath"
+          class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-emerald-500 bg-clip-text text-transparent"
+        >
           TALENTBRIDGE
         </a>
 
         <div *ngIf="role" class="flex gap-8 items-center">
-          <span class="text-sm uppercase tracking-wider border-2 px-3 py-1 font-semibold" [ngClass]="getRoleBadgeClasses()">
+          <a
+            [href]="instructionPath"
+            target="_blank"
+            rel="noopener"
+            class="text-sm uppercase tracking-wider font-semibold hover:text-indigo-600 transition-colors"
+          >
+            Как пользоваться
+          </a>
+          <span
+            class="text-sm uppercase tracking-wider border-2 px-3 py-1 font-semibold"
+            [ngClass]="getRoleBadgeClasses()"
+          >
             {{ getRoleLabel() }}
           </span>
-          <a (click)="logout()" class="text-sm uppercase tracking-wider font-semibold hover:text-indigo-600 transition-colors cursor-pointer">
+          <a
+            (click)="logout()"
+            class="text-sm uppercase tracking-wider font-semibold hover:text-indigo-600 transition-colors cursor-pointer"
+          >
             ВЫХОД
           </a>
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class NavbarComponent {
   @Input() role: 'candidate' | 'employer' | 'expert' | null = null;
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
   ) {}
 
   async logout(): Promise<void> {
@@ -56,6 +73,19 @@ export class NavbarComponent {
       return '/expert-dashboard';
     }
     return '/';
+  }
+
+  get instructionPath(): string {
+    if (this.role === 'employer') {
+      return '/instructions/company-instruction.pdf';
+    }
+    if (this.role === 'candidate') {
+      return '/instructions/candidate-instruction.pdf';
+    }
+    if (this.role === 'expert') {
+      return '/instructions/expert-instruction.pdf';
+    }
+    return '#';
   }
 
   getBorderColor(): string {

@@ -1,5 +1,6 @@
 using Domain.Assignments;
 using Domain.Candidates;
+using Domain.ExpertReviews;
 using Domain.Experts;
 
 namespace Domain.Solutions;
@@ -9,10 +10,14 @@ public record Solution(
     string? SolutionUrl,
     DateOnly? StartedAt,
     SolutionState State,
-    SolutionTeam? Team
+    SolutionTeam? Team,
+    DateTime? MedalGrantedAt
 )
 {
     internal bool IsGroup => Team != null;
+    internal bool HasMedal => MedalGrantedAt != null;
+    internal bool CanSendToReview => State == SolutionState.InProgress 
+                                     || State == SolutionState.RequiresImprovements;
 }
 
 public record SolutionShortInfo(
@@ -21,9 +26,10 @@ public record SolutionShortInfo(
     DateOnly? StartedAt,
     SolutionState State,
     SolutionTeam? Team,
+    DateTime? MedalGrantedAt,
     Guid AssignmentId,
     Guid CandidateOwnerId
-) :  Solution(Id, SolutionUrl, StartedAt, State, Team);
+) :  Solution(Id, SolutionUrl, StartedAt, State, Team, MedalGrantedAt);
 
 public record SolutionFullInfo(
     Guid Id,
@@ -31,13 +37,17 @@ public record SolutionFullInfo(
     DateOnly? StartedAt,
     SolutionState State,
     SolutionTeam? Team,
+    DateTime? MedalGrantedAt,
     AssignmentFullInfo Assignment,
     Candidate CandidateOwner,
     List<Candidate> Candidates,
     List<Candidate>? CandidatesJoinRequested,
-    string? ExpertReview,
-    Expert? Expert
-) : Solution(Id, SolutionUrl, StartedAt, State, Team);
+    List<ExpertReviewInSolution>? ExpertReviews
+) : Solution(Id, SolutionUrl, StartedAt, State, Team, MedalGrantedAt)
+{
+    internal ExpertReviewInSolution GetLastReview()
+        => ExpertReviews!.OrderByDescending(e => e.CreatedAt).First();
+}
 
 
 public record SolutionTeam(
@@ -52,6 +62,7 @@ public enum SolutionState
     Autotests,
     AiReview,
     ExpertReview,
+    RequiresImprovements,
     Done,
-    Rejected,
+    Failed,
 }

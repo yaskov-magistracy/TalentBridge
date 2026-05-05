@@ -1,12 +1,20 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
-import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState } from '../core/models/api.models';
+import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState, AssignmentDifficulty, ExpertReviewInSolution } from '../core/models/api.models';
 import { NotificationService } from '../core/services/notification.service';
+
+type AssignmentTeam = {
+  solutionId: string;
+  name: string;
+  membersCount: number;
+  joinRequestedByCurrentUser: boolean;
+  solution: SolutionFullInfo;
+};
 
 @Component({
   selector: 'app-candidate-dashboard',
@@ -16,11 +24,26 @@ import { NotificationService } from '../core/services/notification.service';
     FormsModule,
     ReactiveFormsModule,
     NavbarComponent,
-    TechChipComponent
+    TechChipComponent,
+    RouterLink
   ],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
       <app-navbar [role]="'candidate'"></app-navbar>
+
+      <ng-template #assignmentMeta let-assignment>
+        <div class="flex flex-wrap gap-2 mb-4 text-xs">
+          <span class="inline-flex items-center px-2.5 py-1 border border-indigo-300 bg-indigo-50 text-indigo-700 font-bold uppercase">
+            Макс. попыток: {{ getAssignmentMaxAttempts(assignment) }}
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 border border-emerald-300 bg-emerald-50 text-emerald-700 font-bold uppercase">
+            Сложность: {{ getDifficultyLabel(assignment.difficulty) }}
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 border border-slate-300 bg-slate-50 text-slate-700 font-bold uppercase">
+            Коэффициенты: {{ formatAttemptCoefficients(assignment) }}
+          </span>
+        </div>
+      </ng-template>
 
       <div class="max-w-7xl mx-auto px-8 py-8">
         <!-- Profile Section -->
@@ -35,18 +58,32 @@ import { NotificationService } from '../core/services/notification.service';
                 <p class="text-sm text-gray-600">Информация о кандидате</p>
               </div>
             </div>
+            <div class="flex gap-3 flex-wrap justify-end">
+              <a
+                [routerLink]="'/candidates-ranking'"
+                class="text-sm border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors uppercase font-semibold flex items-center gap-2 bg-white">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8 21h8" />
+                  <path d="M12 17v4" />
+                  <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+                  <path d="M5 4H3v3a4 4 0 0 0 4 4" />
+                  <path d="M19 4h2v3a4 4 0 0 1-4 4" />
+                </svg>
+                Рейтинг кандидатов
+              </a>
             <button
               (click)="openProfileEdit()"
               class="text-sm border-2 border-indigo-600 px-4 py-2 hover:bg-indigo-600 hover:text-white transition-colors uppercase font-semibold flex items-center gap-2">
               ✏️ РЕДАКТИРОВАТЬ
             </button>
+            </div>
           </div>
 
           <div *ngIf="!candidate" class="text-center py-8 text-gray-500">
             Загрузка профиля...
           </div>
 
-          <div *ngIf="candidate && !showProfileEdit" class="grid grid-cols-2 gap-6">
+          <div *ngIf="candidate && !showProfileEdit" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">ФИО</p>
               <p class="font-semibold text-lg">{{ candidate.surname }} {{ candidate.name }}{{ candidate.patronymic ? ' ' + candidate.patronymic : '' }}</p>
@@ -54,6 +91,49 @@ import { NotificationService } from '../core/services/notification.service';
             <div>
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Город</p>
               <p class="font-semibold text-lg">{{ candidate.city || 'Не указан' }}</p>
+            </div>
+          </div>
+
+          <div *ngIf="candidate && !showProfileEdit" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="border border-indigo-200 bg-indigo-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Рейтинг</p>
+              <p class="font-semibold text-lg text-indigo-600 flex items-center gap-2">
+                <span aria-hidden="true">★</span>
+                {{ formatCandidateRating(candidate.rating) }} / 100
+              </p>
+            </div>
+            <div class="border border-cyan-200 bg-cyan-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Успешность</p>
+              <p class="font-semibold text-lg text-cyan-600">
+                {{ formatCandidatePercent(candidate.successRate) }}%
+              </p>
+            </div>
+            <div class="border border-emerald-200 bg-emerald-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Средняя оценка</p>
+              <p class="font-semibold text-lg text-emerald-600 flex items-center gap-2">
+                <span aria-hidden="true">✓</span>
+                {{ formatCandidateRating(candidate.averageScore) }} / 10
+              </p>
+            </div>
+            <div class="border border-emerald-200 bg-emerald-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Решено</p>
+              <p class="font-semibold text-lg text-emerald-600 flex items-center gap-2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 11l3 3L22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                {{ getSolutionsCompletedCount(candidate) }}
+              </p>
+            </div>
+            <div class="border border-indigo-200 bg-indigo-50 p-4">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Медали</p>
+              <p class="font-semibold text-lg text-indigo-600 flex items-center gap-2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="6" />
+                  <path d="M8.21 13.89 7 23l5-3 5 3-1.21-9.12" />
+                </svg>
+                {{ candidate.medalsCount || 0 }}
+              </p>
             </div>
           </div>
 
@@ -250,6 +330,7 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
+            <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: selectedAssignment }"></ng-container>
 
             <!-- Days Remaining -->
             <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
@@ -276,13 +357,19 @@ import { NotificationService } from '../core/services/notification.service';
               <div *ngIf="assignmentTeams.length > 0" class="mb-4">
                 <p class="text-sm font-bold uppercase text-amber-700 mb-2">Команды, выполняющие это задание:</p>
                 <div class="space-y-2">
-                  <div *ngFor="let team of displayTeams" class="flex justify-between items-center bg-white border border-amber-300 p-2">
+                  <div
+                    *ngFor="let team of displayTeams"
+                    (click)="openAssignmentTeamModal(team.solution)"
+                    class="flex justify-between items-center bg-white border border-amber-300 p-2 cursor-pointer hover:bg-amber-50 transition-colors">
                     <span class="text-sm font-semibold">{{ team.name }}</span>
-                    <button
-                      (click)="joinTeamSolution(team.solutionId)"
-                      class="border border-emerald-600 bg-emerald-600 text-white px-3 py-1 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap">
-                      Присоединиться
-                    </button>
+                    <ng-container *ngIf="team.joinRequestedByCurrentUser">
+                      <button
+                        type="button"
+                        disabled
+                        class="border border-orange-500 bg-orange-500 text-white px-3 py-1 text-xs font-bold uppercase whitespace-nowrap opacity-90 cursor-not-allowed">
+                        на подтверждении
+                      </button>
+                    </ng-container>
                   </div>
                   <button
                     *ngIf="assignmentTeams.length > 3"
@@ -331,6 +418,95 @@ import { NotificationService } from '../core/services/notification.service';
           </div>
         </div>
 
+        <!-- Assignment Team Detail Modal -->
+        <div *ngIf="showAssignmentTeamModal && selectedAssignmentTeamSolution" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[10000]" (click)="closeAssignmentTeamModal()">
+          <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-6">
+              <h2 class="text-2xl font-bold text-indigo-600 uppercase">{{ selectedAssignmentTeamSolution.assignment.name }}</h2>
+              <button (click)="closeAssignmentTeamModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Technologies -->
+            <div class="flex flex-wrap gap-2 mb-4">
+              <app-tech-chip *ngFor="let tech of selectedAssignmentTeamSolution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+            </div>
+
+            <!-- Info Bar -->
+            <div class="flex flex-wrap gap-4 mb-4 text-sm">
+              <div>
+                <span class="font-bold">КОМПАНИЯ:</span> {{ selectedAssignmentTeamSolution.assignment.employer.name }}
+              </div>
+              <div>
+                <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedAssignmentTeamSolution.assignment.deadLine | date:'dd.MM.yyyy' }}
+              </div>
+            </div>
+
+            <!-- Repository Link -->
+            <div *ngIf="selectedAssignmentTeamSolution.assignment.templateUrl" class="mb-4">
+              <a
+                [href]="selectedAssignmentTeamSolution.assignment.templateUrl"
+                target="_blank"
+                class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline">
+                🔗 РЕПОЗИТОРИЙ: {{ selectedAssignmentTeamSolution.assignment.templateUrl }}
+              </a>
+            </div>
+
+            <!-- Days Remaining -->
+            <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
+              <span class="font-bold text-lg" [class]="getDaysRemaining(selectedAssignmentTeamSolution.assignment.deadLine) < 0 ? 'text-red-600' : 'text-indigo-600'">
+                ОСТАЛОСЬ ДНЕЙ: {{ getDaysRemaining(selectedAssignmentTeamSolution.assignment.deadLine) }}
+              </span>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+              <h3 class="font-bold text-lg mb-2 uppercase">ОПИСАНИЕ ПРОЕКТА</h3>
+              <p class="text-gray-700 whitespace-pre-line">{{ selectedAssignmentTeamSolution.assignment.description }}</p>
+            </div>
+
+            <!-- Team Info -->
+            <div class="mb-6 border-2 border-amber-300 bg-amber-50 p-4">
+              <h3 class="font-bold text-lg mb-3 uppercase text-amber-800">
+                📋 КОМАНДА ({{ selectedAssignmentTeamSolution.candidates.length || 0 }} / {{ selectedAssignmentTeamSolution.assignment.candidatesCapacity }} чел.)
+              </h3>
+
+              <div *ngIf="selectedAssignmentTeamSolution.team" class="mb-4">
+                <p class="text-sm font-bold uppercase">НАЗВАНИЕ КОМАНДЫ:</p>
+                <p class="text-lg">{{ selectedAssignmentTeamSolution.team.name }}</p>
+                <p *ngIf="selectedAssignmentTeamSolution.team.description" class="text-sm text-gray-600 mt-1">{{ selectedAssignmentTeamSolution.team.description }}</p>
+              </div>
+
+              <div class="mb-4">
+                <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
+                <div class="space-y-3">
+                  <div *ngFor="let member of selectedAssignmentTeamSolution.candidates" class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
+                    </div>
+                    <div>
+                      <p class="font-semibold">{{ member.surname }} {{ member.name }}{{ member.patronymic ? ' ' + member.patronymic : '' }}</p>
+                      <p class="text-xs text-gray-500">{{ member.login }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4 mt-auto pt-6 border-t-2">
+              <button
+                *ngIf="!hasCurrentUserJoinRequest(selectedAssignmentTeamSolution)"
+                (click)="joinTeamSolution(selectedAssignmentTeamSolution.id)"
+                [disabled]="joiningTeamSolutionId === selectedAssignmentTeamSolution.id"
+                class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                [class]="joiningTeamSolutionId === selectedAssignmentTeamSolution.id ? 'bg-gray-300 text-gray-500' : 'bg-emerald-600 text-white hover:bg-emerald-700'">
+                {{ joiningTeamSolutionId === selectedAssignmentTeamSolution.id ? 'ПРИСОЕДИНЕНИЕ...' : 'ПРИСОЕДИНИТЬСЯ' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Solution Detail Modal -->
         <div *ngIf="showSolutionModal && selectedSolution" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]" (click)="closeSolutionModal()">
           <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
@@ -354,6 +530,8 @@ import { NotificationService } from '../core/services/notification.service';
                 <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedSolution.assignment.deadLine | date:'dd.MM.yyyy' }}
               </div>
             </div>
+
+            <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: selectedSolution.assignment }"></ng-container>
 
             <!-- Repository Link -->
             <div *ngIf="selectedSolution.assignment.templateUrl" class="mb-4">
@@ -385,21 +563,21 @@ import { NotificationService } from '../core/services/notification.service';
               </h3>
 
               <!-- Pending Requests Section (только для владельца решения) -->
-              <div *ngIf="selectedSolution.candidatesJoinRequested.length > 0 && selectedSolution.candidateOwner.id === currentUserId" class="mb-4 border-2 border-emerald-400 bg-emerald-50 p-3">
+              <div *ngIf="canShowJoinRequests(selectedSolution)" class="mb-4 border-2 border-emerald-400 bg-emerald-50 p-3">
                 <div class="flex justify-between items-center mb-2">
-                  <p class="text-sm font-bold uppercase text-emerald-700">⏳ ЗАЯВКИ НА РАССМОТРЕНИИ ({{ selectedSolution.candidatesJoinRequested.length }})</p>
+                  <p class="text-sm font-bold uppercase text-emerald-700">⏳ ЗАЯВКИ НА РАССМОТРЕНИИ ({{ (selectedSolution.candidatesJoinRequested?.length || 0) }})</p>
                   <button
-                    *ngIf="selectedSolution.candidatesJoinRequested.length > 3"
+                    *ngIf="(selectedSolution.candidatesJoinRequested?.length || 0) > 3"
                     (click)="openPendingCandidatesModal()"
                     class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline">
                     Показать всех
                   </button>
                 </div>
                 <div class="space-y-2">
-                  <div *ngFor="let candidate of selectedSolution.candidatesJoinRequested.slice(0, 3)" class="flex justify-between items-center bg-white border border-emerald-300 p-2">
+                  <div *ngFor="let candidate of (selectedSolution.candidatesJoinRequested?.slice(0, 3) || [])" class="flex justify-between items-center bg-white border border-emerald-300 p-2">
                     <div class="flex items-center gap-2">
                       <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                        {{ candidate.surname.charAt(0) }}{{ candidate.name.charAt(0) }}
+                        {{ (candidate.surname || '').charAt(0) }}{{ (candidate.name || '').charAt(0) }}
                       </div>
                       <div>
                         <p class="text-sm font-semibold">{{ candidate.surname }} {{ candidate.name }}</p>
@@ -438,7 +616,7 @@ import { NotificationService } from '../core/services/notification.service';
                 <div class="space-y-3">
                   <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {{ member.surname.charAt(0) }}{{ member.name.charAt(0) }}
+                      {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
                     <div>
                       <p class="font-semibold">{{ member.surname }} {{ member.name }}{{ member.patronymic ? ' ' + member.patronymic : '' }}</p>
@@ -456,8 +634,8 @@ import { NotificationService } from '../core/services/notification.service';
               </h3>
             </div>
 
-            <!-- Solution URL (for NotStarted and InProgress tabs) -->
-            <div *ngIf="selectedSolution.state === 'NotStarted' || selectedSolution.state === 'InProgress'" class="mb-6 border-2 border-emerald-300 bg-emerald-50 p-4">
+            <!-- Solution URL (for NotStarted, InProgress and RequiresImprovements tabs) -->
+            <div *ngIf="(selectedSolution.state === 'InProgress' || selectedSolution.state === 'RequiresImprovements') && selectedSolution.candidateOwner.id === currentUserId" class="mb-6 border-2 border-emerald-300 bg-emerald-50 p-4">
               <h3 class="font-bold text-lg mb-3 uppercase text-emerald-800">
                 🔗 ССЫЛКА НА РЕШЕНИЕ
               </h3>
@@ -486,50 +664,22 @@ import { NotificationService } from '../core/services/notification.service';
                 {{ takingAssignment ? 'ЗАГРУЗКА...' : 'ВЗЯТЬ В РАБОТУ' }}
               </button>
               <button
-                *ngIf="selectedSolution.state === 'InProgress' && selectedSolution.candidateOwner.id === currentUserId"
+                *ngIf="isSendToReviewState(selectedSolution) && selectedSolution.candidateOwner.id === currentUserId"
                 (click)="sendToReview(selectedSolution)"
-                [disabled]="sendingToReview || !canSendToReview(selectedSolution)"
+                [disabled]="isSendingToReview(selectedSolution) || !canSendToReview(selectedSolution)"
                 class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 [class]="canSendToReview(selectedSolution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
-                {{ sendingToReview ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ НА ПРОВЕРКУ' }}
+                {{ isSendingToReview(selectedSolution) ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ НА ПРОВЕРКУ' }}
               </button>
-              <div *ngIf="selectedSolution.state === 'InProgress' && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
+              <div *ngIf="isSendToReviewState(selectedSolution) && !canSendToReview(selectedSolution)" class="text-xs text-red-600 font-semibold">
                 ⚠️ {{ getSendToReviewDisabledReason(selectedSolution) }}
               </div>
             </div>
 
             <!-- Review Progress (only for review tab) -->
-            <div *ngIf="activeTab === 'review'" class="mt-6 border-2 border-amber-300 p-4 bg-amber-50">
+            <div *ngIf="activeTab === 'review' && selectedSolution.state !== 'RequiresImprovements'" class="mt-6 border-2 border-amber-300 p-4 bg-amber-50">
               <h4 class="font-bold mb-4 uppercase text-amber-700">СТАДИИ ПРОВЕРКИ</h4>
               <div class="flex items-center justify-between mb-4">
-                <!-- Autotests -->
-                <div class="flex flex-col items-center flex-1">
-                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
-                    [class]="getReviewStageClass(selectedSolution.state, 'Autotests')">
-                    {{ getStageNumber(selectedSolution.state, 'Autotests') }}
-                  </div>
-                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
-                    [class]="getStageBadgeClass(selectedSolution.state, 'Autotests')">
-                    {{ selectedSolution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
-                  </div>
-                </div>
-                <!-- Line -->
-                <div class="flex-1 h-1 mx-2"
-                  [class]="getLineClass(selectedSolution.state, 'Autotests')"></div>
-                <!-- AI Review -->
-                <div class="flex flex-col items-center flex-1">
-                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
-                    [class]="getReviewStageClass(selectedSolution.state, 'AiReview')">
-                    {{ getStageNumber(selectedSolution.state, 'AiReview') }}
-                  </div>
-                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
-                    [class]="getStageBadgeClass(selectedSolution.state, 'AiReview')">
-                    {{ selectedSolution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
-                  </div>
-                </div>
-                <!-- Line -->
-                <div class="flex-1 h-1 mx-2"
-                  [class]="getLineClass(selectedSolution.state, 'AiReview')"></div>
                 <!-- Expert Review -->
                 <div class="flex flex-col items-center flex-1">
                   <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
@@ -549,6 +699,13 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
+            <div *ngIf="activeTab === 'review' && selectedSolution.state === 'RequiresImprovements'" class="mt-6 border-2 border-red-300 p-4 bg-red-50">
+              <h4 class="font-bold mb-3 uppercase text-red-700">НУЖНЫ ДОПОЛНЕНИЯ</h4>
+              <div class="border-l-4 border-red-500 bg-white p-3">
+                <p class="text-sm text-red-900">{{ getStatusMessage(selectedSolution.state) }}</p>
+              </div>
+            </div>
+
             <!-- Archive Review Result (only for archive tab) -->
             <div *ngIf="activeTab === 'archive'" class="mt-6 border-2 p-4" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'">
               <h4 class="font-bold mb-4 uppercase" [class]="selectedSolution.state === 'Done' ? 'text-emerald-700' : 'text-red-700'">
@@ -558,32 +715,42 @@ import { NotificationService } from '../core/services/notification.service';
               <!-- Status -->
               <div class="flex items-center gap-3 mb-4">
                 <span class="text-3xl" *ngIf="selectedSolution.state === 'Done'">✓</span>
-                <span class="text-3xl" *ngIf="selectedSolution.state === 'Rejected'">✗</span>
+                <span class="text-3xl" *ngIf="selectedSolution.state === 'Failed'">✗</span>
                 <span class="font-bold text-lg" [class]="selectedSolution.state === 'Done' ? 'text-emerald-700' : 'text-red-700'">
                   {{ selectedSolution.state === 'Done' ? 'РЕШЕНИЕ ПРИНЯТО' : 'РЕШЕНИЕ ОТКЛОНЕНО' }}
                 </span>
+                <span *ngIf="selectedSolution.medalGrantedAt" class="text-3xl" aria-label="Медаль">🏅</span>
               </div>
 
-              <!-- Expert Info -->
-              <div *ngIf="selectedSolution.expert" class="mb-4 pt-4 border-t" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
-                <p class="text-xs font-bold uppercase mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">ЭКСПЕРТ:</p>
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {{ selectedSolution.expert.surname.charAt(0) }}{{ selectedSolution.expert.name.charAt(0) }}
-                  </div>
-                  <div>
-                    <p class="font-semibold">{{ selectedSolution.expert.surname }} {{ selectedSolution.expert.name }}{{ selectedSolution.expert.patronymic ? ' ' + selectedSolution.expert.patronymic : '' }}</p>
-                  </div>
-                </div>
-              </div>
+            </div>
 
-              <!-- Expert Review Comment -->
-              <div *ngIf="selectedSolution.expertReview" class="pt-4 border-t" [class]="selectedSolution.state === 'Done' ? 'border-emerald-200' : 'border-red-200'">
-                <p class="text-xs font-bold uppercase mb-2" [class]="selectedSolution.state === 'Done' ? 'text-emerald-600' : 'text-red-600'">КОММЕНТАРИЙ ЭКСПЕРТА:</p>
-                <div class="bg-white p-4 border-2" [class]="selectedSolution.state === 'Done' ? 'border-emerald-300' : 'border-red-300'">
-                  <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ selectedSolution.expertReview }}</p>
+            <div *ngIf="shouldShowExpertReviewHistory(selectedSolution)" class="mt-6 border-2 p-4" [class]="getReviewHistoryContainerClass(selectedSolution)">
+              <p class="text-xs font-bold uppercase tracking-wider mb-3" [class]="getReviewHistoryTitleClass(selectedSolution)">
+                История ревью эксперта:
+              </p>
+              <div *ngIf="getSortedExpertReviews(selectedSolution).length > 0; else noCandidateExpertReviews" class="space-y-3">
+                <div
+                  *ngFor="let review of getSortedExpertReviews(selectedSolution)"
+                  class="border-2 bg-white p-4"
+                  [class]="getReviewHistoryItemClass(selectedSolution)">
+                  <div class="flex flex-wrap justify-between gap-3 mb-2 text-xs text-gray-600">
+                    <span class="font-bold uppercase">
+                      {{ review.expert.surname }} {{ review.expert.name }}{{ review.expert.patronymic ? ' ' + review.expert.patronymic : '' }}
+                    </span>
+                    <span>{{ review.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-4 mb-3 text-xs font-bold uppercase">
+                    <span>Оценка: {{ review.score }}/10</span>
+                    <span>Попытка: {{ review.attemptNumber }}</span>
+                  </div>
+                  <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ review.comment }}</p>
                 </div>
               </div>
+              <ng-template #noCandidateExpertReviews>
+                <div class="border-2 bg-white p-4" [class]="getReviewHistoryItemClass(selectedSolution)">
+                  <p class="text-gray-500 text-sm">История ревью отсутствует</p>
+                </div>
+              </ng-template>
             </div>
           </div>
         </div>
@@ -649,7 +816,7 @@ import { NotificationService } from '../core/services/notification.service';
               <div *ngFor="let candidate of pendingCandidates" class="flex justify-between items-center bg-gray-50 border border-emerald-300 p-3">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {{ candidate.surname.charAt(0) }}{{ candidate.name.charAt(0) }}
+                    {{ (candidate.surname || '').charAt(0) }}{{ (candidate.name || '').charAt(0) }}
                   </div>
                   <div>
                     <p class="font-semibold">{{ candidate.surname }} {{ candidate.name }}{{ candidate.patronymic ? ' ' + candidate.patronymic : '' }}</p>
@@ -826,6 +993,7 @@ import { NotificationService } from '../core/services/notification.service';
                       <p class="text-sm mb-3" *ngIf="!assignment.isGrouped">
                         <span class="font-bold">ПРОЕКТ:</span> ИНДИВИДУАЛЬНЫЙ
                       </p>
+                      <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: assignment }"></ng-container>
                     </div>
                   </div>
                 </div>
@@ -837,9 +1005,9 @@ import { NotificationService } from '../core/services/notification.service';
 
             <!-- Solutions Tabs -->
             <div *ngIf="activeTab !== 'available'" class="space-y-4">
-              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="solution.assignment.isGrouped ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all' : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all'"
-                   [class.ring-4]="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId"
-                   [class.ring-emerald-400]="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId">
+              <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="getSolutionCardClass(solution)"
+                   [class.ring-4]="canShowJoinRequests(solution)"
+                   [class.ring-emerald-400]="canShowJoinRequests(solution)">
                 <div class="flex justify-between items-start gap-4">
                   <div (click)="openSolutionModal(solution)" class="cursor-pointer flex-1">
                     <div class="mb-3">
@@ -865,32 +1033,33 @@ import { NotificationService } from '../core/services/notification.service';
                       <p class="text-sm mb-3" *ngIf="solution.assignment.isGrouped && activeTab !== 'review'">
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
+                      <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: solution.assignment }"></ng-container>
+                      <div *ngIf="solution.state === 'RequiresImprovements'" class="mb-2">
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
+                          <span>!</span> Требуются дополнения
+                        </span>
+                      </div>
                       <!-- Pending Requests Badge -->
-                      <div *ngIf="solution.candidatesJoinRequested.length > 0 && solution.candidateOwner.id === currentUserId" class="mb-2">
+                      <div *ngIf="canShowJoinRequests(solution)" class="mb-2">
                         <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
-                          ⏳ ЗАЯВОК НА РАССМОТРЕНИИ: {{ solution.candidatesJoinRequested.length }}
+                          ⏳ ЗАЯВОК НА РАССМОТРЕНИИ: {{ (solution.candidatesJoinRequested?.length || 0) }}
                         </span>
                       </div>
                       <!-- Review Status Badge (for archive tab) -->
-                      <div *ngIf="activeTab === 'archive'" class="mb-2">
+                      <div *ngIf="activeTab === 'archive'" class="inline-flex mb-2 gap-2">
                         <span *ngIf="solution.state === 'Done'" class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
                           <span>✓</span> РЕВЬЮ ПРОЙДЕНО
                         </span>
-                        <span *ngIf="solution.state === 'Rejected'" class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
+                        <span *ngIf="solution.state === 'Failed'" class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
                           <span>✗</span> РЕВЬЮ НЕ ПРОЙДЕНО
+                        </span>
+                        <span *ngIf="solution.medalGrantedAt" class="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold uppercase border border-amber-300">
+                          <span class="text-base leading-none">🏅</span> Медаль
                         </span>
                       </div>
                     </div>
                     <!-- Review Stage Badges (moved to bottom for review tab) -->
-                    <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review'">
-                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
-                        [class]="getStageBadgeClass(solution.state, 'Autotests')">
-                        {{ solution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
-                      </span>
-                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
-                        [class]="getStageBadgeClass(solution.state, 'AiReview')">
-                        {{ solution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
-                      </span>
+                    <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review' && solution.state !== 'RequiresImprovements'">
                       <span class="px-2 py-1 text-xs font-bold uppercase border-2"
                         [class]="getStageBadgeClass(solution.state, 'ExpertReview')">
                         {{ solution.state === 'ExpertReview' ? '✓ ' : '' }}ЭКСПЕРТ
@@ -906,14 +1075,14 @@ import { NotificationService } from '../core/services/notification.service';
                       {{ takingAssignment ? 'Загрузка...' : 'Взять в работу' }}
                     </button>
                   </div>
-                  <!-- Send to Review Button for In Progress Tab -->
-                  <div *ngIf="activeTab === 'in-progress' && solution.candidateOwner.id === currentUserId" class="flex-shrink-0">
+                  <!-- Send to Review Button for In Progress and Requires Improvements -->
+                  <div *ngIf="(activeTab === 'in-progress' || (activeTab === 'review' && solution.state === 'RequiresImprovements')) && solution.candidateOwner.id === currentUserId" class="flex-shrink-0">
                     <button
                       (click)="sendToReview(solution)"
-                      [disabled]="sendingToReview || !canSendToReview(solution)"
+                      [disabled]="isSendingToReview(solution) || !canSendToReview(solution)"
                       class="border-2 border-emerald-600 px-4 py-2 font-bold uppercase text-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       [class]="canSendToReview(solution) ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-gray-300 text-gray-500'">
-                      {{ sendingToReview ? '...' : 'На проверку' }}
+                      {{ isSendingToReview(solution) ? '...' : 'На проверку' }}
                     </button>
                   </div>
                 </div>
@@ -984,14 +1153,17 @@ export class CandidateDashboardPage implements OnInit {
   teamName = '';
   teamDescription = '';
   takingAssignment = false;
-  assignmentTeams: { solutionId: string; name: string; membersCount: number }[] = [];
-  displayTeams: { solutionId: string; name: string; membersCount: number }[] = [];
+  assignmentTeams: AssignmentTeam[] = [];
+  displayTeams: AssignmentTeam[] = [];
   loadingAssignmentTeams = false;
+  selectedAssignmentTeamSolution: SolutionFullInfo | null = null;
+  showAssignmentTeamModal = false;
+  joiningTeamSolutionId: string | null = null;
 
   // Solution modal
   selectedSolution: SolutionFullInfo | null = null;
   showSolutionModal = false;
-  sendingToReview = false;
+  sendingToReviewSolutionId: string | null = null;
   solutionUrl = '';
   savingSolutionUrl = false;
 
@@ -1051,7 +1223,7 @@ export class CandidateDashboardPage implements OnInit {
     // Исключаем задания, куда уже есть решения или заявки на вступление
     const currentUserId = this.authService.currentUser()?.userId;
     const pendingSolutionIds = this.solutions
-      .filter(s => s.candidatesJoinRequested.some(c => c.id === currentUserId))
+      .filter(s => s.candidatesJoinRequested?.some(c => c.id === currentUserId))
       .map(s => s.assignment.id);
 
     const excludedIds = [
@@ -1182,9 +1354,9 @@ export class CandidateDashboardPage implements OnInit {
         case 'in-progress':
           return state === 'InProgress';
         case 'review':
-          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
+          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview' || state === 'RequiresImprovements';
         case 'archive':
-          return state === 'Done' || state === 'Rejected';
+          return state === 'Done' || state === 'Failed';
         default:
           return false;
       }
@@ -1202,13 +1374,58 @@ export class CandidateDashboardPage implements OnInit {
         case 'in-progress':
           return state === 'InProgress';
         case 'review':
-          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview';
+          return state === 'Autotests' || state === 'AiReview' || state === 'ExpertReview' || state === 'RequiresImprovements';
         case 'archive':
-          return state === 'Done' || state === 'Rejected';
+          return state === 'Done' || state === 'Failed';
         default:
           return false;
       }
     });
+  }
+
+  getSolutionCardClass(solution: SolutionFullInfo): string {
+    if (solution.state === 'RequiresImprovements') {
+      return 'border-2 border-red-500 bg-red-50 p-6 hover:shadow-lg transition-all';
+    }
+    return solution.assignment.isGrouped
+      ? 'border-2 border-amber-400 bg-white p-6 hover:shadow-lg transition-all'
+      : 'border-2 border-indigo-400 bg-white p-6 hover:shadow-lg transition-all';
+  }
+
+  getAssignmentMaxAttempts(assignment: AssignmentFullInfo): number {
+    return assignment.attemptsCoefficients?.length || 0;
+  }
+
+  getDifficultyLabel(difficulty: AssignmentDifficulty): string {
+    const labels: Record<AssignmentDifficulty, string> = {
+      Normal: 'Обычная',
+      Advanced: 'Продвинутая',
+      Hard: 'Сложная'
+    };
+    return labels[difficulty] || difficulty;
+  }
+
+  formatAttemptCoefficients(assignment: AssignmentFullInfo): string {
+    const coefficients = assignment.attemptsCoefficients ?? [];
+    if (!coefficients.length) {
+      return 'Не заданы';
+    }
+    return coefficients
+      .map((coefficient, index) => `${coefficient}`)
+      .join(', ');
+  }
+
+  formatCandidateRating(rating: number | null | undefined): string {
+    const value = Number(rating ?? 0);
+    return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+  }
+
+  formatCandidatePercent(value: number | null | undefined): string {
+    return Number(value ?? 0).toFixed(1);
+  }
+
+  getSolutionsCompletedCount(candidate: CandidateFullInfo): number {
+    return candidate.solutionsCompleted?.length ?? 0;
   }
 
   openProfileEdit() {
@@ -1234,6 +1451,43 @@ export class CandidateDashboardPage implements OnInit {
     this.profileTechs = [];
   }
 
+  getLastExpertReviewComment(solution: SolutionFullInfo): string {
+    const reviews = solution.expertReviews ?? [];
+    return reviews
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]?.comment ?? '';
+  }
+
+  getSortedExpertReviews(solution: SolutionFullInfo): ExpertReviewInSolution[] {
+    return [...(solution.expertReviews ?? [])]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  shouldShowExpertReviewHistory(solution: SolutionFullInfo): boolean {
+    return solution.state === 'RequiresImprovements' || solution.state === 'Done' || solution.state === 'Failed';
+  }
+
+  getReviewHistoryContainerClass(solution: SolutionFullInfo): string {
+    if (solution.state === 'Done') {
+      return 'border-emerald-300 bg-emerald-50';
+    }
+    return 'border-red-300 bg-red-50';
+  }
+
+  getReviewHistoryTitleClass(solution: SolutionFullInfo): string {
+    if (solution.state === 'Done') {
+      return 'text-emerald-600';
+    }
+    return 'text-red-600';
+  }
+
+  getReviewHistoryItemClass(solution: SolutionFullInfo): string {
+    if (solution.state === 'Done') {
+      return 'border-emerald-300';
+    }
+    return 'border-red-300';
+  }
+
   getStateLabel(state: SolutionState): string {
     const labels: Record<string, string> = {
       'NotStarted': 'Ожидает начала',
@@ -1241,7 +1495,8 @@ export class CandidateDashboardPage implements OnInit {
       'Reopened': 'Открыто повторно',
       'Autotests': 'Автотесты',
       'AiReview': 'AI проверка',
-      'ExpertReview': 'Проверка экспертом'
+      'ExpertReview': 'Проверка экспертом',
+      'RequiresImprovements': 'Требуются дополнения'
     };
     return labels[state] || state;
   }
@@ -1314,6 +1569,8 @@ export class CandidateDashboardPage implements OnInit {
         return 'Автотесты пройдены. Решение анализируется искусственным интеллектом.';
       case 'ExpertReview':
         return 'Решение на проверке у эксперта. Ожидайте обратную связь.';
+      case 'RequiresImprovements':
+        return 'Эксперт вернул решение на доработку. Посмотрите комментарии ниже, внесите изменения и отправьте решение на проверку повторно.';
       default:
         return 'Неизвестный статус проверки.';
     }
@@ -1337,6 +1594,7 @@ export class CandidateDashboardPage implements OnInit {
   closeAssignmentModal(): void {
     this.showAssignmentModal = false;
     this.selectedAssignment = null;
+    this.closeAssignmentTeamModal();
   }
 
   openSolutionModal(solution: SolutionFullInfo): void {
@@ -1348,11 +1606,23 @@ export class CandidateDashboardPage implements OnInit {
   closeSolutionModal(): void {
     this.showSolutionModal = false;
     this.selectedSolution = null;
+    this.sendingToReviewSolutionId = null;
   }
 
   navigateToJoinSolution(): void {
     this.closeAssignmentModal();
     this.router.navigate(['/join-solution']);
+  }
+
+  openAssignmentTeamModal(solution: SolutionFullInfo): void {
+    this.selectedAssignmentTeamSolution = solution;
+    this.showAssignmentTeamModal = true;
+  }
+
+  closeAssignmentTeamModal(): void {
+    this.showAssignmentTeamModal = false;
+    this.selectedAssignmentTeamSolution = null;
+    this.joiningTeamSolutionId = null;
   }
 
   private loadAssignmentTeams(assignmentId: string): void {
@@ -1367,8 +1637,7 @@ export class CandidateDashboardPage implements OnInit {
       take: 100,
       skip: 0,
       isAvailableToJoin: true,
-      excludeCandidateOwnerId: currentUserId,
-      excludeCandidateJoinRequestedId: currentUserId
+      excludeCandidateOwnerId: currentUserId
     };
 
     this.solutionsService.searchSolutions(searchRequest).subscribe({
@@ -1380,7 +1649,9 @@ export class CandidateDashboardPage implements OnInit {
           .map(s => ({
             solutionId: s.id,
             name: s.team!.name,
-            membersCount: s.candidates.length
+            membersCount: s.candidates.length,
+            joinRequestedByCurrentUser: this.hasCurrentUserJoinRequest(s),
+            solution: s
           }));
 
         // Показываем максимум 3 команды
@@ -1397,16 +1668,22 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   joinTeamSolution(solutionId: string): void {
-    this.closeAssignmentModal();
+    this.joiningTeamSolutionId = solutionId;
+    this.cdr.markForCheck();
+
     this.solutionsService.requestJoinSolution(solutionId).subscribe({
       next: () => {
         this.notificationService.success('Запрос на присоединение к команде отправлен');
+        this.closeAssignmentTeamModal();
+        this.closeAssignmentModal();
         this.loadSolutions();
       },
       error: (error) => {
         console.error('Failed to join team solution:', error);
         const errorMessage = error?.error?.message || error?.message || 'Не удалось отправить запрос. Попробуйте позже.';
         this.notificationService.error(`Ошибка: ${errorMessage}`);
+        this.joiningTeamSolutionId = null;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1415,7 +1692,22 @@ export class CandidateDashboardPage implements OnInit {
     return this.authService.currentUser()?.userId || null;
   }
 
+  hasCurrentUserJoinRequest(solution: SolutionFullInfo): boolean {
+    const currentUserId = this.currentUserId;
+    if (!currentUserId) return false;
+
+    return (solution.candidatesJoinRequested || []).some(candidate => candidate.id === currentUserId);
+  }
+
+  canShowJoinRequests(solution: SolutionFullInfo | null | undefined): boolean {
+    return this.activeTab === 'waiting-start'
+      && (solution?.candidatesJoinRequested?.length || 0) > 0
+      && solution?.candidateOwner.id === this.currentUserId;
+  }
+
   openPendingCandidatesModal(): void {
+    if (!this.canShowJoinRequests(this.selectedSolution)) return;
+
     this.pendingCandidates = this.selectedSolution?.candidatesJoinRequested || [];
     this.showPendingCandidatesModal = true;
   }
@@ -1505,12 +1797,13 @@ export class CandidateDashboardPage implements OnInit {
   sendToReview(solution: SolutionFullInfo): void {
     if (!solution.id) return;
 
-    this.sendingToReview = true;
+    this.sendingToReviewSolutionId = solution.id;
     this.cdr.markForCheck();
 
     this.solutionsService.sendToReview(solution.id).subscribe({
       next: () => {
         this.notificationService.success('Решение отправлено на проверку!');
+        this.sendingToReviewSolutionId = null;
         this.closeSolutionModal();
         this.loadSolutions();
         this.cdr.markForCheck();
@@ -1518,22 +1811,30 @@ export class CandidateDashboardPage implements OnInit {
       error: (error) => {
         console.error('Failed to send to review:', error);
         this.notificationService.error('Не удалось отправить решение на проверку. Попробуйте позже.');
-        this.sendingToReview = false;
+        this.sendingToReviewSolutionId = null;
         this.cdr.markForCheck();
       }
     });
   }
 
+  isSendingToReview(solution: SolutionFullInfo): boolean {
+    return this.sendingToReviewSolutionId === solution.id;
+  }
+
   canSendToReview(solution: SolutionFullInfo): boolean {
     if (!solution) return false;
-    if (!solution.solutionUrl || solution.solutionUrl.trim() === '') return false;
+    if (!this.isSendToReviewState(solution)) return false;
+    if (!this.getSolutionUrlForValidation(solution)) return false;
     const currentUserId = this.authService.currentUser()?.userId;
     if (!currentUserId) return false;
     return solution.candidateOwner.id === currentUserId;
   }
 
   getSendToReviewDisabledReason(solution: SolutionFullInfo): string | null {
-    if (!solution.solutionUrl || solution.solutionUrl.trim() === '') {
+    if (!this.isSendToReviewState(solution)) {
+      return 'Решение нельзя отправить на проверку в текущем статусе';
+    }
+    if (!this.getSolutionUrlForValidation(solution)) {
       return 'Сначала добавьте ссылку на решение';
     }
     const currentUserId = this.authService.currentUser()?.userId;
@@ -1542,6 +1843,17 @@ export class CandidateDashboardPage implements OnInit {
       return 'Только владелец решения может отправить его на проверку';
     }
     return null;
+  }
+
+  isSendToReviewState(solution: SolutionFullInfo): boolean {
+    return solution.state === 'InProgress' || solution.state === 'RequiresImprovements';
+  }
+
+  private getSolutionUrlForValidation(solution: SolutionFullInfo): string {
+    const url = this.selectedSolution?.id === solution.id
+      ? this.solutionUrl
+      : solution.solutionUrl;
+    return url?.trim() ?? '';
   }
 
   saveSolutionUrl(solution: SolutionFullInfo): void {

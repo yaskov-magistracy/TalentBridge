@@ -9,9 +9,20 @@ public record Assignment(
     string Description,
     string? TemplateUrl,
     DateOnly DeadLine,
-    int CandidatesCapacity)
+    int CandidatesCapacity,
+    AssignmentDifficulty Difficulty,
+    float[] AttemptsCoefficients,
+    bool IsPrivate)
 {
     public bool IsGrouped => CandidatesCapacity > 1;
+
+    internal float GetDifficultyCoefficient() => Difficulty switch
+    {
+        AssignmentDifficulty.Normal => 1f,
+        AssignmentDifficulty.Advanced => 1.5f,
+        AssignmentDifficulty.Hard => 2f,
+        _ => throw new ArgumentException()
+    };
 }
 
 public record AssignmentFullInfo(
@@ -21,6 +32,16 @@ public record AssignmentFullInfo(
     string? TemplateUrl,
     DateOnly DeadLine,
     int CandidatesCapacity,
+    AssignmentDifficulty Difficulty,
+    float[] AttemptsCoefficients,
+    bool IsPrivate,
     Employer Employer,
     Technology[]? Technologies
-) : Assignment(Id, Name, Description, TemplateUrl, DeadLine, CandidatesCapacity);
+) : Assignment(Id, Name, Description, TemplateUrl, DeadLine, CandidatesCapacity, Difficulty, AttemptsCoefficients, IsPrivate);
+
+public enum AssignmentDifficulty
+{
+    Normal,
+    Advanced,
+    Hard
+}

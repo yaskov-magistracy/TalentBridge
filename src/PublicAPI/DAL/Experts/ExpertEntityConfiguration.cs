@@ -12,7 +12,7 @@ internal class ExpertEntityConfiguration : IEntityTypeConfiguration<ExpertEntity
         builder.HasOne(e => e.Employer)
             .WithMany(e => e.Experts);
         
-        builder.HasMany(e => e.Solutions)
+        builder.HasMany(e => e.ExpertReviews)
             .WithOne(e => e.Expert);
     }
 }

@@ -13,14 +13,17 @@ namespace DAL;
 
 public class DatabaseAccessor(
     DataContext dataContext,
-    IEmployersService employersService,
-    ICandidatesService candidatesService,
-    ITechnologiesService technologiesService,
-    IAssignmentsService assignmentsService,
-    ISolutionsService solutionsService,
-    IExpertsService expertsService
+    IServiceScopeFactory serviceScopeFactory
 )
 {
+    private T Get<T>() where T : notnull => serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<T>();
+    private IEmployersService EmployersService => Get<IEmployersService>();
+    private ITechnologiesService TechnologiesService => Get<ITechnologiesService>();
+    private ICandidatesService CandidatesService => Get<ICandidatesService>();
+    private IAssignmentsService  AssignmentsService => Get<IAssignmentsService>();
+    private ISolutionsService SolutionsService => Get<ISolutionsService>();
+    private IExpertsService ExpertsService => Get<IExpertsService>();
+    
     public async Task RecreateDatabase()
     {
         await dataContext.Database.EnsureDeletedAsync();
@@ -28,25 +31,11 @@ public class DatabaseAccessor(
         await AddBaseEntities();
     }
 
-    // TODO: Сделать резолвинг сервисов по требованию
-    /// <summary>
-    /// Костыль чтобы имитировать Scoped
-    /// </summary>
-    private void ClearAttachedItems()
-    {
-        foreach (var entry in dataContext.ChangeTracker.Entries())
-        {
-            entry.State = EntityState.Detached;
-        }
-    }
-
     private async Task AddBaseEntities()
     {
-        await technologiesService.AddBatch(TechnologyCreateEntities);
-        ClearAttachedItems();
-        var (technologies, technologiesCount) = (await technologiesService.Search(new())).Value;
-        ClearAttachedItems();
-        var candidate = (await candidatesService.Add(new(
+        await TechnologiesService.AddBatch(TechnologyCreateEntities);
+        var (technologies, technologiesCount) = (await TechnologiesService.Search(new())).Value;
+        var candidate = (await CandidatesService.Add(new(
             "candidate",
             "candidate",
             "Корнишевский",
@@ -56,8 +45,7 @@ public class DatabaseAccessor(
             "Я новенький разработчик тут",
             technologies.Take(5).Select(e => e.Id).ToArray()
         ))).Value;
-        ClearAttachedItems();
-        var candidate2 = (await candidatesService.Add(new(
+        var candidate2 = (await CandidatesService.Add(new(
             "candidate2",
             "candidate2",
             "Бушуев",
@@ -67,14 +55,12 @@ public class DatabaseAccessor(
             "Опыт в пэт-проектах полгода. Делал телеграм-ботов на аутсорсе",
             technologies.Take(3).Select(e => e.Id).ToArray()
         ))).Value;
-        ClearAttachedItems();
-        var employer = (await employersService.Add(new(
+        var employer = (await EmployersService.Add(new(
             "employer",
             "employer",
             "ООО Рога-копыта"
         ))).Value;
-        ClearAttachedItems();
-        var expert = (await expertsService.Add(new(
+        var expert = (await ExpertsService.Add(new(
             "expert",
             "expert",
             "Экспертов",
@@ -82,68 +68,71 @@ public class DatabaseAccessor(
             "Экспертович",
             employer.Id
         ))).Value;
-        ClearAttachedItems();
-        var soloAssignment = (await assignmentsService.Add(new(
-            "Тестовое задание для одного человека",
+        var soloAssignment = (await AssignmentsService.Add(new(
+            "Тестовое задание для одного человека. Приватное",
             "Это описание тестового задания для одного человека",
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             1,
+            AssignmentDifficulty.Normal,
+            [1],
+            true,
             employer.Id,
             technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()
         ))).Value;
-        ClearAttachedItems();
-        var teamAssignment = (await assignmentsService.Add(new(
-            "Тестовое задание для команды",
+        var teamAssignment = (await AssignmentsService.Add(new(
+            "Тестовое задание для команды c несколькими иттерациями",
             "Это описание тестового задания для команды",
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(15)),
             2,
+            AssignmentDifficulty.Hard,
+            [1, 0.8f],
+            false,
             employer.Id,
             technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
         ))).Value;
-        ClearAttachedItems();
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
-            new("В целом неплохое решение. Я бы взял его на работу", SolutionSubmitReviewResultState.Done));
-        ClearAttachedItems();
+            new("В целом неплохое решение. Я бы взял его на работу", 9, SolutionSubmitReviewResultState.Done, true));
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
-                new("Плохое решение. Много недочётов. Я бы не брал", SolutionSubmitReviewResultState.Rejected));
-        ClearAttachedItems();
-        var teamSolution = (await solutionsService.Add(new(
-            teamAssignment.Id, 
-            candidate.Id,
-            new TeamCreateRequest("Супер команда для проекта", "Делаем крутые штуки")
-        ))).Value;
-        ClearAttachedItems();
-        await solutionsService.Join(candidate2.Id, teamSolution.Id);
-        ClearAttachedItems();
-        await solutionsService.Start(candidate.Id, teamSolution.Id);
-        ClearAttachedItems();
-        var notFullTeamSolution = (await solutionsService.Add(new(
+                new("Плохое решение. Много недочётов. Я бы не брал", 3, SolutionSubmitReviewResultState.Failed, false));
+        await CreateTeamSolutionAndGoToManeReviews(teamAssignment.Id, candidate.Id, candidate2.Id, expert.Id);
+        var notFullTeamSolution = (await SolutionsService.Add(new(
             teamAssignment.Id, 
             candidate.Id,
             new TeamCreateRequest("Ещё не собранная команда", "Ищу интересных людей для работы вместе")
         ))).Value;
-        ClearAttachedItems();
-        await solutionsService.JoinRequest(candidate2.Id, notFullTeamSolution.Id);
-        ClearAttachedItems();
+        await SolutionsService.JoinRequest(candidate2.Id, notFullTeamSolution.Id);
     }
 
     private async Task CreateSolutionAndGoToReview(Guid assignmentId, Guid candidateId, Guid expertId, SolutionSubmitReviewRequest submitReviewRequestRequest)
     {
-        ClearAttachedItems();
-        var soloSolution = (await solutionsService.Add(new(
+        var soloSolution = (await SolutionsService.Add(new(
             assignmentId, 
             candidateId,
             null
         ))).Value;
-        ClearAttachedItems();
-        await solutionsService.Start(candidateId, soloSolution.Id);
-        ClearAttachedItems();
-        await solutionsService.SendToReview(candidateId, soloSolution.Id);
-        ClearAttachedItems();
-        await solutionsService.SubmitReview(expertId, soloSolution.Id, submitReviewRequestRequest);
-        ClearAttachedItems();
+        await SolutionsService.Start(candidateId, soloSolution.Id);
+        await SolutionsService.SendToReview(candidateId, soloSolution.Id);
+        await SolutionsService.SubmitReview(expertId, soloSolution.Id, submitReviewRequestRequest);
+    }
+    
+    private async Task CreateTeamSolutionAndGoToManeReviews(
+        Guid teamAssignmentId, Guid candidateId, Guid candidate2Id, Guid expertId)
+    {
+        var teamSolution = (await SolutionsService.Add(new(
+            teamAssignmentId, 
+            candidateId,
+            new TeamCreateRequest("Супер команда для проекта", "Делаем крутые штуки")
+        ))).Value;
+        await SolutionsService.Join(candidate2Id, teamSolution.Id);
+        await SolutionsService.Start(candidateId, teamSolution.Id);
+        await SolutionsService.SendToReview(candidateId, teamSolution.Id);
+        await SolutionsService.SubmitReview(expertId, teamSolution.Id, 
+            new ("В целом неплохо. Нужно доделать транзакции и закрыть безопасность", 7, SolutionSubmitReviewResultState.Failed, false));
+        await SolutionsService.SendToReview(candidateId, teamSolution.Id);
+        await SolutionsService.SubmitReview(expertId, teamSolution.Id,
+            new("Уже гораздо лучше. Видно проделанную работу. Молодцы", 8, SolutionSubmitReviewResultState.Done, false));
     }
 
     private static readonly TechnologyCreateEntity[] TechnologyCreateEntities =

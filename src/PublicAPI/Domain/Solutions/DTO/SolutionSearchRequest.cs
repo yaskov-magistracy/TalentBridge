@@ -14,9 +14,10 @@ public record SolutionSearchRequest(
     Guid? ExcludeCandidateJoinRequestedId = null,
     bool? IsAvailableToJoin = null,
     SolutionState? State = null,
+    bool? HasMedal = null,
     string? Text = null,
     int Take = 100,
     int Skip = 0
-) : BaseSearchRequest<Solution>(Take, Skip)
+) : BaseSearchRequest(Take, Skip)
 {
 }
