@@ -8,6 +8,13 @@ import { AuthService, CandidatesService, TechnologiesService, AssignmentsService
 import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState, AssignmentDifficulty, ExpertReviewInSolution } from '../core/models/api.models';
 import { NotificationService } from '../core/services/notification.service';
 
+type AssignmentTeam = {
+  solutionId: string;
+  name: string;
+  membersCount: number;
+  joinRequestedByCurrentUser: boolean;
+};
+
 @Component({
   selector: 'app-candidate-dashboard',
   standalone: true,
@@ -352,10 +359,19 @@ import { NotificationService } from '../core/services/notification.service';
                   <div *ngFor="let team of displayTeams" class="flex justify-between items-center bg-white border border-amber-300 p-2">
                     <span class="text-sm font-semibold">{{ team.name }}</span>
                     <button
+                      *ngIf="!team.joinRequestedByCurrentUser; else joinRequestPending"
                       (click)="joinTeamSolution(team.solutionId)"
                       class="border border-emerald-600 bg-emerald-600 text-white px-3 py-1 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap">
                       Присоединиться
                     </button>
+                    <ng-template #joinRequestPending>
+                      <button
+                        type="button"
+                        disabled
+                        class="border border-orange-500 bg-orange-500 text-white px-3 py-1 text-xs font-bold uppercase whitespace-nowrap opacity-90 cursor-not-allowed">
+                        на подтверждении
+                      </button>
+                    </ng-template>
                   </div>
                   <button
                     *ngIf="assignmentTeams.length > 3"
@@ -460,7 +476,7 @@ import { NotificationService } from '../core/services/notification.service';
               </h3>
 
               <!-- Pending Requests Section (только для владельца решения) -->
-              <div *ngIf="(selectedSolution.candidatesJoinRequested?.length || 0) > 0 && selectedSolution.candidateOwner.id === currentUserId" class="mb-4 border-2 border-emerald-400 bg-emerald-50 p-3">
+              <div *ngIf="canShowJoinRequests(selectedSolution)" class="mb-4 border-2 border-emerald-400 bg-emerald-50 p-3">
                 <div class="flex justify-between items-center mb-2">
                   <p class="text-sm font-bold uppercase text-emerald-700">⏳ ЗАЯВКИ НА РАССМОТРЕНИИ ({{ (selectedSolution.candidatesJoinRequested?.length || 0) }})</p>
                   <button
@@ -931,8 +947,8 @@ import { NotificationService } from '../core/services/notification.service';
             <!-- Solutions Tabs -->
             <div *ngIf="activeTab !== 'available'" class="space-y-4">
               <div *ngFor="let solution of getSolutionsForTab(activeTab)" [class]="getSolutionCardClass(solution)"
-                   [class.ring-4]="(solution.candidatesJoinRequested?.length || 0) > 0 && solution.candidateOwner.id === currentUserId"
-                   [class.ring-emerald-400]="(solution.candidatesJoinRequested?.length || 0) > 0 && solution.candidateOwner.id === currentUserId">
+                   [class.ring-4]="canShowJoinRequests(solution)"
+                   [class.ring-emerald-400]="canShowJoinRequests(solution)">
                 <div class="flex justify-between items-start gap-4">
                   <div (click)="openSolutionModal(solution)" class="cursor-pointer flex-1">
                     <div class="mb-3">
@@ -965,7 +981,7 @@ import { NotificationService } from '../core/services/notification.service';
                         </span>
                       </div>
                       <!-- Pending Requests Badge -->
-                      <div *ngIf="(solution.candidatesJoinRequested?.length || 0) > 0 && solution.candidateOwner.id === currentUserId" class="mb-2">
+                      <div *ngIf="canShowJoinRequests(solution)" class="mb-2">
                         <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase border border-emerald-300">
                           ⏳ ЗАЯВОК НА РАССМОТРЕНИИ: {{ (solution.candidatesJoinRequested?.length || 0) }}
                         </span>
@@ -1086,8 +1102,8 @@ export class CandidateDashboardPage implements OnInit {
   teamName = '';
   teamDescription = '';
   takingAssignment = false;
-  assignmentTeams: { solutionId: string; name: string; membersCount: number }[] = [];
-  displayTeams: { solutionId: string; name: string; membersCount: number }[] = [];
+  assignmentTeams: AssignmentTeam[] = [];
+  displayTeams: AssignmentTeam[] = [];
   loadingAssignmentTeams = false;
 
   // Solution modal
@@ -1555,8 +1571,7 @@ export class CandidateDashboardPage implements OnInit {
       take: 100,
       skip: 0,
       isAvailableToJoin: true,
-      excludeCandidateOwnerId: currentUserId,
-      excludeCandidateJoinRequestedId: currentUserId
+      excludeCandidateOwnerId: currentUserId
     };
 
     this.solutionsService.searchSolutions(searchRequest).subscribe({
@@ -1568,7 +1583,8 @@ export class CandidateDashboardPage implements OnInit {
           .map(s => ({
             solutionId: s.id,
             name: s.team!.name,
-            membersCount: s.candidates.length
+            membersCount: s.candidates.length,
+            joinRequestedByCurrentUser: this.hasCurrentUserJoinRequest(s)
           }));
 
         // Показываем максимум 3 команды
@@ -1603,7 +1619,22 @@ export class CandidateDashboardPage implements OnInit {
     return this.authService.currentUser()?.userId || null;
   }
 
+  private hasCurrentUserJoinRequest(solution: SolutionFullInfo): boolean {
+    const currentUserId = this.currentUserId;
+    if (!currentUserId) return false;
+
+    return (solution.candidatesJoinRequested || []).some(candidate => candidate.id === currentUserId);
+  }
+
+  canShowJoinRequests(solution: SolutionFullInfo | null | undefined): boolean {
+    return this.activeTab === 'waiting-start'
+      && (solution?.candidatesJoinRequested?.length || 0) > 0
+      && solution?.candidateOwner.id === this.currentUserId;
+  }
+
   openPendingCandidatesModal(): void {
+    if (!this.canShowJoinRequests(this.selectedSolution)) return;
+
     this.pendingCandidates = this.selectedSolution?.candidatesJoinRequested || [];
     this.showPendingCandidatesModal = true;
   }
