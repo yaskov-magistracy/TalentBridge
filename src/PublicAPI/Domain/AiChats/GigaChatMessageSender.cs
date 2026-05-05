@@ -1,5 +1,6 @@
-﻿using GigaChat;
+using GigaChat;
 using GigaChat.Completions.Request;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Domain.AiChats;
 
@@ -9,15 +10,19 @@ public interface IGigaChatMessageSender
 }
 
 public class GigaChatMessageSender(
-    IGigaChatClient gigaChadClient
+    IGigaChatClient gigaChadClient,
+    IMemoryCache memoryCache
 ) : IGigaChatMessageSender
 {
     public async Task<string> GetChatResponse(AiChat curChat, string newMessageText)
     {
+        var attachmentId = await GetAttachmentFileIdWithCache();
+        
         var systemMessage = new GigaChatCompletionsRequestMessage()
         {
             Content = SystemPrompt,
             Role = GigaChatCompletionsRequestMessageRole.System,
+            Attachments = [attachmentId]
         };
         var prevMessages = curChat.Messages
             .OrderBy(e => e.CreatedAt)
@@ -43,6 +48,28 @@ public class GigaChatMessageSender(
         
         var response = await gigaChadClient.Completions(gigaRequest);
         return response.Choices.First().Message.Content;
+    }
+    
+    
+    private async Task<string> GetAttachmentFileIdWithCache()
+    {
+        if (memoryCache.TryGetValue("InstructionsFileId", out string? cachedFileId) && cachedFileId != null)
+        {
+            return cachedFileId;
+        }
+
+        var filesResponse = await gigaChadClient.GetFiles();
+        var instructionsFile = filesResponse.Data
+            .OrderByDescending(f => f.CreatedAt)
+            .FirstOrDefault(f => f.Filename.Contains("Instructions", StringComparison.OrdinalIgnoreCase));
+
+        if (instructionsFile == null)
+            throw new Exception($"GigaChat has no instructions file with name '%Instructions%'. Should upload it");
+
+        var fileId = instructionsFile.Id.ToString();
+        memoryCache.Set("InstructionsFileId", fileId, TimeSpan.FromMinutes(1));
+
+        return fileId;
     }
 
     private const string SystemPrompt = @"Ты — официальный ИИ-ассистент проекта. Твоя единственная задача — отвечать строго и только на основе информации, которая содержится в предоставленной документации проекта.
