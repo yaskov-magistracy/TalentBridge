@@ -33,11 +33,13 @@ jobs:
           sudo echo -e \
             "POSTGRES_USER = ${{ secrets.POSTGRES_USER }}\n"\
             "POSTGRES_PASSWORD = ${{ secrets.POSTGRES_PASSWORD }}\n"\
+            "GIGACHAD_AUTHORIZATION_KEY = ${{ secrets.GIGACHAD_AUTHORIZATION_KEY }}\n"\
             > docker-env-secrets
             
           sudo echo -e \
             "BACKEND_IMAGE = fnatikjk/talentbridge-backend:last\n"\
             "FRONTEND_IMAGE = iceneo/talentbridge-frontend:last\n"\
+            "GIGACHAD_SCOPE = ${{ secrets.GIGACHAD_SCOPE }}\n"\
             >> docker-env-public
           sudo sh copy-env.sh
 
