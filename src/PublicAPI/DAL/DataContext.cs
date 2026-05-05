@@ -1,4 +1,5 @@
 using System.Reflection;
+using DAL.AiChats;
 using DAL.Assignments;
 using DAL.Candidates;
 using DAL.Employers;
@@ -35,4 +36,6 @@ public class DataContext(
     internal DbSet<TechnologyEntity> Technologies => Set<TechnologyEntity>();
     internal DbSet<SolutionEntity> Solutions => Set<SolutionEntity>();
     internal DbSet<ExpertReviewEntity> ExpertReviews => Set<ExpertReviewEntity>();
+    internal DbSet<AiChatEntity> AiChats => Set<AiChatEntity>();
+    internal DbSet<AiChatMessageEntity> AiChatMessages => Set<AiChatMessageEntity>();
 }
