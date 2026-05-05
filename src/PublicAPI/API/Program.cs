@@ -16,6 +16,7 @@ builder.Services.AddControllers(opt =>
     .AddJsonOptions(JsonConverters.ConfigureJson);
 CookieAuth.Configure(builder.Services);
 DI.Register(builder.Services);
+builder.Services.AddMemoryCache();
 
 
 var app = builder.Build();
