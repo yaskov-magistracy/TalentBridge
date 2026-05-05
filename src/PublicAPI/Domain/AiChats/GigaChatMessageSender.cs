@@ -22,7 +22,6 @@ public class GigaChatMessageSender(
         {
             Content = SystemPrompt,
             Role = GigaChatCompletionsRequestMessageRole.System,
-            Attachments = [attachmentId]
         };
         var prevMessages = curChat.Messages
             .OrderBy(e => e.CreatedAt)
@@ -37,6 +36,7 @@ public class GigaChatMessageSender(
         {
             Content = newMessageText,
             Role = GigaChatCompletionsRequestMessageRole.User,
+            Attachments = [attachmentId],
         };
         var gigaRequest = new GigaChatCompletionsRequest()
         {
