@@ -12,6 +12,9 @@ public interface IGigaChatClient
 {
     Task<GigaChatCompletionsResponse> Completions(GigaChatCompletionsRequest request);
     Task<GigaChatGetFilesResponse> GetFiles();
+    Task<GigaChatFileItem> GetFile(Guid fileId);
+    Task<GigaChatFileItem> UploadFile(Stream fileStream, string fileName, string purpose = "general");
+    Task<GigaChatFileItem> DeleteFile(Guid fileId);
 }
 
 public class GigaChatClient(
@@ -30,7 +33,22 @@ public class GigaChatClient(
 
     public async Task<GigaChatGetFilesResponse> GetFiles()
         => await Get<GigaChatGetFilesResponse>("/files");
-    
+
+    public async Task<GigaChatFileItem> GetFile(Guid fileId)
+        => await Get<GigaChatFileItem>($"/files/{fileId}");
+
+    public async Task<GigaChatFileItem> UploadFile(Stream fileStream, string fileName, string purpose = "general")
+    {
+        var content = new MultipartFormDataContent();
+        content.Add(new StreamContent(fileStream), "file", fileName);
+        content.Add(new StringContent(purpose), "purpose");
+        
+        return await Post<GigaChatFileItem>("/files", content);
+    }
+
+    public async Task<GigaChatFileItem> DeleteFile(Guid fileId)
+        => await Post<GigaChatFileItem>($"/files/{fileId}/delete", null);
+
     
     private Task<T> Get<T>(string urlPostfix)
         => SendRequest<T>(HttpMethod.Get, urlPostfix);

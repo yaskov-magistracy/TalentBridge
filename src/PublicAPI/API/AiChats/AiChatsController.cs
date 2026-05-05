@@ -1,4 +1,4 @@
-﻿using API.Configuration.Auth;
+using API.Configuration.Auth;
 using Domain.AiChats;
 using Domain.AiChats.DTO;
 using GigaChat;
@@ -61,6 +61,37 @@ public class AiChatsController(
     public async Task<ActionResult<GigaChatGetFilesResponse>> GetFiles()
     {
         var result = await gigaChatClient.GetFiles();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Получить данные файла по идентификатору
+    /// </summary>
+    [HttpGet("files/{fileId:Guid}")]
+    public async Task<ActionResult<GigaChatFileItem>> GetFile([FromRoute] Guid fileId)
+    {
+        var result = await gigaChatClient.GetFile(fileId);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Загрузить файл в хранилище GigaChat
+    /// </summary>
+    [HttpPost("files/upload")]
+    public async Task<ActionResult<GigaChatFileItem>> UploadFile(IFormFile file)
+    {
+        await using var stream = file.OpenReadStream();
+        var result = await gigaChatClient.UploadFile(stream, file.FileName);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Удалить файл из хранилища GigaChat
+    /// </summary>
+    [HttpPost("files/{fileId:Guid}/delete")]
+    public async Task<ActionResult<GigaChatFileItem>> DeleteFile([FromRoute] Guid fileId)
+    {
+        var result = await gigaChatClient.DeleteFile(fileId);
         return Ok(result);
     }
 }
