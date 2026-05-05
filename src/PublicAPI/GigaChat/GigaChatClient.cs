@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using GigaChat.Completions.Request;
@@ -40,10 +41,35 @@ public class GigaChatClient(
     public async Task<GigaChatFileItem> UploadFile(Stream fileStream, string fileName, string purpose = "general")
     {
         var content = new MultipartFormDataContent();
-        content.Add(new StreamContent(fileStream), "file", fileName);
+        
+        var fileContent = new StreamContent(fileStream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(GetMimeType(fileName));
+        content.Add(fileContent, "file", fileName);
         content.Add(new StringContent(purpose), "purpose");
         
         return await Post<GigaChatFileItem>("/files", content);
+    }
+
+    private static string GetMimeType(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls" => "application/vnd.ms-excel",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".txt" => "text/plain",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".ogg" => "audio/ogg",
+            _ => "application/octet-stream"
+        };
     }
 
     public async Task<GigaChatFileItem> DeleteFile(Guid fileId)
@@ -64,13 +90,16 @@ public class GigaChatClient(
         var accessToken = await oauthProvider.GetAccessToken();
         var request = new HttpRequestMessage(method, $"{BaseUrl}{urlPostfix}");
         request.Headers.Add("Authorization", $"Bearer {accessToken}");
-        // request.Headers.Add("Accept", "application/json");
+        request.Headers.Add("Accept", "application/json");
         request.Content = body;
         
         var response = await httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
-            throw new HttpRequestException($"Code: {response.StatusCode}. Reason: {response.ReasonPhrase}");
-        response.EnsureSuccessStatusCode();
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"GigaChat API error. Code: {response.StatusCode}. Body: {errorBody}");
+        }
         var result = await response.Content.ReadFromJsonAsync<TResponse>();
         if (result is null)
             throw new Exception($"Invalid response. Url: {urlPostfix}");

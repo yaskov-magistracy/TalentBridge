@@ -78,7 +78,7 @@ public class AiChatsController(
     /// Загрузить файл в хранилище GigaChat
     /// </summary>
     [HttpPost("files/upload")]
-    public async Task<ActionResult<GigaChatFileItem>> UploadFile(IFormFile file)
+    public async Task<ActionResult<GigaChatFileItem>> UploadFile([FromForm] IFormFile file)
     {
         await using var stream = file.OpenReadStream();
         var result = await gigaChatClient.UploadFile(stream, file.FileName);
