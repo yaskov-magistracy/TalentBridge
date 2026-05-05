@@ -9,6 +9,8 @@ USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
+# Копируем обновленные сертификаты из certs-base
+COPY --from=certs-base /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 # Запускать из родительской папки всех солюшенов (Докер не может работать с папками выше самого себя)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
