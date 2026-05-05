@@ -65,18 +65,11 @@ public class AiChatsController(
     }
 
     /// <summary>
-    /// Получить данные файла по идентификатору
-    /// </summary>
-    [HttpGet("files/{fileId:Guid}")]
-    public async Task<ActionResult<GigaChatFileItem>> GetFile([FromRoute] Guid fileId)
-    {
-        var result = await gigaChatClient.GetFile(fileId);
-        return Ok(result);
-    }
-
-    /// <summary>
     /// Загрузить файл в хранилище GigaChat
     /// </summary>
+    /// <remarks>
+    /// В чате, в качестве контекста, выбирается последний загруженный файл с названием `Instructions`
+    /// </remarks>
     [HttpPost("files/upload")]
     public async Task<ActionResult<GigaChatFileItem>> UploadFile([FromForm] IFormFile file)
     {
