@@ -18,6 +18,8 @@ services:
       - "APP_NAME=TalentBridge"
       - "APP_ENVIRONMENT=PRODUCTION"
       - "DATABASE_CONNECTION_STRING=host=postgres;Port=5432;Database=TalentBridge;User Id=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};"
+      - "GIGACHAD_AUTHORIZATION_KEY=${GIGACHAD_AUTHORIZATION_KEY}"
+      - "GIGACHAD_SCOPE=${GIGACHAD_SCOPE}"
     volumes:
       - backend_static_files:/app/_staticFiles
     depends_on:
