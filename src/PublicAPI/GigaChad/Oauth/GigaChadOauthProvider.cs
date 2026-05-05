@@ -66,9 +66,9 @@ internal class GigaChadOauthProvider(
     private string MapScopeToStr()
         => scope switch
         {
-            GigaChadScope.PERS => "GigaChad_API_PERS",
-            GigaChadScope.B2B => "GigaChad_API_B2B",
-            GigaChadScope.CORP => "GigaChad_API_CORP",
+            GigaChadScope.PERS => "GIGACHAT_API_PERS",
+            GigaChadScope.B2B => "GIGACHAT_API_B2B",
+            GigaChadScope.CORP => "GIGACHAT_API_CORP",
             _ => throw new ArgumentOutOfRangeException(nameof(scope), scope, null)
         };
 }
