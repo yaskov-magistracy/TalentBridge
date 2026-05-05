@@ -680,34 +680,6 @@ type AssignmentTeam = {
             <div *ngIf="activeTab === 'review' && selectedSolution.state !== 'RequiresImprovements'" class="mt-6 border-2 border-amber-300 p-4 bg-amber-50">
               <h4 class="font-bold mb-4 uppercase text-amber-700">СТАДИИ ПРОВЕРКИ</h4>
               <div class="flex items-center justify-between mb-4">
-                <!-- Autotests -->
-                <div class="flex flex-col items-center flex-1">
-                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
-                    [class]="getReviewStageClass(selectedSolution.state, 'Autotests')">
-                    {{ getStageNumber(selectedSolution.state, 'Autotests') }}
-                  </div>
-                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
-                    [class]="getStageBadgeClass(selectedSolution.state, 'Autotests')">
-                    {{ selectedSolution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
-                  </div>
-                </div>
-                <!-- Line -->
-                <div class="flex-1 h-1 mx-2"
-                  [class]="getLineClass(selectedSolution.state, 'Autotests')"></div>
-                <!-- AI Review -->
-                <div class="flex flex-col items-center flex-1">
-                  <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
-                    [class]="getReviewStageClass(selectedSolution.state, 'AiReview')">
-                    {{ getStageNumber(selectedSolution.state, 'AiReview') }}
-                  </div>
-                  <div class="px-3 py-1 text-xs font-bold uppercase border-2 text-center"
-                    [class]="getStageBadgeClass(selectedSolution.state, 'AiReview')">
-                    {{ selectedSolution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
-                  </div>
-                </div>
-                <!-- Line -->
-                <div class="flex-1 h-1 mx-2"
-                  [class]="getLineClass(selectedSolution.state, 'AiReview')"></div>
                 <!-- Expert Review -->
                 <div class="flex flex-col items-center flex-1">
                   <div class="w-12 h-12 border-2 flex items-center justify-center font-bold text-lg mb-2"
@@ -1088,14 +1060,6 @@ type AssignmentTeam = {
                     </div>
                     <!-- Review Stage Badges (moved to bottom for review tab) -->
                     <div class="flex gap-2 mb-2" *ngIf="activeTab === 'review' && solution.state !== 'RequiresImprovements'">
-                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
-                        [class]="getStageBadgeClass(solution.state, 'Autotests')">
-                        {{ solution.state === 'Autotests' ? '✓ ' : '' }}АВТОТЕСТЫ
-                      </span>
-                      <span class="px-2 py-1 text-xs font-bold uppercase border-2"
-                        [class]="getStageBadgeClass(solution.state, 'AiReview')">
-                        {{ solution.state === 'AiReview' ? '✓ ' : '' }}AI-АНАЛИЗ
-                      </span>
                       <span class="px-2 py-1 text-xs font-bold uppercase border-2"
                         [class]="getStageBadgeClass(solution.state, 'ExpertReview')">
                         {{ solution.state === 'ExpertReview' ? '✓ ' : '' }}ЭКСПЕРТ
