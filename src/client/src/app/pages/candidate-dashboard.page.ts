@@ -13,6 +13,7 @@ type AssignmentTeam = {
   name: string;
   membersCount: number;
   joinRequestedByCurrentUser: boolean;
+  solution: SolutionFullInfo;
 };
 
 @Component({
@@ -356,22 +357,19 @@ type AssignmentTeam = {
               <div *ngIf="assignmentTeams.length > 0" class="mb-4">
                 <p class="text-sm font-bold uppercase text-amber-700 mb-2">Команды, выполняющие это задание:</p>
                 <div class="space-y-2">
-                  <div *ngFor="let team of displayTeams" class="flex justify-between items-center bg-white border border-amber-300 p-2">
+                  <div
+                    *ngFor="let team of displayTeams"
+                    (click)="openAssignmentTeamModal(team.solution)"
+                    class="flex justify-between items-center bg-white border border-amber-300 p-2 cursor-pointer hover:bg-amber-50 transition-colors">
                     <span class="text-sm font-semibold">{{ team.name }}</span>
-                    <button
-                      *ngIf="!team.joinRequestedByCurrentUser; else joinRequestPending"
-                      (click)="joinTeamSolution(team.solutionId)"
-                      class="border border-emerald-600 bg-emerald-600 text-white px-3 py-1 hover:bg-emerald-700 transition-colors text-xs font-bold uppercase whitespace-nowrap">
-                      Присоединиться
-                    </button>
-                    <ng-template #joinRequestPending>
+                    <ng-container *ngIf="team.joinRequestedByCurrentUser">
                       <button
                         type="button"
                         disabled
                         class="border border-orange-500 bg-orange-500 text-white px-3 py-1 text-xs font-bold uppercase whitespace-nowrap opacity-90 cursor-not-allowed">
                         на подтверждении
                       </button>
-                    </ng-template>
+                    </ng-container>
                   </div>
                   <button
                     *ngIf="assignmentTeams.length > 3"
@@ -415,6 +413,95 @@ type AssignmentTeam = {
                 class="flex-1 border-2 border-indigo-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 [class]="canTakeAssignment ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-500'">
                 {{ takingAssignment ? 'ОФОРМЛЕНИЕ...' : 'ВЗЯТЬ ЗАДАНИЕ' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignment Team Detail Modal -->
+        <div *ngIf="showAssignmentTeamModal && selectedAssignmentTeamSolution" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[10000]" (click)="closeAssignmentTeamModal()">
+          <div class="bg-white border-2 border-indigo-600 p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col" (click)="$event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-6">
+              <h2 class="text-2xl font-bold text-indigo-600 uppercase">{{ selectedAssignmentTeamSolution.assignment.name }}</h2>
+              <button (click)="closeAssignmentTeamModal()" class="text-3xl hover:text-red-600 cursor-pointer">×</button>
+            </div>
+
+            <!-- Technologies -->
+            <div class="flex flex-wrap gap-2 mb-4">
+              <app-tech-chip *ngFor="let tech of selectedAssignmentTeamSolution.assignment.technologies" [name]="tech.name"></app-tech-chip>
+            </div>
+
+            <!-- Info Bar -->
+            <div class="flex flex-wrap gap-4 mb-4 text-sm">
+              <div>
+                <span class="font-bold">КОМПАНИЯ:</span> {{ selectedAssignmentTeamSolution.assignment.employer.name }}
+              </div>
+              <div>
+                <span class="font-bold">ДЕДЛАЙН:</span> {{ selectedAssignmentTeamSolution.assignment.deadLine | date:'dd.MM.yyyy' }}
+              </div>
+            </div>
+
+            <!-- Repository Link -->
+            <div *ngIf="selectedAssignmentTeamSolution.assignment.templateUrl" class="mb-4">
+              <a
+                [href]="selectedAssignmentTeamSolution.assignment.templateUrl"
+                target="_blank"
+                class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline">
+                🔗 РЕПОЗИТОРИЙ: {{ selectedAssignmentTeamSolution.assignment.templateUrl }}
+              </a>
+            </div>
+
+            <!-- Days Remaining -->
+            <div class="border-2 border-indigo-300 bg-indigo-50 p-4 mb-6 text-center">
+              <span class="font-bold text-lg" [class]="getDaysRemaining(selectedAssignmentTeamSolution.assignment.deadLine) < 0 ? 'text-red-600' : 'text-indigo-600'">
+                ОСТАЛОСЬ ДНЕЙ: {{ getDaysRemaining(selectedAssignmentTeamSolution.assignment.deadLine) }}
+              </span>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+              <h3 class="font-bold text-lg mb-2 uppercase">ОПИСАНИЕ ПРОЕКТА</h3>
+              <p class="text-gray-700 whitespace-pre-line">{{ selectedAssignmentTeamSolution.assignment.description }}</p>
+            </div>
+
+            <!-- Team Info -->
+            <div class="mb-6 border-2 border-amber-300 bg-amber-50 p-4">
+              <h3 class="font-bold text-lg mb-3 uppercase text-amber-800">
+                📋 КОМАНДА ({{ selectedAssignmentTeamSolution.candidates.length || 0 }} / {{ selectedAssignmentTeamSolution.assignment.candidatesCapacity }} чел.)
+              </h3>
+
+              <div *ngIf="selectedAssignmentTeamSolution.team" class="mb-4">
+                <p class="text-sm font-bold uppercase">НАЗВАНИЕ КОМАНДЫ:</p>
+                <p class="text-lg">{{ selectedAssignmentTeamSolution.team.name }}</p>
+                <p *ngIf="selectedAssignmentTeamSolution.team.description" class="text-sm text-gray-600 mt-1">{{ selectedAssignmentTeamSolution.team.description }}</p>
+              </div>
+
+              <div class="mb-4">
+                <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
+                <div class="space-y-3">
+                  <div *ngFor="let member of selectedAssignmentTeamSolution.candidates" class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
+                    </div>
+                    <div>
+                      <p class="font-semibold">{{ member.surname }} {{ member.name }}{{ member.patronymic ? ' ' + member.patronymic : '' }}</p>
+                      <p class="text-xs text-gray-500">{{ member.login }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4 mt-auto pt-6 border-t-2">
+              <button
+                *ngIf="!hasCurrentUserJoinRequest(selectedAssignmentTeamSolution)"
+                (click)="joinTeamSolution(selectedAssignmentTeamSolution.id)"
+                [disabled]="joiningTeamSolutionId === selectedAssignmentTeamSolution.id"
+                class="flex-1 border-2 border-emerald-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                [class]="joiningTeamSolutionId === selectedAssignmentTeamSolution.id ? 'bg-gray-300 text-gray-500' : 'bg-emerald-600 text-white hover:bg-emerald-700'">
+                {{ joiningTeamSolutionId === selectedAssignmentTeamSolution.id ? 'ПРИСОЕДИНЕНИЕ...' : 'ПРИСОЕДИНИТЬСЯ' }}
               </button>
             </div>
           </div>
@@ -1105,6 +1192,9 @@ export class CandidateDashboardPage implements OnInit {
   assignmentTeams: AssignmentTeam[] = [];
   displayTeams: AssignmentTeam[] = [];
   loadingAssignmentTeams = false;
+  selectedAssignmentTeamSolution: SolutionFullInfo | null = null;
+  showAssignmentTeamModal = false;
+  joiningTeamSolutionId: string | null = null;
 
   // Solution modal
   selectedSolution: SolutionFullInfo | null = null;
@@ -1540,6 +1630,7 @@ export class CandidateDashboardPage implements OnInit {
   closeAssignmentModal(): void {
     this.showAssignmentModal = false;
     this.selectedAssignment = null;
+    this.closeAssignmentTeamModal();
   }
 
   openSolutionModal(solution: SolutionFullInfo): void {
@@ -1557,6 +1648,17 @@ export class CandidateDashboardPage implements OnInit {
   navigateToJoinSolution(): void {
     this.closeAssignmentModal();
     this.router.navigate(['/join-solution']);
+  }
+
+  openAssignmentTeamModal(solution: SolutionFullInfo): void {
+    this.selectedAssignmentTeamSolution = solution;
+    this.showAssignmentTeamModal = true;
+  }
+
+  closeAssignmentTeamModal(): void {
+    this.showAssignmentTeamModal = false;
+    this.selectedAssignmentTeamSolution = null;
+    this.joiningTeamSolutionId = null;
   }
 
   private loadAssignmentTeams(assignmentId: string): void {
@@ -1584,7 +1686,8 @@ export class CandidateDashboardPage implements OnInit {
             solutionId: s.id,
             name: s.team!.name,
             membersCount: s.candidates.length,
-            joinRequestedByCurrentUser: this.hasCurrentUserJoinRequest(s)
+            joinRequestedByCurrentUser: this.hasCurrentUserJoinRequest(s),
+            solution: s
           }));
 
         // Показываем максимум 3 команды
@@ -1601,16 +1704,22 @@ export class CandidateDashboardPage implements OnInit {
   }
 
   joinTeamSolution(solutionId: string): void {
-    this.closeAssignmentModal();
+    this.joiningTeamSolutionId = solutionId;
+    this.cdr.markForCheck();
+
     this.solutionsService.requestJoinSolution(solutionId).subscribe({
       next: () => {
         this.notificationService.success('Запрос на присоединение к команде отправлен');
+        this.closeAssignmentTeamModal();
+        this.closeAssignmentModal();
         this.loadSolutions();
       },
       error: (error) => {
         console.error('Failed to join team solution:', error);
         const errorMessage = error?.error?.message || error?.message || 'Не удалось отправить запрос. Попробуйте позже.';
         this.notificationService.error(`Ошибка: ${errorMessage}`);
+        this.joiningTeamSolutionId = null;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1619,7 +1728,7 @@ export class CandidateDashboardPage implements OnInit {
     return this.authService.currentUser()?.userId || null;
   }
 
-  private hasCurrentUserJoinRequest(solution: SolutionFullInfo): boolean {
+  hasCurrentUserJoinRequest(solution: SolutionFullInfo): boolean {
     const currentUserId = this.currentUserId;
     if (!currentUserId) return false;
 
