@@ -8,6 +8,7 @@ public record AssignmentCreateEntity(
     int CandidatesCapacity,
     AssignmentDifficulty Difficulty,
     float[] AttemptsCoefficients,
+    bool IsPrivate,
     Guid EmployerId,
     Guid[]? Technologies)
 {

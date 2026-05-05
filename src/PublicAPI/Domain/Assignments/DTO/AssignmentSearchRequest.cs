@@ -10,6 +10,7 @@ public record AssignmentSearchRequest(
     List<Guid>? TechnologiesIds = null,
     bool? IsGrouped = null,
     DateOnlySearchQuery? DeadLineRangeIncluded = null,
+    bool IncludePrivate = false,
     int Take = 100,
     int Skip = 0
 ) : BaseSearchRequest(Take, Skip)

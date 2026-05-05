@@ -59,6 +59,7 @@ public class AssignmentsController(
             request.CandidatesCapacity,
             request.Difficulty,
             request.AttemptsCoefficients,
+            request.IsPrivate,
             employerId,
             request.Technologies));
         return assignment.ActionResult;

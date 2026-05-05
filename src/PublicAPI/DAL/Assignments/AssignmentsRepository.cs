@@ -59,6 +59,8 @@ public class AssignmentsRepository(
             query = query.Where(e => e.CandidatesCapacity > 1);
         if (request.IsGrouped is false)
             query = query.Where(e => e.CandidatesCapacity == 1);
+        if (!request.IncludePrivate)
+            query = query.Where(e => e.IsPrivate == false);
         
         var count = await query.CountAsync();
         return new(

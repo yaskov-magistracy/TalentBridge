@@ -10,6 +10,7 @@ public record AssignmentCreateApiRequest(
     int CandidatesCapacity,
     AssignmentDifficulty Difficulty,
     float[] AttemptsCoefficients,
+    bool IsPrivate,
     Guid[]? Technologies = null
 )
 {

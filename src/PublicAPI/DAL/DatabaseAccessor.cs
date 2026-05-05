@@ -69,13 +69,14 @@ public class DatabaseAccessor(
             employer.Id
         ))).Value;
         var soloAssignment = (await AssignmentsService.Add(new(
-            "Тестовое задание для одного человека",
+            "Тестовое задание для одного человека. Приватное",
             "Это описание тестового задания для одного человека",
             "https://github.com/yaskov-magistracy/TalentBridge",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
             1,
             AssignmentDifficulty.Normal,
             [1],
+            true,
             employer.Id,
             technologies.Skip(5).Take(5).Select(e => e.Id).ToArray()
         ))).Value;
@@ -87,6 +88,7 @@ public class DatabaseAccessor(
             2,
             AssignmentDifficulty.Hard,
             [1, 0.8f],
+            false,
             employer.Id,
             technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
         ))).Value;
