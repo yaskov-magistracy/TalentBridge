@@ -53,6 +53,8 @@ internal class GigaChadOauthProvider(
             new KeyValuePair<string, string>("scope", MapScopeToStr())
         ]);
         var response = await httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"Code: {response.StatusCode}. Reason: {response.ReasonPhrase}");
         response.EnsureSuccessStatusCode();
         
         var result = await response.Content.ReadFromJsonAsync<GigaChadOauthResponse>();
