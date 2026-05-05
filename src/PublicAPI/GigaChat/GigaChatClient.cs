@@ -1,7 +1,8 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using System.Text;
 using GigaChat.Completions.Request;
 using GigaChat.Completions.Response;
+using GigaChat.Files.Response;
 using GigaChat.Oauth;
 using Newtonsoft.Json;
 
@@ -10,6 +11,7 @@ namespace GigaChat;
 public interface IGigaChatClient
 {
     Task<GigaChatCompletionsResponse> Completions(GigaChatCompletionsRequest request);
+    Task<GigaChatGetFilesResponse> GetFiles();
 }
 
 public class GigaChatClient(
@@ -25,6 +27,9 @@ public class GigaChatClient(
         => await Post<GigaChatCompletionsResponse>(
             "/chat/completions", 
             new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json"));
+
+    public async Task<GigaChatGetFilesResponse> GetFiles()
+        => await Get<GigaChatGetFilesResponse>("/files");
     
     
     private Task<T> Get<T>(string urlPostfix)
