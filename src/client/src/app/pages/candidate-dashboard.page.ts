@@ -1060,6 +1060,26 @@ type AssignmentTeam = {
                       <p class="text-sm mb-3" *ngIf="solution.assignment.isGrouped && activeTab !== 'review'">
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
+                      <div *ngIf="solution.assignment.isPrivate" class="mt-2 mb-2">
+                        <span
+                          class="inline-flex items-center gap-1.5 border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs font-bold uppercase text-indigo-700"
+                        >
+                          <svg
+                            class="w-3.5 h-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          приватное
+                        </span>
+                      </div>
                       <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: solution.assignment }"></ng-container>
                       <div *ngIf="solution.state === 'RequiresImprovements'" class="mb-2">
                         <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
