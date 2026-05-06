@@ -1174,7 +1174,6 @@ export class EmployerDashboardPage implements OnInit {
     difficulty: AssignmentDifficulty;
     maxAttempts: number;
     attemptsCoefficients: number[];
-    maxAttemptNumberToGrantMedal: number;
   } = {
     name: '',
     description: '',
@@ -1185,7 +1184,6 @@ export class EmployerDashboardPage implements OnInit {
     difficulty: 'Normal',
     maxAttempts: 2,
     attemptsCoefficients: [1],
-    maxAttemptNumberToGrantMedal: 1,
   };
   allTechs: Technology[] = [];
   selectedTechs: Technology[] = [];
@@ -1205,7 +1203,6 @@ export class EmployerDashboardPage implements OnInit {
     difficulty: AssignmentDifficulty;
     maxAttempts: number;
     attemptsCoefficients: number[];
-    maxAttemptNumberToGrantMedal: number;
   } = {
     name: '',
     description: '',
@@ -1216,7 +1213,6 @@ export class EmployerDashboardPage implements OnInit {
     difficulty: 'Normal',
     maxAttempts: 2,
     attemptsCoefficients: [1],
-    maxAttemptNumberToGrantMedal: 1,
   };
   createSelectedTechs: Technology[] = [];
   creatingAssignment = false;
@@ -1350,7 +1346,6 @@ export class EmployerDashboardPage implements OnInit {
       attemptsCoefficients: assignment.attemptsCoefficients?.length
         ? [...assignment.attemptsCoefficients]
         : [1],
-      maxAttemptNumberToGrantMedal: assignment.maxAttemptNumberToGrantMedal || 1,
     };
     this.selectedTechs = assignment.technologies?.map((t) => ({ ...t })) || [];
     this.showEditAssignmentModal = true;
@@ -1388,7 +1383,6 @@ export class EmployerDashboardPage implements OnInit {
       candidatesCapacity: this.editForm.isGrouped ? this.editForm.candidatesCapacity : undefined,
       difficulty: this.editForm.difficulty,
       attemptsCoefficients: this.editForm.attemptsCoefficients,
-      maxAttemptNumberToGrantMedal: this.editForm.maxAttemptNumberToGrantMedal,
       technologies:
         addedTechs.length > 0 || removedTechs.length > 0
           ? ({ toAdd: addedTechs, toRemove: removedTechs } as RelationsPatch)
@@ -1435,7 +1429,6 @@ export class EmployerDashboardPage implements OnInit {
       difficulty: 'Normal',
       maxAttempts: 1,
       attemptsCoefficients: [1],
-      maxAttemptNumberToGrantMedal: 1,
     };
     this.createSelectedTechs = [];
   }
@@ -1462,10 +1455,6 @@ export class EmployerDashboardPage implements OnInit {
   private syncCreateAttemptsCoefficients(): void {
     const maxAttempts = Math.min(Math.max(this.createForm.maxAttempts, 1), 5);
     this.createForm.maxAttempts = maxAttempts;
-    this.createForm.maxAttemptNumberToGrantMedal = Math.min(
-      this.createForm.maxAttemptNumberToGrantMedal,
-      maxAttempts,
-    );
 
     if (this.createForm.attemptsCoefficients.length > maxAttempts) {
       this.createForm.attemptsCoefficients = this.createForm.attemptsCoefficients.slice(
@@ -1500,10 +1489,6 @@ export class EmployerDashboardPage implements OnInit {
   private syncEditAttemptsCoefficients(): void {
     const maxAttempts = Math.min(Math.max(this.editForm.maxAttempts, 1), 5);
     this.editForm.maxAttempts = maxAttempts;
-    this.editForm.maxAttemptNumberToGrantMedal = Math.min(
-      this.editForm.maxAttemptNumberToGrantMedal,
-      maxAttempts,
-    );
 
     if (this.editForm.attemptsCoefficients.length > maxAttempts) {
       this.editForm.attemptsCoefficients = this.editForm.attemptsCoefficients.slice(0, maxAttempts);
@@ -1555,12 +1540,6 @@ export class EmployerDashboardPage implements OnInit {
     )
       return false;
     if (!this.areCreateAttemptsCoefficientsValid()) return false;
-    if (
-      !Number.isInteger(this.createForm.maxAttemptNumberToGrantMedal) ||
-      this.createForm.maxAttemptNumberToGrantMedal < 1 ||
-      this.createForm.maxAttemptNumberToGrantMedal > this.createForm.maxAttempts
-    )
-      return false;
     return true;
   }
 
@@ -1583,7 +1562,6 @@ export class EmployerDashboardPage implements OnInit {
       candidatesCapacity: this.createForm.candidatesCapacity,
       difficulty: this.createForm.difficulty,
       attemptsCoefficients: this.createForm.attemptsCoefficients,
-      maxAttemptNumberToGrantMedal: this.createForm.maxAttemptNumberToGrantMedal,
       technologies: techIds,
     };
 
@@ -1714,12 +1692,6 @@ export class EmployerDashboardPage implements OnInit {
     )
       return false;
     if (!this.areEditAttemptsCoefficientsValid()) return false;
-    if (
-      !Number.isInteger(this.editForm.maxAttemptNumberToGrantMedal) ||
-      this.editForm.maxAttemptNumberToGrantMedal < 1 ||
-      this.editForm.maxAttemptNumberToGrantMedal > this.editForm.maxAttempts
-    )
-      return false;
     return true;
   }
 }

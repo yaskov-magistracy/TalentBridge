@@ -114,7 +114,7 @@ export interface AssignmentCreateApiRequest {
   candidatesCapacity: number;
   difficulty: AssignmentDifficulty;
   attemptsCoefficients: number[];
-  maxAttemptNumberToGrantMedal?: number;
+  isPrivate?: boolean;
   technologies?: string[]; // Guid[]
 }
 
@@ -128,7 +128,7 @@ export interface AssignmentUpdateEntity {
   candidatesCapacity?: number;
   difficulty?: AssignmentDifficulty;
   attemptsCoefficients?: number[];
-  maxAttemptNumberToGrantMedal?: number;
+  isPrivate?: boolean;
   technologies?: RelationsPatch;
 }
 
@@ -141,7 +141,7 @@ export interface AssignmentFullInfo {
   candidatesCapacity: number;
   difficulty: AssignmentDifficulty;
   attemptsCoefficients: number[];
-  maxAttemptNumberToGrantMedal: number;
+  isPrivate: boolean;
   isGrouped: boolean;
   employer: {
     id: string;
