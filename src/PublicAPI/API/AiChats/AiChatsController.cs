@@ -69,7 +69,8 @@ public class AiChatsController(
     /// Загрузить файл в хранилище GigaChat
     /// </summary>
     /// <remarks>
-    /// В чате, в качестве контекста, выбирается последний загруженный файл с названием `Instructions`
+    /// В чате, в качестве контекста, выбирается последний загруженный файл с названием `Instructions`.<br/>
+    /// Ищет его каждый раз при вызове чата и кэшит на 1 минуту
     /// </remarks>
     [HttpPost("files/upload")]
     public async Task<ActionResult<GigaChatFileItem>> UploadFile([FromForm] UploadFileRequest request)
