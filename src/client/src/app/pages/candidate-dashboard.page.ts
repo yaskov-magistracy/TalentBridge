@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { Router, RouterLink } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
+import { PrivateAssignmentJoinModalComponent } from '../shared/components/private-assignment-join-modal.component';
 import { AuthService, CandidatesService, TechnologiesService, AssignmentsService, SolutionsService } from '../core';
 import { CandidateFullInfo, Technology, CandidatePatchApiRequest, RelationsPatch, NullablePatch, AssignmentFullInfo, AssignmentSearchRequest, SolutionFullInfo, SolutionSearchRequest, SolutionState, AssignmentDifficulty, ExpertReviewInSolution } from '../core/models/api.models';
 import { NotificationService } from '../core/services/notification.service';
@@ -25,6 +26,7 @@ type AssignmentTeam = {
     ReactiveFormsModule,
     NavbarComponent,
     TechChipComponent,
+    PrivateAssignmentJoinModalComponent,
     RouterLink
   ],
   template: `
@@ -417,6 +419,12 @@ type AssignmentTeam = {
             </div>
           </div>
         </div>
+
+        <app-private-assignment-join-modal
+          [open]="showPrivateAssignmentJoinModal"
+          (closed)="closePrivateAssignmentJoinModal()"
+          (joined)="onPrivateAssignmentJoined()"
+        ></app-private-assignment-join-modal>
 
         <!-- Assignment Team Detail Modal -->
         <div *ngIf="showAssignmentTeamModal && selectedAssignmentTeamSolution" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[10000]" (click)="closeAssignmentTeamModal()">
@@ -955,11 +963,30 @@ type AssignmentTeam = {
                     Архив {{ getTabCount('archive') }}
                   </button>
                 </div>
-                <button
-                  (click)="navigateToJoinSolution()"
-                  class="flex-shrink-0 border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors uppercase font-bold text-xs whitespace-nowrap">
-                  🔗 ПРИСОЕДИНИТЬСЯ
-                </button>
+                <div class="flex flex-wrap justify-end gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    (click)="navigateToJoinSolution()"
+                    class="border-2 border-emerald-600 px-3 py-2 hover:bg-emerald-600 hover:text-white transition-colors uppercase font-bold text-xs whitespace-nowrap inline-flex items-center gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Команды
+                  </button>
+                  <button
+                    type="button"
+                    (click)="openPrivateAssignmentJoinModal()"
+                    class="border-2 border-indigo-600 px-3 py-2 hover:bg-indigo-600 hover:text-white transition-colors uppercase font-bold text-xs whitespace-nowrap inline-flex items-center gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    По ID
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1033,6 +1060,26 @@ type AssignmentTeam = {
                       <p class="text-sm mb-3" *ngIf="solution.assignment.isGrouped && activeTab !== 'review'">
                         <span class="font-bold">ПРОЕКТ:</span> ГРУППОВОЙ (до {{ solution.assignment.candidatesCapacity }} чел.)
                       </p>
+                      <div *ngIf="solution.assignment.isPrivate" class="mt-2 mb-2">
+                        <span
+                          class="inline-flex items-center gap-1.5 border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs font-bold uppercase text-indigo-700"
+                        >
+                          <svg
+                            class="w-3.5 h-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          приватное
+                        </span>
+                      </div>
                       <ng-container *ngTemplateOutlet="assignmentMeta; context: { $implicit: solution.assignment }"></ng-container>
                       <div *ngIf="solution.state === 'RequiresImprovements'" class="mb-2">
                         <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-bold uppercase border border-red-300">
@@ -1159,6 +1206,7 @@ export class CandidateDashboardPage implements OnInit {
   selectedAssignmentTeamSolution: SolutionFullInfo | null = null;
   showAssignmentTeamModal = false;
   joiningTeamSolutionId: string | null = null;
+  showPrivateAssignmentJoinModal = false;
 
   // Solution modal
   selectedSolution: SolutionFullInfo | null = null;
@@ -1612,6 +1660,19 @@ export class CandidateDashboardPage implements OnInit {
   navigateToJoinSolution(): void {
     this.closeAssignmentModal();
     this.router.navigate(['/join-solution']);
+  }
+
+  openPrivateAssignmentJoinModal(): void {
+    this.showPrivateAssignmentJoinModal = true;
+  }
+
+  closePrivateAssignmentJoinModal(): void {
+    this.showPrivateAssignmentJoinModal = false;
+  }
+
+  onPrivateAssignmentJoined(): void {
+    this.showPrivateAssignmentJoinModal = false;
+    this.loadSolutions();
   }
 
   openAssignmentTeamModal(solution: SolutionFullInfo): void {

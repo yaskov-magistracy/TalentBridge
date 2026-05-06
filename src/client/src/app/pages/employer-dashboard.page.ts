@@ -262,6 +262,26 @@ import { NotificationService } from '../core/services/notification.service';
                       {{ assignment.isGrouped ? 'ГРУППОВОЕ' : 'ИНДИВИДУАЛЬНОЕ' }}
                     </p>
                   </div>
+                  <div *ngIf="assignment.isPrivate" class="mt-2">
+                    <span
+                      class="inline-flex items-center gap-1.5 border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs font-bold uppercase text-indigo-700"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                      приватное
+                    </span>
+                  </div>
                   <div class="flex gap-4 mt-2 text-sm">
                     <p>
                       <span class="font-bold uppercase">РЕШЕНИЙ:</span>
@@ -294,9 +314,31 @@ import { NotificationService } from '../core/services/notification.service';
                   </a>
                   <button
                     (click)="openEditAssignmentModal(assignment)"
-                    class="border-2 border-indigo-600 px-4 py-2 hover:bg-indigo-600 hover:text-white transition-colors text-sm uppercase font-semibold"
+                    class="border-2 border-indigo-600 px-4 py-2 hover:bg-indigo-600 hover:text-white transition-colors text-sm uppercase font-semibold cursor-pointer"
                   >
                     РЕДАКТИРОВАТЬ
+                  </button>
+                  <button
+                    *ngIf="assignment.isPrivate"
+                    type="button"
+                    (click)="copyAssignmentId(assignment.id)"
+                    title="скопировать ID задания"
+                    aria-label="скопировать ID задания"
+                    class="border-2 border-gray-700 w-10 h-10 inline-flex items-center justify-center hover:bg-gray-700 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -670,42 +712,20 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
-            <!-- Task Type -->
-            <div>
-              <label class="block font-bold mb-3 text-sm uppercase tracking-wider"
-                >ТИП ЗАДАНИЯ</label
-              >
-              <div class="border-2 border-black p-6 space-y-4">
-                <label class="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    [checked]="!editForm.isGrouped"
-                    (change)="editForm.isGrouped = false"
-                    name="editTaskType"
-                    class="w-5 h-5 mt-0.5 border-2 border-black"
-                  />
-                  <div>
-                    <span class="font-bold uppercase">ИНДИВИДУАЛЬНОЕ</span>
-                    <p class="text-sm text-gray-600 mt-1">Задание выполняется одним кандидатом</p>
-                  </div>
-                </label>
-                <label class="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    [checked]="editForm.isGrouped"
-                    (change)="editForm.isGrouped = true"
-                    name="editTaskType"
-                    class="w-5 h-5 mt-0.5 border-2 border-black"
-                  />
-                  <div>
-                    <span class="font-bold uppercase">КОМАНДНОЕ</span>
-                    <p class="text-sm text-gray-600 mt-1">
-                      Задание выполняется командой кандидатов
-                    </p>
-                  </div>
-                </label>
+            <label class="flex items-start gap-3 cursor-pointer border-2 border-black p-4">
+              <input
+                type="checkbox"
+                [(ngModel)]="editForm.isPrivate"
+                name="editIsPrivate"
+                class="w-5 h-5 mt-0.5 border-2 border-black"
+              />
+              <div>
+                <span class="font-bold uppercase">ПРИВАТНОЕ ЗАДАНИЕ</span>
+                <p class="text-sm text-gray-600 mt-1">
+                  Задание будет доступно только по идентификатору.
+                </p>
               </div>
-            </div>
+            </label>
 
             <!-- Technologies -->
             <div>
@@ -743,6 +763,7 @@ import { NotificationService } from '../core/services/notification.service';
           <!-- Footer -->
           <div class="flex gap-4 mt-6 pt-6 border-t-2">
             <button
+              type="button"
               (click)="saveAssignment()"
               [disabled]="savingAssignment || !isFormValid()"
               class="flex-1 border-2 border-indigo-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -755,6 +776,7 @@ import { NotificationService } from '../core/services/notification.service';
               {{ savingAssignment ? 'СОХРАНЕНИЕ...' : 'СОХРАНИТЬ ИЗМЕНЕНИЯ' }}
             </button>
             <button
+              type="button"
               (click)="closeEditAssignmentModal()"
               class="flex-1 border-2 border-gray-400 px-8 py-3 hover:bg-gray-400 hover:text-white transition-colors font-bold uppercase tracking-wider"
             >
@@ -1019,6 +1041,21 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
+            <label class="flex items-start gap-3 cursor-pointer border-2 border-black p-4">
+              <input
+                type="checkbox"
+                [(ngModel)]="createForm.isPrivate"
+                name="createIsPrivate"
+                class="w-5 h-5 mt-0.5 border-2 border-black"
+              />
+              <div>
+                <span class="font-bold uppercase">ПРИВАТНОЕ ЗАДАНИЕ</span>
+                <p class="text-sm text-gray-600 mt-1">
+                  Задание будет доступно только по идентификатору.
+                </p>
+              </div>
+            </label>
+
             <!-- Technologies -->
             <div>
               <div class="flex justify-between items-center mb-3">
@@ -1171,10 +1208,10 @@ export class EmployerDashboardPage implements OnInit {
     deadLine: string;
     candidatesCapacity: number;
     isGrouped: boolean;
+    isPrivate: boolean;
     difficulty: AssignmentDifficulty;
     maxAttempts: number;
     attemptsCoefficients: number[];
-    maxAttemptNumberToGrantMedal: number;
   } = {
     name: '',
     description: '',
@@ -1182,10 +1219,10 @@ export class EmployerDashboardPage implements OnInit {
     deadLine: '',
     candidatesCapacity: 1,
     isGrouped: false,
+    isPrivate: false,
     difficulty: 'Normal',
     maxAttempts: 2,
     attemptsCoefficients: [1],
-    maxAttemptNumberToGrantMedal: 1,
   };
   allTechs: Technology[] = [];
   selectedTechs: Technology[] = [];
@@ -1202,10 +1239,10 @@ export class EmployerDashboardPage implements OnInit {
     deadLine: string;
     candidatesCapacity: number;
     isGrouped: boolean;
+    isPrivate: boolean;
     difficulty: AssignmentDifficulty;
     maxAttempts: number;
     attemptsCoefficients: number[];
-    maxAttemptNumberToGrantMedal: number;
   } = {
     name: '',
     description: '',
@@ -1213,10 +1250,10 @@ export class EmployerDashboardPage implements OnInit {
     deadLine: '',
     candidatesCapacity: 1,
     isGrouped: false,
+    isPrivate: false,
     difficulty: 'Normal',
     maxAttempts: 2,
     attemptsCoefficients: [1],
-    maxAttemptNumberToGrantMedal: 1,
   };
   createSelectedTechs: Technology[] = [];
   creatingAssignment = false;
@@ -1273,6 +1310,7 @@ export class EmployerDashboardPage implements OnInit {
       employerId: employerId,
       take: 100,
       skip: 0,
+      includePrivate: true,
     };
 
     this.assignmentsService.searchAssignments(searchRequest).subscribe({
@@ -1287,6 +1325,16 @@ export class EmployerDashboardPage implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  async copyAssignmentId(assignmentId: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(assignmentId);
+      this.notificationService.success('Идентификатор задания скопирован');
+    } catch (error) {
+      console.error('Failed to copy assignment id:', error);
+      this.notificationService.error('Не удалось скопировать идентификатор задания');
+    }
   }
 
   openProfileEdit() {
@@ -1337,6 +1385,7 @@ export class EmployerDashboardPage implements OnInit {
 
   // Edit Assignment Modal Methods
   openEditAssignmentModal(assignment: AssignmentFullInfo): void {
+    this.savingAssignment = false;
     this.editingAssignment = assignment;
     this.editForm = {
       name: assignment.name,
@@ -1345,12 +1394,12 @@ export class EmployerDashboardPage implements OnInit {
       deadLine: assignment.deadLine.split('T')[0],
       candidatesCapacity: assignment.candidatesCapacity || 2,
       isGrouped: assignment.isGrouped,
+      isPrivate: assignment.isPrivate,
       difficulty: assignment.difficulty || 'Normal',
       maxAttempts: assignment.attemptsCoefficients?.length || 1,
       attemptsCoefficients: assignment.attemptsCoefficients?.length
         ? [...assignment.attemptsCoefficients]
         : [1],
-      maxAttemptNumberToGrantMedal: assignment.maxAttemptNumberToGrantMedal || 1,
     };
     this.selectedTechs = assignment.technologies?.map((t) => ({ ...t })) || [];
     this.showEditAssignmentModal = true;
@@ -1360,6 +1409,7 @@ export class EmployerDashboardPage implements OnInit {
   closeEditAssignmentModal(): void {
     this.showEditAssignmentModal = false;
     this.editingAssignment = null;
+    this.savingAssignment = false;
   }
 
   saveAssignment(): void {
@@ -1385,15 +1435,17 @@ export class EmployerDashboardPage implements OnInit {
       description: this.editForm.description,
       templateUrl: { value: this.editForm.templateUrl },
       deadLine: this.editForm.deadLine,
-      candidatesCapacity: this.editForm.isGrouped ? this.editForm.candidatesCapacity : undefined,
       difficulty: this.editForm.difficulty,
       attemptsCoefficients: this.editForm.attemptsCoefficients,
-      maxAttemptNumberToGrantMedal: this.editForm.maxAttemptNumberToGrantMedal,
+      isPrivate: this.editForm.isPrivate,
       technologies:
         addedTechs.length > 0 || removedTechs.length > 0
           ? ({ toAdd: addedTechs, toRemove: removedTechs } as RelationsPatch)
           : undefined,
     };
+    if (this.editForm.isGrouped) {
+      patchRequest.candidatesCapacity = this.editForm.candidatesCapacity;
+    }
 
     this.assignmentsService.updateAssignment(this.editingAssignment.id, patchRequest).subscribe({
       next: () => {
@@ -1432,10 +1484,10 @@ export class EmployerDashboardPage implements OnInit {
       deadLine: '',
       candidatesCapacity: 1,
       isGrouped: false,
+      isPrivate: false,
       difficulty: 'Normal',
       maxAttempts: 1,
       attemptsCoefficients: [1],
-      maxAttemptNumberToGrantMedal: 1,
     };
     this.createSelectedTechs = [];
   }
@@ -1462,10 +1514,6 @@ export class EmployerDashboardPage implements OnInit {
   private syncCreateAttemptsCoefficients(): void {
     const maxAttempts = Math.min(Math.max(this.createForm.maxAttempts, 1), 5);
     this.createForm.maxAttempts = maxAttempts;
-    this.createForm.maxAttemptNumberToGrantMedal = Math.min(
-      this.createForm.maxAttemptNumberToGrantMedal,
-      maxAttempts,
-    );
 
     if (this.createForm.attemptsCoefficients.length > maxAttempts) {
       this.createForm.attemptsCoefficients = this.createForm.attemptsCoefficients.slice(
@@ -1500,10 +1548,6 @@ export class EmployerDashboardPage implements OnInit {
   private syncEditAttemptsCoefficients(): void {
     const maxAttempts = Math.min(Math.max(this.editForm.maxAttempts, 1), 5);
     this.editForm.maxAttempts = maxAttempts;
-    this.editForm.maxAttemptNumberToGrantMedal = Math.min(
-      this.editForm.maxAttemptNumberToGrantMedal,
-      maxAttempts,
-    );
 
     if (this.editForm.attemptsCoefficients.length > maxAttempts) {
       this.editForm.attemptsCoefficients = this.editForm.attemptsCoefficients.slice(0, maxAttempts);
@@ -1555,12 +1599,6 @@ export class EmployerDashboardPage implements OnInit {
     )
       return false;
     if (!this.areCreateAttemptsCoefficientsValid()) return false;
-    if (
-      !Number.isInteger(this.createForm.maxAttemptNumberToGrantMedal) ||
-      this.createForm.maxAttemptNumberToGrantMedal < 1 ||
-      this.createForm.maxAttemptNumberToGrantMedal > this.createForm.maxAttempts
-    )
-      return false;
     return true;
   }
 
@@ -1583,7 +1621,7 @@ export class EmployerDashboardPage implements OnInit {
       candidatesCapacity: this.createForm.candidatesCapacity,
       difficulty: this.createForm.difficulty,
       attemptsCoefficients: this.createForm.attemptsCoefficients,
-      maxAttemptNumberToGrantMedal: this.createForm.maxAttemptNumberToGrantMedal,
+      isPrivate: this.createForm.isPrivate,
       technologies: techIds,
     };
 
@@ -1714,12 +1752,6 @@ export class EmployerDashboardPage implements OnInit {
     )
       return false;
     if (!this.areEditAttemptsCoefficientsValid()) return false;
-    if (
-      !Number.isInteger(this.editForm.maxAttemptNumberToGrantMedal) ||
-      this.editForm.maxAttemptNumberToGrantMedal < 1 ||
-      this.editForm.maxAttemptNumberToGrantMedal > this.editForm.maxAttempts
-    )
-      return false;
     return true;
   }
 }
