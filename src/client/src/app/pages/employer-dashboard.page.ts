@@ -306,6 +306,18 @@ import { NotificationService } from '../core/services/notification.service';
                   </div>
                 </div>
                 <div class="flex gap-2 flex-shrink-0">
+                  <a
+                    [routerLink]="['/assignment', assignment.id, 'solutions']"
+                    class="border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors text-sm uppercase font-semibold"
+                  >
+                    👁️ Просмотр решений
+                  </a>
+                  <button
+                    (click)="openEditAssignmentModal(assignment)"
+                    class="border-2 border-indigo-600 px-4 py-2 hover:bg-indigo-600 hover:text-white transition-colors text-sm uppercase font-semibold cursor-pointer"
+                  >
+                    РЕДАКТИРОВАТЬ
+                  </button>
                   <button
                     *ngIf="assignment.isPrivate"
                     type="button"
@@ -327,18 +339,6 @@ import { NotificationService } from '../core/services/notification.service';
                       <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
                       <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                     </svg>
-                  </button>
-                  <a
-                    [routerLink]="['/assignment', assignment.id, 'solutions']"
-                    class="border-2 border-emerald-600 px-4 py-2 hover:bg-emerald-600 hover:text-white transition-colors text-sm uppercase font-semibold"
-                  >
-                    👁️ Просмотр решений
-                  </a>
-                  <button
-                    (click)="openEditAssignmentModal(assignment)"
-                    class="border-2 border-indigo-600 px-4 py-2 hover:bg-indigo-600 hover:text-white transition-colors text-sm uppercase font-semibold cursor-pointer"
-                  >
-                    РЕДАКТИРОВАТЬ
                   </button>
                 </div>
               </div>
