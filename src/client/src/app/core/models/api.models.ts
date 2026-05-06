@@ -165,6 +165,7 @@ export interface AssignmentSearchRequest {
   technologiesIds?: string[];
   isGrouped?: boolean;
   deadLineRangeIncluded?: DateRange;
+  includePrivate?: boolean;
 }
 
 export interface AssignmentSearchResponse {
