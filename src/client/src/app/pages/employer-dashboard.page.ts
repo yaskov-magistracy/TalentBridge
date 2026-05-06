@@ -712,43 +712,6 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
-            <!-- Task Type -->
-            <div>
-              <label class="block font-bold mb-3 text-sm uppercase tracking-wider"
-                >ТИП ЗАДАНИЯ</label
-              >
-              <div class="border-2 border-black p-6 space-y-4">
-                <label class="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    [checked]="!editForm.isGrouped"
-                    (change)="editForm.isGrouped = false"
-                    name="editTaskType"
-                    class="w-5 h-5 mt-0.5 border-2 border-black"
-                  />
-                  <div>
-                    <span class="font-bold uppercase">ИНДИВИДУАЛЬНОЕ</span>
-                    <p class="text-sm text-gray-600 mt-1">Задание выполняется одним кандидатом</p>
-                  </div>
-                </label>
-                <label class="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    [checked]="editForm.isGrouped"
-                    (change)="editForm.isGrouped = true"
-                    name="editTaskType"
-                    class="w-5 h-5 mt-0.5 border-2 border-black"
-                  />
-                  <div>
-                    <span class="font-bold uppercase">КОМАНДНОЕ</span>
-                    <p class="text-sm text-gray-600 mt-1">
-                      Задание выполняется командой кандидатов
-                    </p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
             <label class="flex items-start gap-3 cursor-pointer border-2 border-black p-4">
               <input
                 type="checkbox"
@@ -800,6 +763,7 @@ import { NotificationService } from '../core/services/notification.service';
           <!-- Footer -->
           <div class="flex gap-4 mt-6 pt-6 border-t-2">
             <button
+              type="button"
               (click)="saveAssignment()"
               [disabled]="savingAssignment || !isFormValid()"
               class="flex-1 border-2 border-indigo-600 px-8 py-3 font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -812,6 +776,7 @@ import { NotificationService } from '../core/services/notification.service';
               {{ savingAssignment ? 'СОХРАНЕНИЕ...' : 'СОХРАНИТЬ ИЗМЕНЕНИЯ' }}
             </button>
             <button
+              type="button"
               (click)="closeEditAssignmentModal()"
               class="flex-1 border-2 border-gray-400 px-8 py-3 hover:bg-gray-400 hover:text-white transition-colors font-bold uppercase tracking-wider"
             >
@@ -1420,6 +1385,7 @@ export class EmployerDashboardPage implements OnInit {
 
   // Edit Assignment Modal Methods
   openEditAssignmentModal(assignment: AssignmentFullInfo): void {
+    this.savingAssignment = false;
     this.editingAssignment = assignment;
     this.editForm = {
       name: assignment.name,
@@ -1443,6 +1409,7 @@ export class EmployerDashboardPage implements OnInit {
   closeEditAssignmentModal(): void {
     this.showEditAssignmentModal = false;
     this.editingAssignment = null;
+    this.savingAssignment = false;
   }
 
   saveAssignment(): void {
@@ -1468,7 +1435,6 @@ export class EmployerDashboardPage implements OnInit {
       description: this.editForm.description,
       templateUrl: { value: this.editForm.templateUrl },
       deadLine: this.editForm.deadLine,
-      candidatesCapacity: this.editForm.isGrouped ? this.editForm.candidatesCapacity : undefined,
       difficulty: this.editForm.difficulty,
       attemptsCoefficients: this.editForm.attemptsCoefficients,
       isPrivate: this.editForm.isPrivate,
@@ -1477,6 +1443,9 @@ export class EmployerDashboardPage implements OnInit {
           ? ({ toAdd: addedTechs, toRemove: removedTechs } as RelationsPatch)
           : undefined,
     };
+    if (this.editForm.isGrouped) {
+      patchRequest.candidatesCapacity = this.editForm.candidatesCapacity;
+    }
 
     this.assignmentsService.updateAssignment(this.editingAssignment.id, patchRequest).subscribe({
       next: () => {
