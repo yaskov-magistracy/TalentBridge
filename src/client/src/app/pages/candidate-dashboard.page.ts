@@ -488,7 +488,12 @@ type AssignmentTeam = {
               <div class="mb-4">
                 <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
                 <div class="space-y-3">
-                  <div *ngFor="let member of selectedAssignmentTeamSolution.candidates" class="flex items-center gap-3">
+                  <div
+                    *ngFor="let member of selectedAssignmentTeamSolution.candidates"
+                    [routerLink]="['/candidate', member.id]"
+                    (click)="$event.stopPropagation()"
+                    class="flex items-center gap-3 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
+                  >
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
@@ -583,7 +588,11 @@ type AssignmentTeam = {
                 </div>
                 <div class="space-y-2">
                   <div *ngFor="let candidate of (selectedSolution.candidatesJoinRequested?.slice(0, 3) || [])" class="flex justify-between items-center bg-white border border-emerald-300 p-2">
-                    <div class="flex items-center gap-2">
+                    <div
+                      [routerLink]="['/candidate', candidate.id]"
+                      (click)="$event.stopPropagation()"
+                      class="flex items-center gap-2 cursor-pointer p-1 transition-all hover:bg-emerald-50 hover:shadow-md"
+                    >
                       <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
                         {{ (candidate.surname || '').charAt(0) }}{{ (candidate.name || '').charAt(0) }}
                       </div>
@@ -622,7 +631,12 @@ type AssignmentTeam = {
               <div class="mb-4">
                 <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
                 <div class="space-y-3">
-                  <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
+                  <div
+                    *ngFor="let member of selectedSolution.candidates"
+                    [routerLink]="['/candidate', member.id]"
+                    (click)="$event.stopPropagation()"
+                    class="flex items-center gap-3 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
+                  >
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
@@ -822,7 +836,11 @@ type AssignmentTeam = {
             <!-- Candidates List -->
             <div class="space-y-2 overflow-y-auto max-h-96">
               <div *ngFor="let candidate of pendingCandidates" class="flex justify-between items-center bg-gray-50 border border-emerald-300 p-3">
-                <div class="flex items-center gap-3">
+                <div
+                  [routerLink]="['/candidate', candidate.id]"
+                  (click)="$event.stopPropagation()"
+                  class="flex items-center gap-3 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
+                >
                   <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                     {{ (candidate.surname || '').charAt(0) }}{{ (candidate.name || '').charAt(0) }}
                   </div>
