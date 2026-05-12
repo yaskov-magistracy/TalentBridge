@@ -1,4 +1,4 @@
-﻿using Domain.Assignments;
+using Domain.Assignments;
 using Domain.Candidates;
 using Domain.Employers;
 using Domain.Experts;
@@ -58,7 +58,10 @@ public class DatabaseAccessor(
         var employer = (await EmployersService.Add(new(
             "employer",
             "employer",
-            "ООО Рога-копыта"
+            "ООО Рога-копыта",
+            @"test@mail.ru",
+            "88005553535",
+            "talentbridge.yaskov.space"
         ))).Value;
         var expert = (await ExpertsService.Add(new(
             "expert",
@@ -93,9 +96,9 @@ public class DatabaseAccessor(
             technologies.Skip(3).Take(4).Select(e => e.Id).ToArray()
         ))).Value;
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
-            new("В целом неплохое решение. Я бы взял его на работу", 9, SolutionSubmitReviewResultState.Done, true));
+            new SolutionSubmitReviewRequest("В целом неплохое решение. Я бы взял его на работу", 9, SolutionSubmitReviewResultState.Done, true));
         await CreateSolutionAndGoToReview(soloAssignment.Id, candidate.Id, expert.Id, 
-                new("Плохое решение. Много недочётов. Я бы не брал", 3, SolutionSubmitReviewResultState.Failed, false));
+                new SolutionSubmitReviewRequest("Плохое решение. Много недочётов. Я бы не брал", 3, SolutionSubmitReviewResultState.Failed, false));
         await CreateTeamSolutionAndGoToManeReviews(teamAssignment.Id, candidate.Id, candidate2.Id, expert.Id);
         var notFullTeamSolution = (await SolutionsService.Add(new(
             teamAssignment.Id, 
@@ -129,10 +132,10 @@ public class DatabaseAccessor(
         await SolutionsService.Start(candidateId, teamSolution.Id);
         await SolutionsService.SendToReview(candidateId, teamSolution.Id);
         await SolutionsService.SubmitReview(expertId, teamSolution.Id, 
-            new ("В целом неплохо. Нужно доделать транзакции и закрыть безопасность", 7, SolutionSubmitReviewResultState.Failed, false));
+            new SolutionSubmitReviewRequest("В целом неплохо. Нужно доделать транзакции и закрыть безопасность", 7, SolutionSubmitReviewResultState.Failed, false));
         await SolutionsService.SendToReview(candidateId, teamSolution.Id);
         await SolutionsService.SubmitReview(expertId, teamSolution.Id,
-            new("Уже гораздо лучше. Видно проделанную работу. Молодцы", 8, SolutionSubmitReviewResultState.Done, false));
+            new SolutionSubmitReviewRequest("Уже гораздо лучше. Видно проделанную работу. Молодцы", 8, SolutionSubmitReviewResultState.Done, false));
     }
 
     private static readonly TechnologyCreateEntity[] TechnologyCreateEntities =

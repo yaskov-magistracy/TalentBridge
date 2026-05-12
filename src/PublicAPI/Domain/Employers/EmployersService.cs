@@ -1,4 +1,4 @@
-﻿using Domain.Authorization;
+using Domain.Authorization;
 using Domain.Authorization.DTO;
 using Domain.Employers.DTO;
 using Infrastructure.Results;
@@ -47,7 +47,10 @@ public class EmployersService(
         var res = await employersRepository.Add(new(
             createRequest.Login, 
             passwordHasher.HashPassword(createRequest.Password),
-            createRequest.Name
+            createRequest.Name,
+            createRequest.Email,
+            createRequest.PhoneNumber,
+            createRequest.SiteUrl
         ));
         return Results.Ok(res);
     }

@@ -1,4 +1,4 @@
-﻿using Domain.Employers;
+using Domain.Employers;
 using Domain.Employers.DTO;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,6 +45,12 @@ public class EmployersRepository(
             existed.PasswordHash = updateEntity.PasswordHash;
         if (updateEntity.Name != null)
             existed.Name = updateEntity.Name;
+        if (updateEntity.Email != null)
+            existed.Email = updateEntity.Email.Value;
+        if (updateEntity.PhoneNumber != null)
+            existed.PhoneNumber = updateEntity.PhoneNumber.Value;
+        if (updateEntity.SiteUrl != null)
+            existed.SiteUrl = updateEntity.SiteUrl.Value;
 
         await dataContext.SaveChangesAsync();
         return EmployersMapper.ToDomain(existed);

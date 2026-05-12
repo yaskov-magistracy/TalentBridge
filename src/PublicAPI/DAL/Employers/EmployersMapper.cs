@@ -1,4 +1,4 @@
-﻿using Domain.Employers;
+using Domain.Employers;
 using Domain.Employers.DTO;
 
 namespace DAL.Employers;
@@ -6,7 +6,7 @@ namespace DAL.Employers;
 internal static class EmployersMapper
 {
     public static Employer ToDomain(EmployerEntity entity)
-        => new(entity.Id, entity.Login, entity.Name);
+        => new(entity.Id, entity.Login, entity.Name, entity.Email, entity.PhoneNumber, entity.SiteUrl);
 
     public static EmployerEntity ToEntity(EmployerCreateEntity createEntity)
         => new()
@@ -14,5 +14,8 @@ internal static class EmployersMapper
             Login = createEntity.Login,
             PasswordHash = createEntity.PasswordHash,
             Name = createEntity.Name,
+            Email = createEntity.Email,
+            PhoneNumber = createEntity.PhoneNumber,
+            SiteUrl = createEntity.SiteUrl,
         };
 }
