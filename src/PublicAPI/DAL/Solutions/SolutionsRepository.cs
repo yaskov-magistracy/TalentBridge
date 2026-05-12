@@ -63,10 +63,19 @@ public class SolutionsRepository(
             query = query.Where(e => e.CandidatesJoinRequested!.Any(c => c.Id == request.CandidateJoinRequestedId));
         if (request.ExcludeCandidateJoinRequestedId != null)
             query = query.Where(e => e.CandidatesJoinRequested!.All(c => c.Id != request.ExcludeCandidateJoinRequestedId));
+       
         if (request.IsAvailableToJoin is true)
-            query = query.Where(e => e.Candidates.Count < e.Assignment.CandidatesCapacity);
+        {
+            query = query.Where(e => e.State == SolutionEntityState.NotStarted
+                                     && e.Candidates.Count < e.Assignment.CandidatesCapacity);
+        }
+
         if (request.IsAvailableToJoin is false)
-            query = query.Where(e => e.Candidates.Count == e.Assignment.CandidatesCapacity);
+        {
+            query = query.Where(e => e.State != SolutionEntityState.NotStarted
+                                     || e.Candidates.Count == e.Assignment.CandidatesCapacity);
+        }
+
         if (request.State != null)
             query = query.Where(e => e.State == SolutionsMapper.ToEntity(request.State.Value));
         if (request.HasMedal != null)
