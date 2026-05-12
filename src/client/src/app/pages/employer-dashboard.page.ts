@@ -888,46 +888,20 @@ import { NotificationService } from '../core/services/notification.service';
               </p>
             </div>
 
-            <!-- Deadline & Capacity -->
-            <div class="grid gap-4" [class.grid-cols-2]="createForm.isGrouped">
-              <div [class.col-span-2]="!createForm.isGrouped">
-                <label class="block font-bold mb-2 text-sm uppercase tracking-wider">ДЕДЛАЙН</label>
-                <input
-                  type="date"
-                  [(ngModel)]="createForm.deadLine"
-                  name="createDeadLine"
-                  #createDeadlineInput="ngModel"
-                  class="w-full border-2 border-black p-3"
-                  [class.border-red-500]="
-                    createDeadlineInput.invalid && createDeadlineInput.touched
-                  "
-                  required
-                />
-              </div>
-              <div *ngIf="createForm.isGrouped">
-                <label class="block font-bold mb-2 text-sm uppercase tracking-wider"
-                  >МАКС. УЧАСТНИКОВ</label
-                >
-                <input
-                  type="number"
-                  [(ngModel)]="createForm.candidatesCapacity"
-                  name="createCandidatesCapacity"
-                  #createCapacityInput="ngModel"
-                  class="w-full border-2 border-black p-3"
-                  [class.border-red-500]="
-                    createCapacityInput.invalid && createCapacityInput.touched
-                  "
-                  min="2"
-                  max="20"
-                  required
-                />
-                <p
-                  *ngIf="createCapacityInput.invalid && createCapacityInput.touched"
-                  class="text-red-600 text-xs mt-1"
-                >
-                  От 2 до 20 участников
-                </p>
-              </div>
+            <!-- Deadline -->
+            <div>
+              <label class="block font-bold mb-2 text-sm uppercase tracking-wider">ДЕДЛАЙН</label>
+              <input
+                type="date"
+                [(ngModel)]="createForm.deadLine"
+                name="createDeadLine"
+                #createDeadlineInput="ngModel"
+                class="w-full border-2 border-black p-3"
+                [class.border-red-500]="
+                  createDeadlineInput.invalid && createDeadlineInput.touched
+                "
+                required
+              />
             </div>
 
             <!-- Difficulty -->
@@ -1031,13 +1005,37 @@ import { NotificationService } from '../core/services/notification.service';
                     name="createTaskType"
                     class="w-5 h-5 mt-0.5 border-2 border-black"
                   />
-                  <div>
+                  <div class="flex-1">
                     <span class="font-bold uppercase">КОМАНДНОЕ</span>
                     <p class="text-sm text-gray-600 mt-1">
                       Задание выполняется командой кандидатов
                     </p>
                   </div>
                 </label>
+                <div *ngIf="createForm.isGrouped" class="mt-4">
+                  <div class="font-bold mb-2 text-sm uppercase tracking-wider">
+                    МАКС. УЧАСТНИКОВ
+                  </div>
+                  <input
+                    type="number"
+                    [(ngModel)]="createForm.candidatesCapacity"
+                    name="createCandidatesCapacity"
+                    #createCapacityInput="ngModel"
+                    class="w-full border-2 border-black p-3"
+                    [class.border-red-500]="
+                          createCapacityInput.invalid && createCapacityInput.touched
+                        "
+                    min="2"
+                    max="20"
+                    required
+                  />
+                  <p
+                    *ngIf="createCapacityInput.invalid && createCapacityInput.touched"
+                    class="text-red-600 text-xs mt-1"
+                  >
+                    От 2 до 20 участников
+                  </p>
+                </div>
               </div>
             </div>
 

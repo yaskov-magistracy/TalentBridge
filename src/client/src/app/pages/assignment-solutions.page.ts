@@ -147,7 +147,9 @@ import { NotificationService } from '../core/services/notification.service';
                     >
                       <div
                         *ngFor="let member of solution.candidates"
-                        class="flex items-center gap-2"
+                        [routerLink]="['/candidate', member.id]"
+                        (click)="$event.stopPropagation()"
+                        class="flex items-center gap-2 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
                       >
                         <div
                           class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs"
@@ -375,7 +377,9 @@ import { NotificationService } from '../core/services/notification.service';
               <div class="flex flex-wrap gap-3">
                 <div
                   *ngFor="let member of selectedSolution.candidates"
-                  class="flex items-center gap-2"
+                  [routerLink]="['/candidate', member.id]"
+                  (click)="$event.stopPropagation()"
+                  class="flex items-center gap-2 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
                 >
                   <div
                     class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm"
@@ -526,7 +530,12 @@ import { NotificationService } from '../core/services/notification.service';
               <h4 class="font-bold mb-3 uppercase text-amber-700">КОМАНДА</h4>
               <p *ngIf="selectedSolution.team.description" class="text-sm text-gray-600 mb-3">{{ selectedSolution.team.description }}</p>
               <div class="flex flex-wrap gap-3">
-                <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-2">
+                <div
+                  *ngFor="let member of selectedSolution.candidates"
+                  [routerLink]="['/candidate', member.id]"
+                  (click)="$event.stopPropagation()"
+                  class="flex items-center gap-2 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
+                >
                   <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                     {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                   </div>

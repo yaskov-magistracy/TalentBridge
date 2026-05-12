@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AssignmentsService, AuthService, SolutionsService } from '../../core';
 import {
   AssignmentDifficulty,
@@ -22,7 +23,7 @@ type AssignmentTeam = {
 @Component({
   selector: 'app-private-assignment-join-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, TechChipComponent],
+  imports: [CommonModule, FormsModule, TechChipComponent, RouterLink],
   template: `
     <div
       *ngIf="open"
@@ -281,7 +282,12 @@ type AssignmentTeam = {
           <div class="mb-4">
             <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
             <div class="space-y-3">
-              <div *ngFor="let member of selectedAssignmentTeamSolution.candidates" class="flex items-center gap-3">
+              <div
+                *ngFor="let member of selectedAssignmentTeamSolution.candidates"
+                [routerLink]="['/candidate', member.id]"
+                (click)="$event.stopPropagation()"
+                class="flex items-center gap-3 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
+              >
                 <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                   {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                 </div>

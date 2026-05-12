@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CommonModule, Location } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CandidatesService, SolutionsService } from '../core';
 import { CandidateFullInfo, ExpertReviewInSolution, SolutionFullInfo } from '../core/models/api.models';
 import { NavbarComponent } from '../shared/components/navbar.component';
@@ -49,15 +49,16 @@ import { TechChipComponent } from '../shared/components/tech-chip.component';
               </div>
 
               <div class="flex gap-3 flex-wrap justify-end">
-                <a
-                  [routerLink]="'/candidates-ranking'"
+                <button
+                  type="button"
+                  (click)="goBack()"
                   class="border-2 border-gray-300 bg-white text-gray-700 px-5 py-3 hover:border-emerald-600 hover:text-emerald-700 transition-colors font-bold uppercase tracking-wider flex items-center gap-2">
                   <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                    <path d="M18 6 6 18" />
-                    <path d="m6 6 12 12" />
+                    <path d="m12 19-7-7 7-7" />
+                    <path d="M19 12H5" />
                   </svg>
-                  Закрыть
-                </a>
+                  Назад
+                </button>
               </div>
             </div>
 
@@ -243,7 +244,12 @@ import { TechChipComponent } from '../shared/components/tech-chip.component';
               <div class="mb-4">
                 <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
                 <div class="space-y-3">
-                  <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
+                  <div
+                    *ngFor="let member of selectedSolution.candidates"
+                    [routerLink]="['/candidate', member.id]"
+                    (click)="$event.stopPropagation()"
+                    class="flex items-center gap-3 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
+                  >
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
@@ -314,6 +320,8 @@ export class CandidateProfilePage implements OnInit {
   private readonly candidatesService = inject(CandidatesService);
   private readonly solutionsService = inject(SolutionsService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly cdr = inject(ChangeDetectorRef);
 
   candidate: CandidateFullInfo | null = null;
@@ -324,15 +332,18 @@ export class CandidateProfilePage implements OnInit {
   errorMessage = '';
 
   ngOnInit(): void {
-    const candidateId = this.route.snapshot.paramMap.get('id');
+    this.route.paramMap.subscribe((params) => {
+      const candidateId = params.get('id');
 
-    if (!candidateId) {
-      this.errorMessage = 'Не удалось определить кандидата.';
-      return;
-    }
+      if (!candidateId) {
+        this.errorMessage = 'Не удалось определить кандидата.';
+        return;
+      }
 
-    this.loadCandidate(candidateId);
-    this.loadCompletedSolutions(candidateId);
+      this.closeSolutionModal();
+      this.loadCandidate(candidateId);
+      this.loadCompletedSolutions(candidateId);
+    });
   }
 
   getCandidateName(candidate: CandidateFullInfo): string {
@@ -348,6 +359,15 @@ export class CandidateProfilePage implements OnInit {
 
   formatSuccessRate(successRate: number | null | undefined): string {
     return Number(successRate ?? 0).toFixed(1);
+  }
+
+  goBack(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+
+    this.router.navigateByUrl('/candidates-ranking');
   }
 
   getSolutionCardClass(solution: SolutionFullInfo): string {

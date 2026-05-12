@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NavbarComponent } from '../shared/components/navbar.component';
 import { TechChipComponent } from '../shared/components/tech-chip.component';
 import { AuthService, AssignmentsService, SolutionsService } from '../core';
@@ -16,7 +16,8 @@ import { NotificationService } from '../core/services/notification.service';
     FormsModule,
     ReactiveFormsModule,
     NavbarComponent,
-    TechChipComponent
+    TechChipComponent,
+    RouterLink
   ],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-amber-50">
@@ -309,7 +310,12 @@ import { NotificationService } from '../core/services/notification.service';
               <div class="mb-4">
                 <p class="text-sm font-bold uppercase mb-3">УЧАСТНИКИ КОМАНДЫ:</p>
                 <div class="space-y-3">
-                  <div *ngFor="let member of selectedSolution.candidates" class="flex items-center gap-3">
+                  <div
+                    *ngFor="let member of selectedSolution.candidates"
+                    [routerLink]="['/candidate', member.id]"
+                    (click)="$event.stopPropagation()"
+                    class="flex items-center gap-3 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
+                  >
                     <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {{ (member.surname || '').charAt(0) }}{{ (member.name || '').charAt(0) }}
                     </div>
