@@ -10,8 +10,18 @@ public class EmployersRepository(
 {
     private DbSet<EmployerEntity> Employers => dataContext.Employers;
     private IQueryable<EmployerEntity> EmployersSearch => Employers.AsNoTracking();
-    private IQueryable<EmployerEntity> EmployersFullSearch => EmployersFull.AsNoTracking();
+    private IQueryable<EmployerEntity> EmployersFullSearch => EmployersFull
+        .Include(e => e.Assignments)!.ThenInclude(a => a.Solutions)
+        .AsNoTracking();
     private IQueryable<EmployerEntity> EmployersFull => Employers;
+
+    public async Task<EmployerFull?> GetFull(Guid id)
+    {
+        var entity = await EmployersFullSearch.FirstOrDefaultAsync(e => e.Id == id);
+        return entity != null
+            ? EmployersMapper.ToDomainFull(entity)
+            : null;
+    }
     
     public async Task<Employer?> Get(Guid id)
     {

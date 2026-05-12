@@ -24,6 +24,16 @@ public class EmployersController(
     }
     
     /// <summary>
+    /// Получить фулл инфу о работодателе
+    /// </summary>
+    [HttpGet("{id:Guid}")]
+    public async Task<ActionResult<EmployerFull>> GetFull([FromRoute] Guid id)
+    {
+        var res = await employersService.GetFull(id);
+        return res.ActionResult;
+    }
+    
+    /// <summary>
     /// Редактирование Работодателя
     /// </summary>
     [AuthorizeRoles(AccountRole.Employer)]

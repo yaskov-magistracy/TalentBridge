@@ -7,6 +7,7 @@ namespace Domain.Employers;
 
 public interface IEmployersService
 {
+    Task<Result<EmployerFull>> GetFull(Guid id);
     Task<Result<Employer>> Get(Guid id);
     Task<Result<Employer>> Get(string login);
     Task<Result<Employer>> Add(EmployerCreateRequest createRequest);
@@ -20,6 +21,15 @@ public class EmployersService(
     IPasswordHasher passwordHasher
 ) : IEmployersService
 {
+    public async Task<Result<EmployerFull>> GetFull(Guid id)
+    {
+        var res = await employersRepository.GetFull(id);
+        if (res == null)
+            return Results.NotFound<EmployerFull>("");
+
+        return Results.Ok(res);
+    }
+
     public async Task<Result<Employer>> Get(Guid id)
     {
         var res = await employersRepository.Get(id);

@@ -4,6 +4,7 @@ namespace Domain.Employers;
 
 public interface IEmployersRepository
 {
+    public Task<EmployerFull?> GetFull(Guid id);
     public Task<Employer?> Get(Guid id);
     public Task<Employer?> Get(string login);
     public Task<Employer> Add(EmployerCreateEntity createEntity);
