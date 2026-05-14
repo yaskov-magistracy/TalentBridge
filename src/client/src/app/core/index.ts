@@ -8,6 +8,7 @@ export { SolutionsService } from './services/solutions.service';
 export { TechnologiesService } from './services/technologies.service';
 export { TalentBridgeRepository } from './services/talent-bridge.repository';
 export { NotificationService } from './services/notification.service';
+export { AiChatsService } from './services/ai-chats.service';
 
 // ==================== Guards ====================
 export { authGuard, requireAuthGuard } from './guards';
