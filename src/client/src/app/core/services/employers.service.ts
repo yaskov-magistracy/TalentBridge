@@ -20,10 +20,17 @@ export class EmployersService {
   }
 
   /**
+   * Получить полную информацию о работодателе
+   */
+  getEmployer(id: string): Observable<EmployerFullInfo> {
+    return this.apiClient.get<EmployerFullInfo>(`/Employers/${id}`);
+  }
+
+  /**
    * Обновить информацию о работодателе
    */
   updateEmployer(id: string, request: EmployerUpdateEntity): Observable<string> {
-    return this.apiClient.post<string>(`/employers/${id}`, request);
+    return this.apiClient.post<string>(`/Employers/${id}`, request);
   }
 
   /**

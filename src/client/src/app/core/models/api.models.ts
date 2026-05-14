@@ -79,29 +79,30 @@ export interface CandidateSearchResponse {
 // ==================== Employers ====================
 
 export interface EmployerCreateRequest {
-  companyName: string;
-  email: string;
+  login: string;
   password: string;
-  description?: string;
-  phone?: string;
-  website?: string;
+  name: string;
+  email?: string;
+  phoneNumber?: string;
+  siteUrl?: string;
 }
 
 export interface EmployerUpdateEntity {
-  companyName?: string;
-  email?: string;
-  description?: string;
-  phone?: string;
-  website?: string;
+  name?: string;
+  email?: NullablePatch<string>;
+  phoneNumber?: NullablePatch<string>;
+  siteUrl?: NullablePatch<string>;
 }
 
 export interface EmployerFullInfo {
   id: string;
-  companyName: string;
-  email: string;
-  description?: string;
-  phone?: string;
-  website?: string;
+  login: string;
+  name: string;
+  email?: string | null;
+  number?: string | null;
+  siteUrl?: string | null;
+  assignmentsCount: number;
+  completedSolutions: number;
 }
 
 // ==================== Assignments ====================

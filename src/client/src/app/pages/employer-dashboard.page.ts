@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import {
   AuthService,
   AssignmentsService,
+  EmployersService,
   TalentBridgeRepository,
   TechnologiesService,
   SolutionsService,
@@ -18,7 +19,10 @@ import {
   AssignmentFullInfo,
   AssignmentSearchRequest,
   AssignmentUpdateEntity,
+  EmployerFullInfo,
+  EmployerUpdateEntity,
   AssignmentCreateApiRequest,
+  NullablePatch,
   RelationsPatch,
   Technology,
   SolutionState,
@@ -128,11 +132,6 @@ import { NotificationService } from '../core/services/notification.service';
             </div>
           </div>
 
-          <div class="mb-4">
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">О компании</p>
-            <p class="text-gray-700 leading-relaxed">{{ profile.description }}</p>
-          </div>
-
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</p>
@@ -165,16 +164,6 @@ import { NotificationService } from '../core/services/notification.service';
                   [(ngModel)]="editProfile.companyName"
                   class="w-full border-2 border-black p-3"
                 />
-              </div>
-
-              <div>
-                <label class="block font-bold mb-2 text-sm uppercase tracking-wider"
-                  >О компании</label
-                >
-                <textarea
-                  [(ngModel)]="editProfile.description"
-                  class="w-full border-2 border-black p-3 min-h-[120px]"
-                ></textarea>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1169,6 +1158,7 @@ import { NotificationService } from '../core/services/notification.service';
 export class EmployerDashboardPage implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly assignmentsService = inject(AssignmentsService);
+  private readonly employersService = inject(EmployersService);
   private readonly solutionsService = inject(SolutionsService);
   private readonly technologiesService = inject(TechnologiesService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -1261,12 +1251,46 @@ export class EmployerDashboardPage implements OnInit {
   expertComment = '';
 
   ngOnInit() {
-    this.profile = this.repository.getEmployerProfile();
-    if (this.profile) {
-      this.editProfile = { ...this.profile, website: this.profile.website || '' };
-    }
     this.candidates = this.repository.getEmployerCandidates();
+    this.loadEmployerProfile();
     this.loadPublishedAssignments();
+  }
+
+  private loadEmployerProfile(): void {
+    const employerId = this.authService.currentUser()?.userId;
+    if (!employerId) return;
+
+    this.employersService.getEmployer(employerId).subscribe({
+      next: (employer) => {
+        this.profile = this.mapEmployerToProfile(employer);
+        this.editProfile = { ...this.profile, website: this.profile.website || '' };
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to load employer profile:', error);
+        this.notificationService.error('Не удалось загрузить профиль компании.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private mapEmployerToProfile(employer: EmployerFullInfo): EmployerProfile {
+    return {
+      id: employer.id,
+      login: employer.login,
+      companyName: employer.name,
+      description: '',
+      publishedTasksCount: employer.assignmentsCount,
+      completedSubmissionsCount: employer.completedSolutions,
+      email: employer.email || '',
+      phone: employer.number || '',
+      website: employer.siteUrl || '',
+    };
+  }
+
+  private toNullablePatch(value: string | undefined): NullablePatch<string> {
+    const trimmedValue = value?.trim();
+    return { value: trimmedValue || null, isSet: true };
   }
 
   private loadAssignmentStats(): void {
@@ -1343,8 +1367,27 @@ export class EmployerDashboardPage implements OnInit {
   }
 
   saveProfile() {
-    this.profile = { ...this.editProfile, website: this.editProfile.website || undefined };
-    this.showProfileEdit = false;
+    if (!this.profile) return;
+
+    const updateRequest: EmployerUpdateEntity = {
+      name: this.editProfile.companyName,
+      email: this.toNullablePatch(this.editProfile.email),
+      phoneNumber: this.toNullablePatch(this.editProfile.phone),
+      siteUrl: this.toNullablePatch(this.editProfile.website),
+    };
+
+    this.employersService.updateEmployer(this.profile.id, updateRequest).subscribe({
+      next: () => {
+        this.notificationService.success('Профиль компании обновлен!');
+        this.showProfileEdit = false;
+        this.loadEmployerProfile();
+      },
+      error: (error) => {
+        console.error('Failed to update employer profile:', error);
+        this.notificationService.error('Не удалось обновить профиль компании. Попробуйте позже.');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   cancelProfileEdit() {

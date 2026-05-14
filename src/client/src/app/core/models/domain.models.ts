@@ -8,6 +8,7 @@ export type SkillLevel = 'начинающий' | 'базовый' | 'опытн
 
 export interface EmployerProfile {
   id: string;
+  login?: string;
   companyName: string;
   description: string;
   publishedTasksCount: number;
