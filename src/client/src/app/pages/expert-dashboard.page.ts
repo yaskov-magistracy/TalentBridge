@@ -283,7 +283,7 @@ import { NotificationService } from '../core/services/notification.service';
             <!-- Days Remaining -->
             <div class="border-2 border-amber-300 bg-amber-50 p-4 mb-6 text-center">
               <span class="font-bold text-lg" [class]="getDaysRemaining(selectedSolution.assignment.deadLine) < 0 ? 'text-red-600' : 'text-amber-600'">
-                ОСТАЛОСЬ ДНЕЕЙ: {{ getDaysRemaining(selectedSolution.assignment.deadLine) }}
+                ОСТАЛОСЬ ДНЕЙ: {{ getDaysRemaining(selectedSolution.assignment.deadLine) }}
               </span>
             </div>
 
@@ -333,7 +333,11 @@ import { NotificationService } from '../core/services/notification.service';
               <h3 class="font-bold text-lg uppercase text-amber-800">
                 👤 ИНДИВИДУАЛЬНЫЙ ПРОЕКТ
               </h3>
-              <div class="flex items-center gap-3 mt-3">
+              <div
+                [routerLink]="['/candidate', selectedSolution.candidateOwner.id]"
+                (click)="$event.stopPropagation()"
+                class="flex items-center gap-3 mt-3 cursor-pointer p-1 transition-all hover:bg-white hover:shadow-md"
+              >
                 <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                   {{ (selectedSolution.candidateOwner.surname || '').charAt(0) }}{{ (selectedSolution.candidateOwner.name || '').charAt(0) }}
                 </div>
