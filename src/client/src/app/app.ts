@@ -2,10 +2,11 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { FooterComponent } from './shared/components/footer.component';
 import { NotificationToastComponent } from './shared/components/notification-toast.component';
+import { AiChatComponent } from './shared/components/ai-chat.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, FooterComponent, NotificationToastComponent],
+  imports: [RouterOutlet, FooterComponent, NotificationToastComponent, AiChatComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

@@ -299,6 +299,32 @@ export interface TechnologySearchResponse {
   total: number;
 }
 
+// ==================== AiChats ====================
+
+export type AiChatMessageAuthor = 'Ai' | 'User';
+
+export interface AiChatMessage {
+  id: string;
+  text?: string | null;
+  author: AiChatMessageAuthor;
+  createdAt: string;
+}
+
+export interface AiChat {
+  id: string;
+  userId: string;
+  messages?: AiChatMessage[] | null;
+}
+
+export interface AiChatSendMessageRequest {
+  text: string;
+}
+
+export interface AiChatSendMessageResponse {
+  userRequest: AiChatMessage;
+  aiResponse: AiChatMessage;
+}
+
 // ==================== Common ====================
 
 export interface NullablePatch<T> {
