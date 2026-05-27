@@ -15,6 +15,7 @@ internal static class SolutionsMapper
             entity.SolutionUrl,
             entity.StartedAt,
             ToDomain(entity.State),
+            entity.StateHistory.OrderByDescending(e => e.Date).Select(ToDomain).ToArray(),
             entity.Team == null ? null : ToDomain(entity.Team),
             entity.MedalGrantedAt,
             entity.AssignmentId,
@@ -27,6 +28,7 @@ internal static class SolutionsMapper
             entity.SolutionUrl,
             entity.StartedAt,
             ToDomain(entity.State),
+            entity.StateHistory.OrderByDescending(e => e.Date).Select(ToDomain).ToArray(),
             entity.Team == null ? null : ToDomain(entity.Team),
             entity.MedalGrantedAt,
             AssignmentsMapper.ToDomainFull(entity.Assignment),
@@ -44,6 +46,14 @@ internal static class SolutionsMapper
             SolutionUrl = createEntity.SolutionUrl,
             StartedAt = null,
             State = ToEntity(createEntity.State),
+            StateHistory = new()
+            {
+                new()
+                {
+                    Date = DateTime.UtcNow,
+                    State = ToEntity(createEntity.State),
+                }
+            },
             AssignmentId = createEntity.AssignmentId,
             Assignment = new()
             {
@@ -65,7 +75,16 @@ internal static class SolutionsMapper
     
     public static SolutionTeam ToDomain(SolutionTeamEntity entity)
         => new(entity.Name, entity.Description);
+
+    public static SolutionStateHistoryEventEntity ToEntity(SolutionStateHistoryEvent domain)
+        => new()
+        {
+            Date = domain.Date,
+            State = ToEntity(domain.State),
+        };
     
+    public static SolutionStateHistoryEvent ToDomain(SolutionStateHistoryEventEntity entity)
+        => new(ToDomain(entity.State), entity.Date);
 
     public static SolutionEntityState ToEntity(SolutionState state)
         => state switch

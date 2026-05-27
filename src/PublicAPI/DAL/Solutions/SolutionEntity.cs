@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using DAL.Assignments;
 using DAL.Candidates;
 using DAL.ExpertReviews;
-using DAL.Experts;
 
 namespace DAL.Solutions;
 
@@ -12,6 +11,7 @@ internal class SolutionEntity : IEntity
     public string? SolutionUrl { get; set; }
     public DateOnly? StartedAt { get; set; }
     public SolutionEntityState State { get; set; }
+    public List<SolutionStateHistoryEventEntity> StateHistory { get; set; }
     public SolutionTeamEntity? Team { get; set; }
     public DateTime? MedalGrantedAt { get; set; }
     
@@ -24,6 +24,12 @@ internal class SolutionEntity : IEntity
     public List<CandidateEntity>? CandidatesJoinRequested { get; set; }
     
     public List<ExpertReviewEntity>? ExpertReviews { get; set; }
+}
+
+internal class SolutionStateHistoryEventEntity
+{
+    public SolutionEntityState State { get; set; }
+    public DateTime Date { get; set; }
 }
 
 internal class SolutionTeamEntity

@@ -10,6 +10,7 @@ public record Solution(
     string? SolutionUrl,
     DateOnly? StartedAt,
     SolutionState State,
+    SolutionStateHistoryEvent[] History,
     SolutionTeam? Team,
     DateTime? MedalGrantedAt
 )
@@ -25,17 +26,19 @@ public record SolutionShortInfo(
     string? SolutionUrl,
     DateOnly? StartedAt,
     SolutionState State,
+    SolutionStateHistoryEvent[] History,
     SolutionTeam? Team,
     DateTime? MedalGrantedAt,
     Guid AssignmentId,
     Guid CandidateOwnerId
-) :  Solution(Id, SolutionUrl, StartedAt, State, Team, MedalGrantedAt);
+) :  Solution(Id, SolutionUrl, StartedAt, State, History, Team, MedalGrantedAt);
 
 public record SolutionFullInfo(
     Guid Id,
     string? SolutionUrl,
     DateOnly? StartedAt,
     SolutionState State,
+    SolutionStateHistoryEvent[] History,
     SolutionTeam? Team,
     DateTime? MedalGrantedAt,
     AssignmentFullInfo Assignment,
@@ -43,12 +46,17 @@ public record SolutionFullInfo(
     List<Candidate> Candidates,
     List<Candidate>? CandidatesJoinRequested,
     List<ExpertReviewInSolution>? ExpertReviews
-) : Solution(Id, SolutionUrl, StartedAt, State, Team, MedalGrantedAt)
+) : Solution(Id, SolutionUrl, StartedAt, State, History, Team, MedalGrantedAt)
 {
     internal ExpertReviewInSolution GetLastReview()
         => ExpertReviews!.OrderByDescending(e => e.CreatedAt).First();
 }
 
+public record SolutionStateHistoryEvent(
+    SolutionState State,
+    DateTime Date)
+{
+}
 
 public record SolutionTeam(
     string Name,

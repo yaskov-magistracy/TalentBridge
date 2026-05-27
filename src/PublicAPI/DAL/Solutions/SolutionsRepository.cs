@@ -104,7 +104,14 @@ public class SolutionsRepository(
         if (patchEntity.SolutionUrl != null)
             existed.SolutionUrl = patchEntity.SolutionUrl;
         if (patchEntity.State != null)
+        {
             existed.State = SolutionsMapper.ToEntity(patchEntity.State.Value);
+            existed.StateHistory.Add(new SolutionStateHistoryEventEntity()
+            {
+                State = SolutionsMapper.ToEntity(patchEntity.State.Value),
+                Date = DateTime.UtcNow,
+            });
+        }
         if (patchEntity.StartedAt != null)
             existed.StartedAt = patchEntity.StartedAt;
         if (patchEntity.Team?.Name != null)
