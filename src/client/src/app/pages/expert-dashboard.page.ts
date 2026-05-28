@@ -737,7 +737,7 @@ export class ExpertDashboardPage implements OnInit {
       return parts.find(part => part.type === type)?.value ?? '';
     };
 
-    return `${getPart('day')} ${getPart('month')}, ${getPart('year')}, ${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
+    return `${getPart('day')} ${getPart('month')} ${getPart('year')}, ${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
   }
 
   getSolutionStateLabel(state: SolutionState): string {
