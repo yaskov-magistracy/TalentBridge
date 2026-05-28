@@ -52,7 +52,18 @@ export interface CandidateFullInfo {
   averageScore?: number | null;
   solutionsCompleted?: string[] | null;
   technologies?: Technology[] | null;
-  medalsCount: number;
+  medalsCount?: number;
+}
+
+export interface Candidate {
+  id: string;
+  login?: string | null;
+  surname?: string | null;
+  name?: string | null;
+  patronymic?: string | null;
+  city?: string | null;
+  about?: string | null;
+  rating: number;
 }
 
 export type SearchOrderingDirection = 'Ascending' | 'Descending';
@@ -182,18 +193,20 @@ export interface SolutionCreateApiRequest {
 }
 
 export interface SolutionTeamCreateApiRequest {
-  name: string;
-  description: string;
+  name?: string | null;
+  description?: string | null;
 }
 
-export interface SolutionPatchApiRequest {
-  solutionUrl?: string;
-  team?: SolutionTeamPatchApiRequest;
+export interface SolutionPatchRequest {
+  solutionUrl?: string | null;
+  team?: SolutionTeamPatchRequest;
 }
 
-export interface SolutionTeamPatchApiRequest {
-  name?: string;
-  description?: string;
+export type SolutionPatchApiRequest = SolutionPatchRequest;
+
+export interface SolutionTeamPatchRequest {
+  name?: string | null;
+  description?: string | null;
 }
 
 export interface SolutionFullInfo {
@@ -201,12 +214,13 @@ export interface SolutionFullInfo {
   solutionUrl?: string | null;
   startedAt?: string | null;
   state: SolutionState;
+  history?: SolutionStateHistoryEvent[] | null;
   team?: SolutionTeamInfo | null;
   medalGrantedAt?: string | null;
   assignment: AssignmentFullInfo;
-  candidateOwner: CandidateFullInfo;
+  candidateOwner: Candidate;
   candidates: CandidateFullInfo[];
-  candidatesJoinRequested?: CandidateFullInfo[] | null;
+  candidatesJoinRequested?: Candidate[] | null;
   expertReviews?: ExpertReviewInSolution[] | null;
 }
 
@@ -215,15 +229,20 @@ export interface SolutionTeamInfo {
   description: string;
 }
 
+export interface SolutionStateHistoryEvent {
+  state: SolutionState;
+  date: string;
+}
+
 export interface ExpertReviewInSolution {
   id: string;
   expert: {
     id: string;
-    surname: string;
-    name: string;
-    patronymic: string;
+    surname?: string | null;
+    name?: string | null;
+    patronymic?: string | null;
   };
-  comment: string;
+  comment?: string | null;
   score: number;
   attemptNumber: number;
   createdAt: string;
@@ -253,23 +272,23 @@ export type ExpertReviewStatus = 'pending' | 'approved' | 'rejected';
 export interface SolutionSearchRequest {
   take?: number;
   skip?: number;
-  assignmentId?: string;
-  technologiesIds?: string[];
-  excludeAssignmentsIds?: string[];
-  candidateId?: string;
-  excludeCandidateId?: string;
-  candidateOwnerId?: string;
-  excludeCandidateOwnerId?: string;
-  candidateJoinRequestedId?: string;
-  excludeCandidateJoinRequestedId?: string;
-  isAvailableToJoin?: boolean;
+  assignmentId?: string | null;
+  technologiesIds?: string[] | null;
+  excludeAssignmentsIds?: string[] | null;
+  candidateId?: string | null;
+  excludeCandidateId?: string | null;
+  candidateOwnerId?: string | null;
+  excludeCandidateOwnerId?: string | null;
+  candidateJoinRequestedId?: string | null;
+  excludeCandidateJoinRequestedId?: string | null;
+  isAvailableToJoin?: boolean | null;
   state?: SolutionState;
-  hasMedal?: boolean;
-  text?: string;
+  hasMedal?: boolean | null;
+  text?: string | null;
 }
 
 export interface SolutionSearchResponse {
-  items: SolutionFullInfo[];
+  items?: SolutionFullInfo[] | null;
   totalCount: number;
 }
 

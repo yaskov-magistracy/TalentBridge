@@ -348,6 +348,35 @@ import { NotificationService } from '../core/services/notification.service';
               </div>
             </div>
 
+            <!-- Solution Status History -->
+            <div class="mb-6 border-2 border-gray-300 bg-white p-4">
+              <h3 class="font-bold text-lg mb-4 uppercase text-gray-800">ИСТОРИЯ СТАТУСОВ РЕШЕНИЯ</h3>
+
+              <div *ngIf="getSortedSolutionHistory(selectedSolution).length > 0; else noSolutionHistory" class="space-y-3">
+                <div
+                  *ngFor="let event of getSortedSolutionHistory(selectedSolution); let isLast = last"
+                  class="flex gap-3">
+                  <div class="flex flex-col items-center">
+                    <div
+                      class="w-3 h-3 border-2 border-gray-500 bg-white"
+                      [class.bg-gray-500]="isLast">
+                    </div>
+                    <div *ngIf="!isLast" class="w-px flex-1 bg-gray-300 min-h-8"></div>
+                  </div>
+                  <div class="flex-1 pb-3">
+                    <p class="text-sm font-bold uppercase text-gray-800">{{ getSolutionStateLabel(event.state) }}</p>
+                    <p class="text-xs text-gray-600">{{ formatSolutionHistoryDate(event.date) }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noSolutionHistory>
+                <div class="border-2 border-gray-200 bg-gray-50 p-4">
+                  <p class="text-gray-500 text-sm">История статусов отсутствует</p>
+                </div>
+              </ng-template>
+            </div>
+
             <!-- Review Form (only for pending solutions) -->
             <div *ngIf="activeTab === 'pending'" class="mb-6 border-2 border-amber-400 bg-amber-50 p-6">
               <h3 class="font-bold text-lg mb-4 uppercase text-amber-700">РЕЗУЛЬТАТЫ ПРОВЕРКИ</h3>
@@ -683,6 +712,47 @@ export class ExpertDashboardPage implements OnInit {
   getSortedExpertReviews(solution: SolutionFullInfo): ExpertReviewInSolution[] {
     return [...(solution.expertReviews ?? [])]
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  getSortedSolutionHistory(solution: SolutionFullInfo): NonNullable<SolutionFullInfo['history']> {
+    const hiddenStates = new Set<SolutionState>(['NotStarted', 'Autotests', 'AiReview']);
+
+    return [...(solution.history ?? [])]
+      .filter(event => !hiddenStates.has(event.state))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+
+  formatSolutionHistoryDate(date: string): string {
+    const parts = new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).formatToParts(new Date(date));
+
+    const getPart = (type: Intl.DateTimeFormatPartTypes): string => {
+      return parts.find(part => part.type === type)?.value ?? '';
+    };
+
+    return `${getPart('day')} ${getPart('month')}, ${getPart('year')}, ${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
+  }
+
+  getSolutionStateLabel(state: SolutionState): string {
+    const labels: Record<SolutionState, string> = {
+      NotStarted: 'Не начато',
+      InProgress: 'В работе',
+      Autotests: 'Автотесты',
+      AiReview: 'AI-ревью',
+      ExpertReview: 'Ревью эксперта',
+      RequiresImprovements: 'Требуются доработки',
+      Done: 'Решение принято',
+      Failed: 'Решение отклонено'
+    };
+
+    return labels[state];
   }
 
   private getNormalizedReviewScore(): number {
